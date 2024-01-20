@@ -31,10 +31,10 @@ type RidBlockWithNbt struct {
 	Nbt map[string]interface{}
 }
 
-type LegacyBlockWithNbt struct {
-	block *chunk.LegacyBlock
-	Nbt   map[string]interface{}
-}
+// type LegacyBlockWithNbt struct {
+// 	block *chunk.LegacyBlock
+// 	Nbt   map[string]interface{}
+// }
 
 // 考虑到 Chunk 是一个结构化的，空间受限的，16对齐的数据结构
 // 因此，不同格式(特别是非序列化的格式中)，不同世界的转换很不方便
@@ -47,10 +47,10 @@ type WorldChunkBasic interface {
 
 // WorldChunkAdvanced 和 WorldChunkBasic 概念类似
 // 只是增加了可被导入，导出的数据类型
-type WorldChunkAdvanced interface {
-	WorldChunkBasic
-	DumpAllAsLegacyBlock() chan LegacyBlockWithNbt
-}
+// type WorldChunkAdvanced interface {
+// 	WorldChunkBasic
+// 	DumpAllAsLegacyBlock() chan LegacyBlockWithNbt
+// }
 
 type ChunkWriter interface {
 	Write(data *ChunkData) error

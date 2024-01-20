@@ -2,6 +2,7 @@ package chunk
 
 import (
 	"fmt"
+	"neo-omega-kernel/neomega/blocks"
 	"reflect"
 	"unsafe"
 )
@@ -207,7 +208,7 @@ func (storage *PalettedStorage) RuntimeID(x, y, z byte) uint32 {
 //		*storage = *newStorage
 //	}
 func (storage *PalettedStorage) shrinkAir() {
-	airRID := AirRID
+	airRID := blocks.AIR_RUNTIMEID
 	foundAirPalette := false
 	shrinkHappen := false
 	for _, v := range storage.palette.Values {

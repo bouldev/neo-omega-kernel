@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"neo-omega-kernel/neomega/blocks"
 
 	"neo-omega-kernel/minecraft/nbt"
-
-	"neo-omega-kernel/minecraft/protocol"
 )
 
 type (
@@ -21,8 +20,8 @@ type (
 	// paletteEncoding is an encoding type used for Chunk encoding. It is used to encode different types of palettes
 	// (for example, blocks or biomes) differently.
 	paletteEncoding interface {
-		encode(buf *bytes.Buffer, v uint32)
-		decode(buf *bytes.Buffer) (uint32, error)
+		encode(buf *bytes.Buffer, rtid uint32)
+		decode(buf *bytes.Buffer) (rtid uint32, err error)
 	}
 )
 
@@ -43,16 +42,6 @@ var (
 	BlockPaletteEncoding blockPaletteEncoding
 )
 
-// blockPaletteEncoding implements the encoding of block palettes to disk.
-type blockPaletteEncoding struct{}
-
-func (blockPaletteEncoding) encode(buf *bytes.Buffer, v uint32) {
-	// Get the block state registered with the runtime IDs we have in the palette of the block storage
-	// as we need the name and data value to store.
-	name, props, _ := RuntimeIDToState(v)
-	_ = nbt.NewEncoderWithEncoding(buf, nbt.LittleEndian).Encode(blockEntry{Name: name, State: props, Version: CurrentBlockVersion})
-}
-
 type BlockPaletteEncodingError struct {
 	error       string
 	canContinue bool
@@ -66,44 +55,43 @@ func (e *BlockPaletteEncodingError) CanContinue() bool {
 	return e.canContinue
 }
 
-func (blockPaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
+// blockPaletteEncoding implements the encoding of block palettes to disk.
+type blockPaletteEncoding struct{}
+
+func (blockPaletteEncoding) encode(buf *bytes.Buffer, rtid uint32) {
+	// Get the block state registered with the runtime IDs we have in the palette of the block storage
+	// as we need the name and data value to store.
+	name, props, _ := blocks.RuntimeIDToState(rtid)
+	_ = nbt.NewEncoderWithEncoding(buf, nbt.LittleEndian).Encode(blockEntry{Name: name, State: props, Version: int32(blocks.NEMC_BLOCK_VERSION)})
+}
+
+func (blockPaletteEncoding) decode(buf *bytes.Buffer) (rtid uint32, err error) {
 	var e blockEntry
 	if err := nbt.NewDecoderWithEncoding(buf, nbt.LittleEndian).Decode(&e); err != nil {
 		return 0, &BlockPaletteEncodingError{
 			error:       fmt.Sprintf("error decoding block palette entry: %w", err),
 			canContinue: false,
 		}
-
 	}
 	// As of 1.18.30, many common block state names have been renamed for consistency and the old names are now aliases.
 	// This function checks if the entry has an alias and if so, returns the updated entry.
-	if updatedEntry, ok := upgradeAliasEntry(e); ok {
-		e = updatedEntry
-	}
+	// if updatedEntry, ok := upgradeAliasEntry(e); ok {
+	// 	e = updatedEntry
+	// }
 
-	v, ok := StateToRuntimeID(e.Name, e.State)
-	if !ok {
-		v, ok = BlockPropsToRuntimeID(e.Name, e.State)
-		if !ok {
-			return AirRID, &BlockPaletteEncodingError{
-				error:       fmt.Sprintf("cannot get runtime ID of block state %v{%+v}", e.Name, e.State),
-				canContinue: true,
-			}
-		}
-		return v, nil
-	}
+	v, _ := blocks.BlockNameAndStateToRuntimeID(e.Name, e.State)
 	return v, nil
 }
 
-type biomePaletteEncoding struct{}
+// type biomePaletteEncoding struct{}
 
-func (biomePaletteEncoding) encode(buf *bytes.Buffer, v uint32) {
-	_ = binary.Write(buf, binary.LittleEndian, v)
-}
-func (biomePaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
-	var v uint32
-	return v, binary.Read(buf, binary.LittleEndian, &v)
-}
+// func (biomePaletteEncoding) encode(buf *bytes.Buffer, v uint32) {
+// 	_ = binary.Write(buf, binary.LittleEndian, v)
+// }
+// func (biomePaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
+// 	var v uint32
+// 	return v, binary.Read(buf, binary.LittleEndian, &v)
+// }
 
 // diskEncoding implements the Chunk encoding for writing to disk.
 type diskEncoding struct{}
@@ -134,7 +122,7 @@ func (diskEncoding) decodePalette(buf *bytes.Buffer, blockSize PaletteSize, e pa
 			if ok {
 				if decodeErr.CanContinue() {
 					fmt.Println(decodeErr.Error())
-					palette.Values[i] = AirRID
+					palette.Values[i] = blocks.AIR_RUNTIMEID
 					continue
 				} else {
 					fmt.Println(decodeErr.Error())
@@ -146,45 +134,45 @@ func (diskEncoding) decodePalette(buf *bytes.Buffer, blockSize PaletteSize, e pa
 	return palette, nil
 }
 
-// networkEncoding implements the Chunk encoding for sending over network.
-type nemcNetworkEncoding struct {
-	isChunkDecoding bool
-}
+// // networkEncoding implements the Chunk encoding for sending over network.
+// type nemcNetworkEncoding struct {
+// 	isChunkDecoding bool
+// }
 
-func (*nemcNetworkEncoding) network() byte { return 1 }
-func (*nemcNetworkEncoding) translate(nemcRID uint32) (mcRid uint32) {
-	// if nemcRID >= 6880 && nemcRID < 6882 {
-	// 	pterm.Error.Println(nemcRID, " -> ", NEMCRuntimeIDToStandardRuntimeID(nemcRID))
+// func (*nemcNetworkEncoding) network() byte { return 1 }
+// func (*nemcNetworkEncoding) translate(nemcRID uint32) (mcRid uint32) {
+// 	// if nemcRID >= 6880 && nemcRID < 6882 {
+// 	// 	pterm.Error.Println(nemcRID, " -> ", NEMCRuntimeIDToStandardRuntimeID(nemcRID))
 
-	// }
-	// fmt.Print(RuntimeIDToLegacyBlock(NEMCRuntimeIDToStandardRuntimeID(nemcRID)))
-	return NEMCRuntimeIDToStandardRuntimeID(nemcRID)
-}
-func (*nemcNetworkEncoding) encodePalette(buf *bytes.Buffer, p *Palette, _ paletteEncoding) {
-	panic("nemcNetworkEncoding.encodePalette not implement")
-}
-func (o *nemcNetworkEncoding) decodePalette(buf *bytes.Buffer, blockSize PaletteSize, _ paletteEncoding) (*Palette, error) {
-	var paletteCount int32 = 1
-	if blockSize != 0 {
-		if err := protocol.Varint32(buf, &paletteCount); err != nil {
-			return nil, fmt.Errorf("error reading palette entry count: %w", err)
-		}
-		if paletteCount <= 0 {
-			return nil, fmt.Errorf("invalid palette entry count %v", paletteCount)
-		}
-	}
+// 	// }
+// 	// fmt.Print(RuntimeIDToLegacyBlock(NEMCRuntimeIDToStandardRuntimeID(nemcRID)))
+// 	return NEMCRuntimeIDToStandardRuntimeID(nemcRID)
+// }
+// func (*nemcNetworkEncoding) encodePalette(buf *bytes.Buffer, p *Palette, _ paletteEncoding) {
+// 	panic("nemcNetworkEncoding.encodePalette not implement")
+// }
+// func (o *nemcNetworkEncoding) decodePalette(buf *bytes.Buffer, blockSize PaletteSize, _ paletteEncoding) (*Palette, error) {
+// 	var paletteCount int32 = 1
+// 	if blockSize != 0 {
+// 		if err := protocol.Varint32(buf, &paletteCount); err != nil {
+// 			return nil, fmt.Errorf("error reading palette entry count: %w", err)
+// 		}
+// 		if paletteCount <= 0 {
+// 			return nil, fmt.Errorf("invalid palette entry count %v", paletteCount)
+// 		}
+// 	}
 
-	blocks, temp := make([]uint32, paletteCount), int32(0)
-	for i := int32(0); i < paletteCount; i++ {
-		if err := protocol.Varint32(buf, &temp); err != nil {
-			return nil, fmt.Errorf("error decoding palette entry: %w", err)
-		}
-		if o.isChunkDecoding {
-			blocks[i] = o.translate(uint32(temp))
-		} else {
-			blocks[i] = uint32(temp)
-		}
+// 	blocks, temp := make([]uint32, paletteCount), int32(0)
+// 	for i := int32(0); i < paletteCount; i++ {
+// 		if err := protocol.Varint32(buf, &temp); err != nil {
+// 			return nil, fmt.Errorf("error decoding palette entry: %w", err)
+// 		}
+// 		if o.isChunkDecoding {
+// 			blocks[i] = o.translate(uint32(temp))
+// 		} else {
+// 			blocks[i] = uint32(temp)
+// 		}
 
-	}
-	return &Palette{Values: blocks, Size: blockSize}, nil
-}
+// 	}
+// 	return &Palette{Values: blocks, Size: blockSize}, nil
+// }

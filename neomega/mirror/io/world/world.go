@@ -1,8 +1,8 @@
 package world
 
 import (
+	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/mirror"
-	"neo-omega-kernel/neomega/mirror/chunk"
 	"neo-omega-kernel/neomega/mirror/define"
 )
 
@@ -21,7 +21,7 @@ func (w *World) chunk(pos define.ChunkPos) *mirror.ChunkData {
 func (w *World) Block(pos define.CubePos) (rtid uint32, found bool) {
 	if w == nil || pos.OutOfYBounds() {
 		// Fast way out.
-		return chunk.AirRID, false
+		return blocks.AIR_RUNTIMEID, false
 	}
 	chunkPos := define.ChunkPos{int32(pos[0] >> 4), int32(pos[2] >> 4)}
 	var c *mirror.ChunkData
@@ -33,7 +33,7 @@ func (w *World) Block(pos define.CubePos) (rtid uint32, found bool) {
 		w.lastPos = chunkPos
 	}
 	if c == nil {
-		return chunk.AirRID, false
+		return blocks.AIR_RUNTIMEID, false
 	}
 	x, y, z := uint8(pos[0]), int16(pos[1]), uint8(pos[2])
 	rtid = c.Chunk.Block(x, y, z, 0)
@@ -43,7 +43,7 @@ func (w *World) Block(pos define.CubePos) (rtid uint32, found bool) {
 func (w *World) BlockWithNbt(pos define.CubePos) (rtid uint32, nbt map[string]interface{}, found bool) {
 	if w == nil || pos.OutOfYBounds() {
 		// Fast way out.
-		return chunk.AirRID, nil, false
+		return blocks.AIR_RUNTIMEID, nil, false
 	}
 	chunkPos := define.ChunkPos{int32(pos[0] >> 4), int32(pos[2] >> 4)}
 	var c *mirror.ChunkData
@@ -55,7 +55,7 @@ func (w *World) BlockWithNbt(pos define.CubePos) (rtid uint32, nbt map[string]in
 		w.lastPos = chunkPos
 	}
 	if c == nil {
-		return chunk.AirRID, nil, false
+		return blocks.AIR_RUNTIMEID, nil, false
 	}
 	rtid = c.Chunk.Block(uint8(pos[0]), int16(pos[1]), uint8(pos[2]), 0)
 	if nbt, hasK := c.BlockNbts[pos]; hasK {
@@ -83,7 +83,7 @@ func (w *World) SetBlock(pos define.CubePos, rtid uint32) (success bool) {
 func (w *World) UpdateBlock(pos define.CubePos, rtid uint32) (origBlockRTID uint32, success bool) {
 	if w == nil || pos.OutOfYBounds() {
 		// Fast way out.
-		return chunk.AirRID, false
+		return blocks.AIR_RUNTIMEID, false
 	}
 	chunkPos := define.ChunkPos{int32(pos[0] >> 4), int32(pos[2] >> 4)}
 	var c *mirror.ChunkData
@@ -95,7 +95,7 @@ func (w *World) UpdateBlock(pos define.CubePos, rtid uint32) (origBlockRTID uint
 		w.lastPos = chunkPos
 	}
 	if c == nil {
-		return chunk.AirRID, false
+		return blocks.AIR_RUNTIMEID, false
 	}
 	x, y, z := uint8(pos[0]), int16(pos[1]), uint8(pos[2])
 	origBlockRTID = c.Chunk.Block(x, y, z, 0)

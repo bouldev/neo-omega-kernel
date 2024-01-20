@@ -371,7 +371,7 @@ type ComparedOutput struct {
 }
 
 func (ps *PropsForSearch) Compare(compare *PropsForSearch) (o ComparedOutput) {
-	if ps == nil {
+	if ps == nil || compare == nil || compare.propsByName == nil {
 		return
 	}
 	for n, p := range compare.propsByName {

@@ -36,11 +36,20 @@ type PropVal interface {
 	// SNBT -> 1b/0b; int32 -> 1,2,3,...; string -> "string"
 	SNBTString() string
 
+	Raw() any
+
 	Equal(other PropVal) bool
 }
 
 type PropValUint8 struct {
 	val bool
+}
+
+func (v PropValUint8) Raw() any {
+	if v.val {
+		return uint8(1)
+	}
+	return uint8(0)
 }
 
 func (v PropValUint8) Type() PropValType {
@@ -104,6 +113,10 @@ type PropValInt32 struct {
 	str string
 }
 
+func (v PropValInt32) Raw() any {
+	return v.val
+}
+
 func (v PropValInt32) Type() PropValType {
 	return PropValTypeInt32
 }
@@ -160,6 +173,10 @@ type PropValString struct {
 	wrappedString string
 }
 
+func (v PropValString) Raw() any {
+	return v.str
+}
+
 func (v PropValString) Type() PropValType {
 	return PropValTypeString
 }
@@ -205,15 +222,26 @@ type Props []struct {
 	Value PropVal
 }
 
+func (ps Props) ToNBT() map[string]any {
+	nbt := map[string]any{}
+	for _, p := range ps {
+		nbt[p.Name] = p.Value.Raw()
+	}
+	return nbt
+}
+
 func (ps Props) BedrockString(bracket bool) string {
 	if len(ps) == 0 {
+		if bracket {
+			return "[]"
+		}
 		return ""
 	}
 	props := make([]string, 0, len(ps))
 	for _, p := range ps {
-		props = append(props, "\""+p.Name+"\""+"="+p.Value.BedrockString())
+		props = append(props, "\""+p.Name+"\""+":"+p.Value.BedrockString())
 	}
-	stateStr := strings.Join(props, ",")
+	stateStr := strings.Join(props, ", ")
 	if !bracket {
 		return stateStr
 	}

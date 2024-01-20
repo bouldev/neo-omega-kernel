@@ -38,6 +38,10 @@ func main() {
 	}
 	for blockIn, bedrockBlockDescribe := range javaBlocks {
 		outBlockNameForSearch := blocks.BlockNameForSearch(bedrockBlockDescribe.Name)
+		// TODO CHECK IF THIS EXIST IN 1.19
+		if strings.Contains(outBlockNameForSearch.BaseName(), "mangrove_roots") {
+			continue
+		}
 		outBlockStateForSearch, err := blocks.PropsForSearchFromNbt(bedrockBlockDescribe.Properties)
 		if err != nil {
 			panic(err)
@@ -55,7 +59,7 @@ func main() {
 		if len(inSS) > 1 {
 			inBlockState = inSS[1]
 		}
-		hasWaterLoggedInfo := strings.ContainsAny(inBlockState, "waterlogged")
+		hasWaterLoggedInfo := strings.Contains(inBlockState, "waterlogged")
 		var inBlockStateFroSearchWaterLogged *blocks.PropsForSearch
 		inBlockState = strings.TrimSuffix(inBlockState, "]")
 		if hasWaterLoggedInfo {

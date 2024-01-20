@@ -6,7 +6,7 @@ import (
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/mirror/chunk"
+	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/mirror/define"
 	"neo-omega-kernel/nodes"
 	"strings"
@@ -95,15 +95,13 @@ func (o *BotActionHighLevel) occupyBot(timeout time.Duration) (release func(), e
 				case <-stopChan:
 					return
 				case <-time.NewTimer(time.Second).C:
-					o.node.ResetLockTime("bot-action", time.Second*2)
+					o.node.ResetLockTime("bot-action-high", time.Second*2)
 				}
 			}
 		}()
 		return func() {
 			close(stopChan)
-			if !o.node.ResetLockTime("bot-action-high", 0) {
-				fmt.Println("cannot release lock")
-			}
+			o.node.ResetLockTime("bot-action-high", 0)
 			o.microAction.SleepTick(1)
 			o.muChan <- struct{}{} // give back bot control
 		}, nil
@@ -159,7 +157,7 @@ func (o *BotActionHighLevel) highLevelGetAndRemoveSpecificBlockSideEffect(pos de
 	}
 	foreGround, backGround := decodedStructure.BlockOf(define.CubePos{0, 0, 0})
 	isAir := false
-	if foreGround == chunk.AirRID && backGround == chunk.AirRID {
+	if foreGround == blocks.AIR_RUNTIMEID && backGround == blocks.AIR_RUNTIMEID {
 		isAir = true
 	} else {
 		ret := o.cmdHelper.BackupStructureWithGivenNameCmd(pos, define.CubePos{1, 1, 1}, backupName).SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
@@ -207,17 +205,17 @@ func (o *BotActionHighLevel) highLevelPlaceSign(targetPos define.CubePos, text s
 
 	o.cmdHelper.SetBlockCmd(targetPos, "air").Send()
 	o.cmdHelper.SetBlockCmd(victimBlock, "glass").Send()
-	blockRTID, found := chunk.BlockStateStrToRuntimeID("glass", "")
+	blockRTID, found := blocks.BlockStrToRuntimeID("glass")
 	if !found {
 		return fmt.Errorf("glass runtime id not found")
 	}
-	nemcBlockRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(blockRTID)
-	if nemcBlockRuntimeID == chunk.NEMCAirRID {
-		return fmt.Errorf("glass nemc runtime id not found")
-	}
+	// nemcBlockRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(blockRTID)
+	// if nemcBlockRuntimeID == chunk.NEMCAirRID {
+	// 	return fmt.Errorf("glass nemc runtime id not found")
+	// }
 	o.microAction.SleepTick(4)
 	// o.microAction.SelectHotBar(0)
-	o.microAction.UseHotBarItemOnBlock(victimBlock, nemcBlockRuntimeID, 4, 0)
+	o.microAction.UseHotBarItemOnBlock(victimBlock, blockRTID, 4, 0)
 
 	// this is actually a bug of minecraft
 	// if old sign is replace by new sign when "writing" (actually is "unfinished" state since nothing is sent to server when writing)
@@ -326,11 +324,11 @@ func (o *BotActionHighLevel) highLevelMoveItemToContainer(pos define.CubePos, mo
 		return err
 	}
 	containerRuntimeID := structure.ForeGround[0]
-	containerNEMCRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(containerRuntimeID)
-	if containerNEMCRuntimeID == chunk.NEMCAirRID {
+	// containerNEMCRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(containerRuntimeID)
+	if containerRuntimeID == blocks.AIR_RUNTIMEID {
 		return fmt.Errorf("block of %v (nemc) not found", containerRuntimeID)
 	}
-	block, found := chunk.RuntimeIDToBlock(containerRuntimeID)
+	block, found := blocks.RuntimeIDToBlock(containerRuntimeID)
 	if !found {
 		panic(fmt.Errorf("block of %v not found", containerRuntimeID))
 	}
@@ -382,7 +380,7 @@ func (o *BotActionHighLevel) highLevelMoveItemToContainer(pos define.CubePos, mo
 	}
 	defer deferAction()
 	o.microAction.SleepTick(1)
-	return o.microAction.MoveItemFromInventoryToEmptyContainerSlots(pos, containerNEMCRuntimeID, block.Name, moveOperations)
+	return o.microAction.MoveItemFromInventoryToEmptyContainerSlots(pos, containerRuntimeID, block.Name, moveOperations)
 }
 
 func (o *BotActionHighLevel) HighLevelRenameItemWithAnvil(pos define.CubePos, slot uint8, newName string, autoGenAnvil bool) (err error) {
@@ -523,7 +521,7 @@ func (o *BotActionHighLevel) highLevelBlockBreakAndPickInHotBar(pos define.CubeP
 	if err != nil {
 		return targetSlotsGetInfo, err
 	}
-	if currentBlock.ForeGround[0] == chunk.AirRID && currentBlock.BackGround[0] == chunk.AirRID {
+	if currentBlock.ForeGround[0] == blocks.AIR_RUNTIMEID && currentBlock.BackGround[0] == blocks.AIR_RUNTIMEID {
 		return targetSlotsGetInfo, fmt.Errorf("block is air")
 	}
 	defer func() {
@@ -531,7 +529,6 @@ func (o *BotActionHighLevel) highLevelBlockBreakAndPickInHotBar(pos define.CubeP
 			recoverAction()
 		}
 	}()
-
 	totalTimes := len(targetSlotsGetInfo) + maxRetriesTotal
 	for tryTime := 0; tryTime < totalTimes; tryTime++ {
 		thisTimeOk := false
@@ -633,6 +630,7 @@ func (o *BotActionHighLevel) highLevelBlockBreakAndPickInHotBar(pos define.CubeP
 		}
 		o.microAction.SleepTick(10)
 	}
+	o.microAction.SleepTick(5)
 	return targetSlotsGetInfo, fmt.Errorf("not all slots successfully get block")
 }
 
@@ -699,7 +697,8 @@ func (o *BotActionHighLevel) HighLevelPlaceItemFrameItem(pos define.CubePos, slo
 }
 
 func (o *BotActionHighLevel) highLevelPlaceItemFrameItem(pos define.CubePos, slotID uint8) (err error) {
-	block, err := o.structureRequester.RequestStructure(pos, define.CubePos{1, 1, 1}, "block").BlockGetResult()
+	o.highLevelEnsureBotNearby(pos, 0)
+	block, err := o.structureRequester.RequestStructure(pos, define.CubePos{1, 1, 1}, "_t").SetTimeout(time.Second * 3).BlockGetResult()
 	if err != nil {
 		return err
 	}
@@ -708,8 +707,8 @@ func (o *BotActionHighLevel) highLevelPlaceItemFrameItem(pos define.CubePos, slo
 		panic(err)
 	}
 	runtimeID := decoded.ForeGround[0]
-	nemcRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(runtimeID)
-	_, states, _ := chunk.RuntimeIDToState(decoded.ForeGround[0])
+	// nemcRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(runtimeID)
+	_, states, _ := blocks.RuntimeIDToState(decoded.ForeGround[0])
 	face, ok := states["facing_direction"]
 	if !ok {
 		return fmt.Errorf("facing not found")
@@ -719,9 +718,9 @@ func (o *BotActionHighLevel) highLevelPlaceItemFrameItem(pos define.CubePos, slo
 		return fmt.Errorf("facing not found")
 	}
 	o.microAction.SleepTick(1)
-	o.microAction.UseHotBarItemOnBlock(pos, nemcRuntimeID, facing, slotID)
+	err = o.microAction.UseHotBarItemOnBlock(pos, runtimeID, facing, slotID)
 	o.microAction.SleepTick(1)
-	return nil
+	return err
 }
 
 func (o *BotActionHighLevel) HighLevelSetContainerContent(pos define.CubePos, containerInfo map[uint8]*neomega.ContainerSlotItemStack) (err error) {

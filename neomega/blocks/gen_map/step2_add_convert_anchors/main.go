@@ -16,6 +16,7 @@ import (
 var translated = 0
 var failed = 0
 var redundant = 0
+var ignored = 0
 var translateRecord = []struct {
 	Name      string
 	SNBTState string
@@ -55,7 +56,7 @@ func main() {
 			HandleInOutSNBT(inBlockSNBT, snbt)
 		}
 	}
-	fmt.Printf("translated %v failed %v redundant %v\n", translated, failed, redundant)
+	fmt.Printf("translated %v failed %v redundant %v ignored %v\n", translated, failed, redundant, ignored)
 	// fmt.Println(translateRecord)
 	textRecord := ""
 	for _, record := range translateRecord {
@@ -81,6 +82,13 @@ func HandleInOutSNBT(inSNBT, outSNBT string) {
 	}
 	outBlockState = strings.TrimSuffix(outBlockState, "]")
 
+	inSS := strings.Split(inSNBT, "[")
+	inBlockName, inBlockState := inSS[0], ""
+	if len(inSS) > 1 {
+		inBlockState = inSS[1]
+	}
+	inBlockState = strings.TrimSuffix(inBlockState, "]")
+
 	if outBlockName == "minecraft:cherry_sign" {
 		// fix
 		outBlockName = "minecraft:standing_sign"
@@ -101,12 +109,63 @@ func HandleInOutSNBT(inSNBT, outSNBT string) {
 		outBlockName = "minecraft:piston_arm_collision"
 		outBlockState = "block_data=0"
 	}
+	if strings.HasPrefix(inBlockName, "minecraft:mangrove_propagule") {
+		if strings.HasPrefix(inBlockState, "hanging=0b") || strings.Contains(inBlockState, `hanging="false"`) {
+			outBlockName = "minecraft:mangrove_propagule"
+		} else {
+			outBlockName = "minecraft:mangrove_propagule_hanging"
+		}
+		trimedInState := inBlockState
+		if idx := strings.Index(trimedInState, "propagule_stage="); idx != -1 {
+			trimedInState = strings.TrimPrefix(trimedInState[idx:], `propagule_stage=`)
+			// inBlockState = inBlockState[len(inBlockState)-2 : len(inBlockState)-1]
+		} else if idx := strings.Index(trimedInState, "stage="); idx != -1 {
+			trimedInState = strings.TrimPrefix(trimedInState[idx:], `stage="`)
+			trimedInState = trimedInState[len(trimedInState)-2 : len(trimedInState)-1]
+		}
+
+		outBlockState = "facing_direction:0, growth:" + trimedInState
+	}
+	if strings.HasPrefix(inBlockName, "minecraft:sculk_catalyst") {
+		outBlockName = "minecraft:sculk_catalyst"
+		if strings.Contains(inBlockState, `bloom="true"`) || strings.Contains(inBlockState, `bloom=1b`) {
+			outBlockState = "bloom=1b"
+		} else if strings.Contains(inBlockState, `bloom="`) || strings.Contains(inBlockState, `bloom=0b`) {
+			outBlockState = "bloom=0b"
+		} else {
+			panic(inBlockState)
+		}
+	} else if strings.HasPrefix(inBlockName, "minecraft:sculk_sensor") || strings.HasPrefix(inBlockName, "minecraft:calibrated_sculk_sensor") {
+		outBlockName = "minecraft:sculk_sensor"
+		if strings.Contains(inBlockState, `power="0"`) || strings.Contains(inBlockState, "powered_bit=0b") {
+			outBlockState = "powered_bit=0b"
+		} else if strings.Contains(inBlockState, `power="`) || strings.Contains(inBlockState, "powered_bit=1b") {
+			outBlockState = "powered_bit=1b"
+		} else {
+			outBlockState = "powered_bit=0b"
+		}
+	} else if strings.HasPrefix(inBlockName, "minecraft:sculk_vein") {
+		outBlockName = "minecraft:sculk_vein"
+		outBlockState = "multi_face_direction_bits=0"
+	} else if strings.HasPrefix(inBlockName, "minecraft:sculk_shrieker") {
+		outBlockName = "minecraft:sculk_shrieker"
+		if strings.Contains(inBlockState, `shrieking="true"`) || strings.Contains(inBlockState, `active=1b`) {
+			outBlockState = "active=1b"
+		} else if strings.Contains(inBlockState, `shrieking="false"`) || strings.Contains(inBlockState, `active=0b`) {
+			outBlockState = "active=0b"
+		} else {
+			panic(inBlockState)
+		}
+	} else if strings.HasPrefix(inBlockName, "minecraft:sculk") {
+		outBlockName = "minecraft:sculk"
+		outBlockState = ""
+	}
 	outBlockNameForSearch := blocks.BlockNameForSearch(outBlockName)
 	outBlockStateForSearch, err := blocks.PropsForSearchFromStr(outBlockState)
 	if err != nil {
 		panic(err)
 	}
-	rtid := blocks.UNKNOWM_RUNTIME
+	rtid := blocks.UNKNOWN_RUNTIME
 	found := false
 	// fmt.Printf("%v %v -> %v %v \n", inBlockName, inBlockState, outBlockName, outBlockState)
 	if strings.HasPrefix(outBlockState, "block_data=") {
@@ -121,22 +180,22 @@ func HandleInOutSNBT(inSNBT, outSNBT string) {
 				fmt.Printf("fuzzy block data: %v %v\n", outBlockName, blockVal)
 			}
 		}
+		if rtid == uint32(blocks.AIR_RUNTIMEID) {
+			ignored++
+			return
+		}
 	} else {
 		rtid, found = blocks.DefaultAnyToNemcConvertor.PreciseMatchByState(outBlockNameForSearch, outBlockStateForSearch)
 		if !found {
 			blocks.DefaultAnyToNemcConvertor.PreciseMatchByState(outBlockNameForSearch, outBlockStateForSearch)
 			panic(fmt.Errorf("not found!"))
 		}
+		if rtid == uint32(blocks.AIR_RUNTIMEID) {
+			ignored++
+			return
+		}
 	}
 	// fmt.Println(rtid)
-
-	inSS := strings.Split(inSNBT, "[")
-	inBlockName, inBlockState := inSS[0], ""
-	if len(inSS) > 1 {
-		inBlockState = inSS[1]
-	}
-
-	inBlockState = strings.TrimSuffix(inBlockState, "]")
 	inBlockNameForSearch := blocks.BlockNameForSearch(inBlockName)
 	inBlockStateForSearch, err := blocks.PropsForSearchFromStr(inBlockState)
 	if err != nil {

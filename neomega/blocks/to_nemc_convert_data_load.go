@@ -107,6 +107,6 @@ func initToNemcDataLoadSchem() {
 			panic(err)
 		}
 		// door direction and so on in initToNemcDataLoadBedrockJava is not precise, overwrite it
-		DefaultAnyToNemcConvertor.AddAnchorByState(blockNameToAdd, props, uint32(rtid), true)
+		DefaultAnyToNemcConvertor.AddAnchorByState(blockNameToAdd, props, uint32(rtid), false)
 	}
 }

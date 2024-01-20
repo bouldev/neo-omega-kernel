@@ -13,8 +13,13 @@ import (
 )
 
 var NEMC_BLOCK_VERSION = int32(0)
-var NEMC_AIR_RUNTIMEID = int32(0)
-var AIR_RUNTIMEID = int32(0)
+var NEMC_AIR_RUNTIMEID = uint32(0)
+var AIR_RUNTIMEID = uint32(0)
+var AIR_BLOCK = &NEMCBlock{
+	Name:  "air",
+	Value: 0,
+	Props: make(Props, 0),
+}
 
 type NEMCBlock struct {
 	Name  string
@@ -99,7 +104,7 @@ func initNemcBlocks() {
 			panic(fmt.Errorf("snbt error: %v!=%v", stateSNBT, nemcBlocks[runtimeID].Props.SNBTString()))
 		}
 		if blockName == "air" {
-			NEMC_AIR_RUNTIMEID = int32(runtimeID)
+			NEMC_AIR_RUNTIMEID = uint32(runtimeID)
 			AIR_RUNTIMEID = NEMC_AIR_RUNTIMEID
 		}
 

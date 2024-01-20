@@ -103,9 +103,26 @@ func Entry(args *Args) {
 	// }).SendAndGetResponse().BlockGetResult()
 	// time.Sleep(time.Second)
 
+	// origBlock := define.CubePos{265, -59, 47}
+	// block, err := omegaCore.GetStructureRequester().RequestStructure(origBlock, define.CubePos{1, 1, 1}, "block").BlockGetResult()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// decoded, err := block.Decode()
+	// blockName, _ := blocks.RuntimeIDToBlockNameWithStateStr(decoded.ForeGround[0])
+	// fmt.Println(blockName)
+	// nbtData := decoded.Nbts[origBlock]["Item"]
+	// fmt.Println(nbtData)
+	// item, err := neomega.GenItemInfoFromItemFrameNBT(nbtData)
+	// fmt.Println(item)
+	// err = omegaCore.GetBotAction().HighLevelMakeItem(item, 0, origBlock.Add(define.CubePos{1, 0, -1}), origBlock.Add(define.CubePos{1, 0, 1}))
+	// fmt.Println("make err", err)
+	// err = omegaCore.GetBotAction().HighLevelPlaceItemFrameItem(define.CubePos{259, -60, 54}, 0)
+	// fmt.Println("put err", err)
 	// read out nbt data of a specific container
 	// then re-make it
-	// block, err := omegaCore.GetStructureRequester().RequestStructure(define.CubePos{260, -60, 35}, define.CubePos{1, 1, 1}, "block").BlockGetResult()
+	// origChest := define.CubePos{264, -60, 46}
+	// block, err := omegaCore.GetStructureRequester().RequestStructure(origChest, define.CubePos{1, 1, 1}, "block").BlockGetResult()
 	// if err != nil {
 	// 	panic(err)
 	// }
@@ -113,15 +130,16 @@ func Entry(args *Args) {
 	// if err != nil {
 	// 	panic(err)
 	// }
-	// // fmt.Println(decoded)
-	// nbtData := decoded.Nbts[define.CubePos{260, -60, 35}]["Items"]
+	// fmt.Println(decoded)
+	// nbtData := decoded.Nbts[origChest]["Items"]
 	// containerInfo, _ := neomega.GenContainerItemsInfoFromItemsNbt(nbtData.([]any))
 	// fmt.Println(containerInfo)
-	// containerBlock, found := chunk.RuntimeIDToBlock(decoded.ForeGround[0])
+	// blockName, found := blocks.RuntimeIDToBlockNameWithStateStr(decoded.ForeGround[0])
 	// if !found {
 	// 	panic(err)
 	// }
-	// err = omegaCore.GetBotAction().HighLevelGenContainer(define.CubePos{265, -60, 35}, containerInfo, containerBlock.Name+" "+chunk.PropsToStateString(containerBlock.Properties, true))
+	// fmt.Println(blockName)
+	// err = omegaCore.GetBotAction().HighLevelGenContainer(define.CubePos{260, -60, 46}, containerInfo, blockName)
 	// fmt.Println(err)
 
 	// containerBlock.
@@ -211,14 +229,14 @@ func Entry(args *Args) {
 	// 	panic(err)
 	// }
 
-	// // place sign
+	// place sign
 	// omegaCore.GetBotAction().HighLevelPlaceSign(
 	// 	define.CubePos{262, -60, 49}, "2401!", true, "standing_sign",
 	// )
 
 	// // put command block
 	// omegaCore.GetBotAction().HighLevelPlaceCommandBlock(&neomega.PlaceCommandBlockOption{
-	// 	X: 1253, Y: 75, Z: 929,
+	// 	X: 263, Y: -60, Z: 49,
 	// 	BlockName:    "command_block",
 	// 	BlockState:   "0",
 	// 	NeedRedStone: true,

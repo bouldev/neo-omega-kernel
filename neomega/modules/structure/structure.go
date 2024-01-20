@@ -6,7 +6,7 @@ import (
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/mirror/chunk"
+	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/mirror/define"
 	"neo-omega-kernel/utils/string_wrapper"
 	"neo-omega-kernel/utils/sync_wrapper"
@@ -109,40 +109,36 @@ func (sr *StructureResponse) Raw() *packet.StructureTemplateDataResponse {
 }
 
 type StructureContent struct {
-	Version   int32    `mapstructure:"format_version"`
-	Size      [3]int32 `mapstructure:"size"`
-	Origin    [3]int32 `mapstructure:"structure_world_origin"`
+	Version   int32    `mapstructure:"format_version" nbt:"format_version"`
+	Size      [3]int32 `mapstructure:"size" nbt:"size"`
+	Origin    [3]int32 `mapstructure:"structure_world_origin" nbt:"structure_world_origin"`
 	Structure struct {
-		BlockIndices [2]interface{} `mapstructure:"block_indices"`
+		BlockIndices [2]interface{} `mapstructure:"block_indices" nbt:"block_indices"`
 		//Entities     []map[string]interface{} `mapstructure:"entities"`
 		Palette struct {
 			Default struct {
 				BlockPositionData map[string]struct {
-					Nbt map[string]interface{} `mapstructure:"block_entity_data"`
-				} `mapstructure:"block_position_data"`
+					Nbt map[string]interface{} `mapstructure:"block_entity_data" nbt:"block_entity_data"`
+				} `mapstructure:"block_position_data" nbt:"block_position_data"`
 				BlockPalette []struct {
-					Name   string                 `mapstructure:"name"`
-					States map[string]interface{} `mapstructure:"states"`
-					Value  int16                  `mapstructure:"val"`
-				} `mapstructure:"block_palette"`
-			} `mapstructure:"default"`
-		} `mapstructure:"palette"`
-	} `mapstructure:"structure"`
+					Name   string                 `mapstructure:"name" nbt:"name"`
+					States map[string]interface{} `mapstructure:"states" nbt:"states"`
+					Value  int16                  `mapstructure:"val" nbt:"val"`
+				} `mapstructure:"block_palette" nbt:"block_palette"`
+			} `mapstructure:"default" nbt:"default"`
+		} `mapstructure:"palette" nbt:"palette"`
+	} `mapstructure:"structure" nbt:"structure"`
+	decoded *neomega.DecodedStructure
 }
 
-func (sr *StructureResponse) Decode() (s *neomega.DecodedStructure, err error) {
-	if !sr.raw.Success {
-		return nil, fmt.Errorf("response get fail result")
-	}
-	if sr.decodedStructure != nil {
-		return sr.decodedStructure, nil
-	}
-	structureData := sr.raw.StructureTemplate
-	structure := &StructureContent{}
-	err = mapstructure.Decode(structureData, &structure)
+func (structure *StructureContent) FromNBT(nbt map[string]any) error {
+	err := mapstructure.Decode(nbt, &structure)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	return nil
+}
+func (structure *StructureContent) Decode() *neomega.DecodedStructure {
 	nbts := map[define.CubePos]map[string]interface{}{}
 	for _, blockNbt := range structure.Structure.Palette.Default.BlockPositionData {
 		x, y, z, ok := define.GetPosFromNBT(blockNbt.Nbt)
@@ -150,19 +146,19 @@ func (sr *StructureResponse) Decode() (s *neomega.DecodedStructure, err error) {
 			nbts[define.CubePos{x, y, z}] = blockNbt.Nbt
 		}
 	}
-	BlockPalettesUpdates := make(map[string]*neomega.BlockPalettes)
+	// BlockPalettes := make(map[string]*neomega.BlockPalettes)
 	paletteLookUp := make([]uint32, len(structure.Structure.Palette.Default.BlockPalette))
 	for paletteIdx, palette := range structure.Structure.Palette.Default.BlockPalette {
-		rtid, _ := chunk.BlockPropsToRuntimeID(palette.Name, palette.States)
+		rtid, _ := blocks.BlockNameAndStateToRuntimeID(palette.Name, palette.States)
 		paletteLookUp[paletteIdx] = rtid
-		hashName := fmt.Sprintf("%v[%v]", palette.Name, chunk.PropsToStateString(palette.States, false))
-		BlockPalettesUpdates[hashName] = &neomega.BlockPalettes{
-			Name:        palette.Name,
-			States:      palette.States,
-			Value:       palette.Value,
-			NotNEMCRTID: rtid,
-			// NemcRtid:    chunk.AirRID,
-		}
+		// hashName := fmt.Sprintf("%v[%v]", palette.Name, chunk.PropsToStateString(palette.States, false))
+		// BlockPalettes[hashName] = &neomega.BlockPalettes{
+		// 	Name:   palette.Name,
+		// 	States: palette.States,
+		// 	Value:  palette.Value,
+		// 	RTID:   rtid,
+		// 	// NemcRtid:    chunk.AirRID,
+		// }
 	}
 	var foreground, background []uint32
 	{
@@ -175,7 +171,7 @@ func (sr *StructureResponse) Decode() (s *neomega.DecodedStructure, err error) {
 			if _v != -1 {
 				foreground[i] = paletteLookUp[_v]
 			} else {
-				foreground[i] = chunk.AirRID
+				foreground[i] = blocks.AIR_RUNTIMEID
 			}
 		}
 		for i, v := range BlockIndices1 {
@@ -183,7 +179,7 @@ func (sr *StructureResponse) Decode() (s *neomega.DecodedStructure, err error) {
 			if _v != -1 {
 				background[i] = paletteLookUp[_v]
 			} else {
-				background[i] = chunk.AirRID
+				background[i] = blocks.AIR_RUNTIMEID
 			}
 		}
 	}
@@ -195,11 +191,29 @@ func (sr *StructureResponse) Decode() (s *neomega.DecodedStructure, err error) {
 		Origin: define.CubePos{
 			int(structure.Origin[0]), int(structure.Origin[1]), int(structure.Origin[2]),
 		},
-		BlockPalettes: BlockPalettesUpdates,
-		ForeGround:    foreground,
-		BackGround:    background,
-		Nbts:          nbts,
+		ForeGround: foreground,
+		BackGround: background,
+		Nbts:       nbts,
+		// BlockPalettes: BlockPalettes,
 	}
+	structure.decoded = decodeStructure
+	return decodeStructure
+}
+
+func (sr *StructureResponse) Decode() (s *neomega.DecodedStructure, err error) {
+	if !sr.raw.Success {
+		return nil, fmt.Errorf("response get fail result")
+	}
+	if sr.decodedStructure != nil {
+		return sr.decodedStructure, nil
+	}
+	structureData := sr.raw.StructureTemplate
+	structure := &StructureContent{}
+	err = structure.FromNBT(structureData)
+	if err != nil {
+		return nil, err
+	}
+	decodeStructure := structure.Decode()
 	sr.decodedStructure = decodeStructure
 	return decodeStructure, nil
 

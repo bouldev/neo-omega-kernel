@@ -2,10 +2,11 @@ package blocks
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 )
 
-const UNKNOWM_RUNTIME = uint32(0xFFFFFFFF)
+const UNKNOWN_RUNTIME = uint32(0xFFFFFFFF)
 
 type ToNEMCBaseNames struct {
 	legacyValuesMapping []uint32
@@ -19,7 +20,7 @@ type ToNEMCBaseNames struct {
 
 func (baseNameGroup *ToNEMCBaseNames) addAnchorByLegacyValue(legacyValue int16, nemcRTID uint32) (exist bool, conflictErr error) {
 	if int(legacyValue+1) <= len(baseNameGroup.legacyValuesMapping) {
-		if baseNameGroup.legacyValuesMapping[legacyValue] == UNKNOWM_RUNTIME {
+		if baseNameGroup.legacyValuesMapping[legacyValue] == UNKNOWN_RUNTIME {
 			baseNameGroup.legacyValuesMapping[legacyValue] = nemcRTID
 			return false, nil
 		} else if baseNameGroup.legacyValuesMapping[legacyValue] != nemcRTID {
@@ -31,7 +32,7 @@ func (baseNameGroup *ToNEMCBaseNames) addAnchorByLegacyValue(legacyValue int16, 
 	baseNameGroup.mu.Lock()
 	defer baseNameGroup.mu.Unlock()
 	for int(legacyValue+1) > len(baseNameGroup.legacyValuesMapping) {
-		baseNameGroup.legacyValuesMapping = append(baseNameGroup.legacyValuesMapping, UNKNOWM_RUNTIME)
+		baseNameGroup.legacyValuesMapping = append(baseNameGroup.legacyValuesMapping, UNKNOWN_RUNTIME)
 	}
 	baseNameGroup.legacyValuesMapping[legacyValue] = nemcRTID
 	return false, nil
@@ -39,7 +40,7 @@ func (baseNameGroup *ToNEMCBaseNames) addAnchorByLegacyValue(legacyValue int16, 
 
 func (baseNameGroup *ToNEMCBaseNames) preciseMatchByLegacyValue(legacyValue int16) (rtid uint32, found bool) {
 	if int(legacyValue+1) <= len(baseNameGroup.legacyValuesMapping) {
-		if rtid = baseNameGroup.legacyValuesMapping[legacyValue]; rtid == UNKNOWM_RUNTIME {
+		if rtid = baseNameGroup.legacyValuesMapping[legacyValue]; rtid == UNKNOWN_RUNTIME {
 			return uint32(AIR_RUNTIMEID), false
 		} else {
 			return rtid, true
@@ -51,7 +52,7 @@ func (baseNameGroup *ToNEMCBaseNames) preciseMatchByLegacyValue(legacyValue int1
 
 func (baseNameGroup *ToNEMCBaseNames) fuzzySearchByLegacyValue(legacyValue int16) (rtid uint32, found bool) {
 	if int(legacyValue+1) <= len(baseNameGroup.legacyValuesMapping) {
-		if rtid = baseNameGroup.legacyValuesMapping[legacyValue]; rtid != UNKNOWM_RUNTIME {
+		if rtid = baseNameGroup.legacyValuesMapping[legacyValue]; rtid != UNKNOWN_RUNTIME {
 			return rtid, true
 		}
 	}
@@ -101,17 +102,21 @@ func (baseNameGroup *ToNEMCBaseNames) fuzzySearchByState(states *PropsForSearch)
 	defer baseNameGroup.mu.RUnlock()
 	rtid, found := baseNameGroup.StatesWithRtidQuickMatch[quickMatchStr]
 	if found {
-		return rtid, ComparedOutput{Same: uint8(len(states.props))}, true
+		sameCount := uint8(0)
+		if states != nil {
+			sameCount = uint8(len(states.props))
+		}
+		return rtid, ComparedOutput{Same: sameCount}, true
 	}
 	rtid = uint32(AIR_RUNTIMEID)
 	matchAny = false
 	for _, anchor := range baseNameGroup.statesWithRtid {
-		matchAny = true
 		newScore := anchor.states.Compare(states)
-		if newScore.Same > score.Same || (newScore.Same == score.Same && ((newScore.Different + newScore.Redundant + newScore.Missing) < (score.Different + score.Redundant + score.Missing))) {
+		if (!matchAny) || newScore.Same > score.Same || (newScore.Same == score.Same && ((newScore.Different + newScore.Redundant + newScore.Missing) < (score.Different + score.Redundant + score.Missing))) {
 			score = newScore
 			rtid = anchor.rtid
 		}
+		matchAny = true
 	}
 	return rtid, score, matchAny
 }
@@ -158,7 +163,7 @@ func (c *ToNEMCConverter) AddAnchorByLegacyValue(name BaseWithNameSpace, legacyV
 func (c *ToNEMCConverter) PreciseMatchByLegacyValue(name BaseWithNameSpace, legacyValue int16) (rtid uint32, found bool) {
 	baseGroup, found := c.getBaseNameGroup(name.BaseName())
 	if !found {
-		return uint32(NEMC_AIR_RUNTIMEID), false
+		return uint32(AIR_RUNTIMEID), false
 	}
 	return baseGroup.preciseMatchByLegacyValue(legacyValue)
 }
@@ -166,7 +171,7 @@ func (c *ToNEMCConverter) PreciseMatchByLegacyValue(name BaseWithNameSpace, lega
 func (c *ToNEMCConverter) TryBestSearchByLegacyValue(name BaseWithNameSpace, legacyValue int16) (rtid uint32, found bool) {
 	baseGroup, found := c.getBaseNameGroup(name.BaseName())
 	if !found {
-		return uint32(NEMC_AIR_RUNTIMEID), false
+		return uint32(AIR_RUNTIMEID), false
 	}
 	return baseGroup.fuzzySearchByLegacyValue(legacyValue)
 }
@@ -179,7 +184,7 @@ func (c *ToNEMCConverter) AddAnchorByState(name BaseWithNameSpace, states *Props
 func (c *ToNEMCConverter) PreciseMatchByState(name BaseWithNameSpace, states *PropsForSearch) (rtid uint32, found bool) {
 	baseGroup, found := c.getBaseNameGroup(name.BaseName())
 	if !found {
-		return uint32(NEMC_AIR_RUNTIMEID), false
+		return uint32(AIR_RUNTIMEID), false
 	}
 	return baseGroup.preciseMatchByState(states)
 }
@@ -187,7 +192,7 @@ func (c *ToNEMCConverter) PreciseMatchByState(name BaseWithNameSpace, states *Pr
 func (c *ToNEMCConverter) TryBestSearchByState(name BaseWithNameSpace, states *PropsForSearch) (rtid uint32, score ComparedOutput, matchAny bool) {
 	baseGroup, found := c.getBaseNameGroup(name.BaseName())
 	if !found {
-		return uint32(NEMC_AIR_RUNTIMEID), ComparedOutput{}, false
+		return uint32(AIR_RUNTIMEID), ComparedOutput{}, false
 	}
 	return baseGroup.fuzzySearchByState(states)
 }
@@ -195,4 +200,24 @@ func (c *ToNEMCConverter) TryBestSearchByState(name BaseWithNameSpace, states *P
 var DefaultAnyToNemcConvertor = &ToNEMCConverter{
 	BaseNames: map[string]*ToNEMCBaseNames{},
 	mu:        sync.RWMutex{},
+}
+
+func ConvertStringToBlockNameAndPropsForSearch(blockString string) (blockNameForSearch BaseWithNameSpace, propsForSearch *PropsForSearch) {
+	blockString = strings.ReplaceAll(blockString, "{", "[")
+	inFrags := strings.Split(blockString, "[")
+	inBlockName, inBlockState := inFrags[0], ""
+	if len(inFrags) > 1 {
+		inBlockState = inFrags[1]
+	}
+	if len(inBlockState) > 0 {
+		if inBlockState[len(inBlockState)-1] == ']' || inBlockState[len(inBlockState)-1] == '}' {
+			inBlockState = inBlockState[:len(inBlockState)-1]
+		}
+	}
+	inBlockStateForSearch, err := PropsForSearchFromStr(inBlockState)
+	if err != nil {
+		// legacy capability
+		fmt.Println(err)
+	}
+	return BlockNameForSearch(inBlockName), inBlockStateForSearch
 }
