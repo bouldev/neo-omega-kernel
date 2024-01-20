@@ -27,7 +27,7 @@ func Entry(args *access_helper.ImpactOption) {
 
 	ctx := context.Background()
 	node := nodes.NewLocalNode(ctx)
-	node = nodes.NewGroup("neo-omega-kernel/neomega-core", node, false)
+	node = nodes.NewGroup("neomega-core", node, false)
 	omegaCore, err := access_helper.ImpactServer(context.Background(), node, accessOption)
 	if err != nil {
 		panic(err)

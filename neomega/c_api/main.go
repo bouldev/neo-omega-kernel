@@ -19,9 +19,9 @@ import (
 	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
 	"neo-omega-kernel/neomega/rental_server_impact/info_collect_utils"
 	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/utils/sync_wrapper"
 	"time"
 	"unsafe"
-	"utils/sync_wrapper"
 
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"

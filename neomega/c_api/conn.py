@@ -48,7 +48,7 @@ machine=platform.machine()
 if machine=="x86_64":
     machine="amd64"
 if platform.uname()[0] == "Windows":
-    lib_path = f"neo-omega-kernel/neomega_windows_{machine}.dll"
+    lib_path = f"neomega_windows_{machine}.dll"
     lib_path = os.path.join(os.path.dirname(__file__),"libs", lib_path)
     LIB = ctypes.cdll.LoadLibrary(lib_path)
 elif platform.uname()[0] == "Linux":
@@ -56,7 +56,7 @@ elif platform.uname()[0] == "Linux":
     lib_path = os.path.join(os.path.dirname(__file__),"libs", lib_path)
     LIB = ctypes.CDLL(lib_path)
 else:
-    lib_path = f"neo-omega-kernel/neomega_macos_{machine}.dylib"
+    lib_path = f"neomega_macos_{machine}.dylib"
     lib_path = os.path.join(os.path.dirname(__file__),"libs", lib_path)
     LIB = ctypes.CDLL(lib_path)
 

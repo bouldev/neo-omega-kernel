@@ -2,11 +2,12 @@ package assembler
 
 import (
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
+	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/mirror"
 	"neo-omega-kernel/neomega/mirror/chunk"
 	"neo-omega-kernel/neomega/mirror/define"
+	"neo-omega-kernel/minecraft/protocol"
+	"neo-omega-kernel/minecraft/protocol/packet"
 	"sync"
 	"time"
 
@@ -29,12 +30,12 @@ type Assembler struct {
 }
 
 func NewAssembler(sendPeriod time.Duration, validCacheTime time.Duration) *Assembler {
-	airRID, ok := chunk.StateToRuntimeID("minecraft:air", nil)
-	if !ok {
-		panic("cannot find air runtime ID")
-	}
+	// airRID, ok := chunk.StateToRuntimeID("minecraft:air", nil)
+	// if !ok {
+	// 	panic("cannot find air runtime ID")
+	// }
 	a := &Assembler{
-		airRID:           airRID,
+		airRID:           blocks.AIR_RUNTIMEID,
 		pendingTasks:     make(map[define.ChunkPos]*mirror.ChunkData),
 		chunkRequestChan: make(chan []*packet.SubChunkRequest, 10240),
 		visitTime:        make(map[define.ChunkPos]time.Time),
