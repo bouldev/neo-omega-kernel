@@ -173,48 +173,6 @@ type GameCtrl interface {
 	BlockPlacer
 }
 
-type BlockPalettes struct {
-	Name        string
-	States      map[string]interface{}
-	Value       int16
-	NotNEMCRTID uint32
-	// NemcRtid    uint32
-}
-type DecodedStructure struct {
-	Version       int32
-	Size          define.CubePos
-	Origin        define.CubePos
-	BlockPalettes map[string]*BlockPalettes
-	ForeGround    []uint32
-	BackGround    []uint32
-	Nbts          map[define.CubePos]map[string]interface{}
-}
-
-func (d *DecodedStructure) IndexOf(pos define.CubePos) int {
-	YZ := d.Size.Y() * d.Size.Z()
-	return YZ*pos.X() + d.Size.Z()*pos.Y() + pos.Z()
-}
-
-func (d *DecodedStructure) BlockOf(pos define.CubePos) (foreGround, backGround uint32) {
-	idx := d.IndexOf(pos)
-	return d.ForeGround[idx], d.BackGround[idx]
-}
-
-type StructureResponse interface {
-	Raw() *packet.StructureTemplateDataResponse
-	Decode() (s *DecodedStructure, err error)
-}
-type StructureRequestResultHandler interface {
-	BlockGetResult() (r StructureResponse, err error)
-	AsyncGetResult(callback func(r StructureResponse, err error))
-	SetContext(ctx context.Context) StructureRequestResultHandler
-	SetTimeout(timeout time.Duration) StructureRequestResultHandler
-}
-type StructureRequester interface {
-	RequestStructure(pos define.CubePos, size define.CubePos, structureName string) StructureRequestResultHandler
-	RequestStructureWithAutoName(pos define.CubePos, size define.CubePos) StructureRequestResultHandler
-}
-
 type MicroOmega interface {
 	Dead() chan error
 	GetGameControl() GameCtrl
