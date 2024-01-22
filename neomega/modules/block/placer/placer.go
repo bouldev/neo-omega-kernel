@@ -202,8 +202,8 @@ func (g *BlockPlacer) AsyncPlaceCommandBlock(pos define.CubePos, commandBlockNam
 	g.onBlockActorCbs[pos] = checkAndSendUpdate
 	g.blockActorLock.Unlock()
 	if withMove && ctx.Err() == nil {
-		g.SendWebSocketCmdOmitResponse(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
-		time.Sleep(6 * 50 * time.Millisecond)
+		g.SendWebSocketCmdNeedResponse(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z())).SetTimeout(time.Second * 3).BlockGetResult()
+		time.Sleep(50 * time.Millisecond)
 	}
 	if withAirPrePlace && commandBlockPlacedCtx.Err() == nil && ctx.Err() == nil {
 		cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], "air", 0)
@@ -211,7 +211,8 @@ func (g *BlockPlacer) AsyncPlaceCommandBlock(pos define.CubePos, commandBlockNam
 	}
 	if commandBlockPlacedCtx.Err() == nil && ctx.Err() == nil {
 		cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], strings.Replace(commandBlockName, "minecraft:", "", 1), blockDataOrStateStr)
-		g.SendWebSocketCmdOmitResponse(cmd)
+		g.SendWebSocketCmdNeedResponse(cmd).SetTimeout(time.Second * 3).BlockGetResult()
+		time.Sleep(50 * time.Millisecond)
 	}
 	select {
 	case <-commandBlockPlacedCtx.Done():
