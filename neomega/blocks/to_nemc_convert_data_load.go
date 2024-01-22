@@ -55,6 +55,9 @@ func initToNemcDataLoadBedrockJava() {
 			if exist, err := DefaultAnyToNemcConvertor.AddAnchorByLegacyValue(blockNameToAdd, int16(legacyBlockValue), uint32(rtid)); err != nil || exist == true {
 				panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, legacyBlockValue, rtid))
 			}
+			if exist, err := SchemToNemcConvertor.AddAnchorByLegacyValue(blockNameToAdd, int16(legacyBlockValue), uint32(rtid)); err != nil || exist == true {
+				panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, legacyBlockValue, rtid))
+			}
 		} else {
 			props, err := PropsForSearchFromStr(snbtState)
 			if err != nil {
@@ -62,6 +65,9 @@ func initToNemcDataLoadBedrockJava() {
 				panic(err)
 			}
 			if exist, err := DefaultAnyToNemcConvertor.AddAnchorByState(blockNameToAdd, props, uint32(rtid), false); err != nil || exist == true {
+				panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, props.InPreciseSNBT(), rtid))
+			}
+			if exist, err := SchemToNemcConvertor.AddAnchorByState(blockNameToAdd, props, uint32(rtid), false); err != nil || exist == true {
 				panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, props.InPreciseSNBT(), rtid))
 			}
 		}
@@ -108,5 +114,6 @@ func initToNemcDataLoadSchem() {
 		}
 		// door direction and so on in initToNemcDataLoadBedrockJava is not precise, overwrite it
 		DefaultAnyToNemcConvertor.AddAnchorByState(blockNameToAdd, props, uint32(rtid), false)
+		SchemToNemcConvertor.AddAnchorByState(blockNameToAdd, props, uint32(rtid), true)
 	}
 }

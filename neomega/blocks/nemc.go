@@ -113,10 +113,20 @@ func initNemcBlocks() {
 		} else if exist {
 			panic("should not happen")
 		}
+		if exist, err := SchemToNemcConvertor.AddAnchorByLegacyValue(BlockNameForSearch(blockName), int16(blockVal), uint32(runtimeID)); err != nil {
+			panic(err)
+		} else if exist {
+			panic("should not happen")
+		}
 		if propsForSearch, err := PropsForSearchFromStr(stateSNBT); err != nil {
 			panic(err)
 		} else {
 			if exist, err := DefaultAnyToNemcConvertor.AddAnchorByState(BlockNameForSearch(blockName), propsForSearch, uint32(runtimeID), false); err != nil {
+				panic(err)
+			} else if exist {
+				panic("should not happen")
+			}
+			if exist, err := SchemToNemcConvertor.AddAnchorByState(BlockNameForSearch(blockName), propsForSearch, uint32(runtimeID), false); err != nil {
 				panic(err)
 			} else if exist {
 				panic("should not happen")

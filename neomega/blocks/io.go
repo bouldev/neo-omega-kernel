@@ -66,6 +66,12 @@ func BlockStrToRuntimeID(blockNameWithOrWithoutState string) (runtimeID uint32, 
 	return rtid, found
 }
 
+func SchemBlockStrToRuntimeID(blockNameWithOrWithoutState string) (runtimeID uint32, found bool) {
+	blockName, blockProps := ConvertStringToBlockNameAndPropsForSearch(blockNameWithOrWithoutState)
+	rtid, _, found := SchemToNemcConvertor.TryBestSearchByState(blockName, blockProps)
+	return rtid, found
+}
+
 func SchematicToRuntimeID(blockIdx uint8, data uint8) (runtimeID uint32, found bool) {
 	if int(blockIdx) >= len(SchematicBlockStrings) {
 		return AIR_RUNTIMEID, false
