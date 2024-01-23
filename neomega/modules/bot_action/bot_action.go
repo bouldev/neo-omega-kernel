@@ -633,10 +633,16 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 		renameAndGetItemResponse := resps.Responses[1]
 		fallbackGetItemResponse := resps.Responses[2]
 		if placeItemOnAnvilResponse.RequestID != RequestIDPutItemOnAnvil {
-			o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info")
+			o.cmdSender.SendWebSocketCmdNeedResponse(fmt.Sprintf("replaceitem entity @s slot.hotbar %v air", slot)).SetTimeout(time.Second * 3).BlockGetResult()
+			o.SleepTick(1)
+			return fmt.Errorf("client and server out of sync in maintained info (put item on anvil)")
+			// o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info")
 		}
 		if renameAndGetItemResponse.RequestID != RequestIDDoRenameAndTakeIt {
-			o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info")
+			o.cmdSender.SendWebSocketCmdNeedResponse(fmt.Sprintf("replaceitem entity @s slot.hotbar %v air", slot)).SetTimeout(time.Second * 3).BlockGetResult()
+			o.SleepTick(1)
+			return fmt.Errorf("client and server out of sync in maintained info (take item from anvil)")
+			// o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info")
 		}
 
 		// 如果命名成功, 这个 response 的 ID 可能变化
@@ -650,7 +656,10 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 					for _, slot := range container.SlotInfo {
 						var itemInstance *protocol.ItemInstance
 						if slot.StackNetworkID == 0 {
-							o.forceGetRidOfUnrecoverableState("server report rename ok and get is successful, but get nothing, out of sync!")
+							o.cmdSender.SendWebSocketCmdNeedResponse(fmt.Sprintf("replaceitem entity @s slot.hotbar %v air", slot)).SetTimeout(time.Second * 3).BlockGetResult()
+							o.SleepTick(1)
+							return fmt.Errorf("client and server out of sync in maintained info (server report rename ok and get is successful, but get nothing)")
+							// o.forceGetRidOfUnrecoverableState("server report rename ok and get is successful, but get nothing, out of sync!")
 						} else {
 							itemInstance = o.copyItemInstance(origInventoryItem)
 							itemInstance.StackNetworkID = slot.StackNetworkID
@@ -672,7 +681,10 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 
 		// 因为命名失败导致第二步错误，现在检查是否正确拿到东西了
 		if fallbackGetItemResponse.RequestID != RequestIDGetBackItemWhenFail {
-			o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info")
+			// o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info")
+			o.cmdSender.SendWebSocketCmdNeedResponse(fmt.Sprintf("replaceitem entity @s slot.hotbar %v air", slot)).SetTimeout(time.Second * 3).BlockGetResult()
+			o.SleepTick(1)
+			return fmt.Errorf("client and server out of sync in maintained info (take back item from anvil)")
 		}
 
 		if fallbackGetItemResponse.Status == protocol.ItemStackResponseStatusOK {
@@ -681,7 +693,10 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 					for _, slot := range container.SlotInfo {
 						var itemInstance *protocol.ItemInstance
 						if slot.StackNetworkID == 0 {
-							o.forceGetRidOfUnrecoverableState("server report rename fail and get is successful, but get nothing, out of sync!")
+							// o.forceGetRidOfUnrecoverableState("server report rename fail and get is successful, but get nothing, out of sync!")
+							o.cmdSender.SendWebSocketCmdNeedResponse(fmt.Sprintf("replaceitem entity @s slot.hotbar %v air", slot)).SetTimeout(time.Second * 3).BlockGetResult()
+							o.SleepTick(1)
+							return fmt.Errorf("client and server out of sync in maintained info (server report rename fail and get is successful, but get nothing)")
 						} else {
 							itemInstance = o.copyItemInstance(origInventoryItem)
 							itemInstance.StackNetworkID = slot.StackNetworkID
@@ -693,7 +708,10 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 				}
 			}
 		} else {
-			o.forceGetRidOfUnrecoverableState("server report rename fail and cannot get item back, out of sync!")
+			o.cmdSender.SendWebSocketCmdNeedResponse(fmt.Sprintf("replaceitem entity @s slot.hotbar %v air", slot)).SetTimeout(time.Second * 3).BlockGetResult()
+			o.SleepTick(1)
+			return fmt.Errorf("client and server out of sync in maintained info (server report rename fail and cannot get item back)")
+			// o.forceGetRidOfUnrecoverableState("server report rename fail and cannot get item back, out of sync!")
 		}
 	}
 	return nil
@@ -750,7 +768,10 @@ func (o *AccessPointBotActionWithPersistData) DropItemFromHotBar(slot uint8) err
 	case resps := <-itemResponseWaitor:
 		dropItemResponse := resps.Responses[0]
 		if dropItemResponse.RequestID != dropItemRequestID {
-			o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info")
+			// o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info")
+			o.cmdSender.SendWebSocketCmdNeedResponse(fmt.Sprintf("replaceitem entity @s slot.hotbar %v air", slot)).SetTimeout(time.Second * 3).BlockGetResult()
+			o.SleepTick(1)
+			return fmt.Errorf("client and server out of sync in maintained info (drop item)")
 		}
 		for _, container := range dropItemResponse.ContainerInfo {
 			if container.ContainerID == ContainerIDHotBar { // 玩家快捷物品栏
@@ -759,7 +780,10 @@ func (o *AccessPointBotActionWithPersistData) DropItemFromHotBar(slot uint8) err
 						o.clientInfo.writeInventorySlot(0, slot.Slot, o.makeEmptyItemInstance())
 					} else {
 						// 明明应该丢出物品的，却告诉背包里有新东西，我们肯定无法知道这个新东西是什么
-						o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info, want drop item, but get item")
+						// o.forceGetRidOfUnrecoverableState("client and server out of sync in maintained info, want drop item, but get item")
+						o.cmdSender.SendWebSocketCmdNeedResponse(fmt.Sprintf("replaceitem entity @s slot.hotbar %v air", slot)).SetTimeout(time.Second * 3).BlockGetResult()
+						o.SleepTick(1)
+						return fmt.Errorf("client and server out of sync in maintained info (want drop item, but get item)")
 					}
 				}
 			}
