@@ -117,6 +117,16 @@ func NewMicroOmega(
 			}
 		}()
 	})
+	omega.PostponeActionsAfterChallengePassed("force reset dimension and pos", func() {
+		e := &neomega.PosAndDimensionInfo{}
+		if bot_action.RefreshPosAndDimensionInfo(e, omega) == nil {
+			// fmt.Println(e)
+			omega.MicroUQHolder.UpdateFromPacket(&packet.ChangeDimension{
+				Dimension: int32(e.Dimension),
+				Position:  e.HeadPosPrecise,
+			})
+		}
+	})
 	reactCore.Start()
 	return omega
 }
