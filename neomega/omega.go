@@ -2,7 +2,9 @@ package neomega
 
 import (
 	"context"
+	"fmt"
 	"neo-omega-kernel/minecraft/protocol/packet"
+	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/mirror/define"
 	"time"
 
@@ -92,6 +94,88 @@ type PlaceCommandBlockOption struct {
 	TickDelay          int
 	ShouldTrackOutput  bool
 	ExecuteOnFirstTick bool
+}
+
+func (o *PlaceCommandBlockOption) GenFromNBT(pos define.CubePos, blockNameAndState string, nbt map[string]interface{}) (err error) {
+	_, exist := nbt["__tag"]
+	if exist {
+		return fmt.Errorf("flatten nemc nbt, cannot handle")
+	}
+	if nbt == nil {
+		return fmt.Errorf("nbt is empty, cannot handle")
+	}
+	var mode uint32
+	defer func() {
+		r := recover()
+		if r != nil {
+			err = fmt.Errorf("cannot gen place command block option %v", r)
+		}
+	}()
+	rtid, found := blocks.BlockStrToRuntimeID(blockNameAndState)
+	if !found {
+		return fmt.Errorf("cannot recognize this block %v", blockNameAndState)
+	}
+	block, _ := blocks.RuntimeIDToBlock(rtid)
+	if block.Name == "command_block" {
+		mode = packet.CommandBlockImpulse
+	} else if block.Name == "repeating_command_block" {
+		mode = packet.CommandBlockRepeating
+	} else if block.Name == "chain_command_block" {
+		mode = packet.CommandBlockChain
+	} else {
+		return fmt.Errorf("this block %v is not command block", blockNameAndState)
+	}
+	mode = mode // just make compiler happy
+	cmd, _ := nbt["Command"].(string)
+	constumeName, _ := nbt["CustomName"].(string)
+	exeft, _ := nbt["ExecuteOnFirstTick"].(uint8)
+	tickdelay, _ := nbt["TickDelay"].(int32)     //*/
+	aut, _ := nbt["auto"].(uint8)                //!needrestone
+	trackoutput, _ := nbt["TrackOutput"].(uint8) //
+	// lo, _ := nbt["LastOutput"].(string)
+	conditionalmode, ok := nbt["conditionalMode"].(uint8)
+	if !ok {
+		conditionalmode = block.Props.ToNBT()["conditional_bit"].(uint8)
+	}
+	//conditionalmode := nbt["conditionalMode"].(uint8)
+	var executeOnFirstTickBit bool
+	if exeft == 0 {
+		executeOnFirstTickBit = false
+	} else {
+		executeOnFirstTickBit = true
+	}
+	var trackOutputBit bool
+	if trackoutput == 1 {
+		trackOutputBit = true
+	} else {
+		trackOutputBit = false
+	}
+	var needRedStoneBit bool
+	if aut == 1 {
+		needRedStoneBit = false
+		//REVERSED!!
+	} else {
+		needRedStoneBit = true
+	}
+	var conditionalBit bool
+	if conditionalmode == 1 {
+		conditionalBit = true
+	} else {
+		conditionalBit = false
+	}
+	o = &PlaceCommandBlockOption{
+		X: pos.X(), Y: pos.Y(), Z: pos.Z(),
+		BlockName:          block.Name,
+		BlockState:         block.Props.BedrockString(true),
+		NeedRedStone:       needRedStoneBit,
+		Conditional:        conditionalBit,
+		Command:            cmd,
+		Name:               constumeName,
+		TickDelay:          int(tickdelay),
+		ShouldTrackOutput:  trackOutputBit,
+		ExecuteOnFirstTick: executeOnFirstTickBit,
+	}
+	return nil
 }
 
 type AsyncNBTBlockPlacer interface {
