@@ -12,13 +12,15 @@ import (
 
 type CommandHelper struct {
 	neomega.CmdSender
-	uq neomega.MicroUQHolder
+	uq               neomega.MicroUQHolder
+	botExecutePrefix string
 }
 
 func NewCommandHelper(sender neomega.CmdSender, uq neomega.MicroUQHolder) neomega.CommandHelper {
 	return &CommandHelper{
-		CmdSender: sender,
-		uq:        uq,
+		CmdSender:        sender,
+		uq:               uq,
+		botExecutePrefix: fmt.Sprintf("execute @a[name=\"%v\"] ~~~ ", uq.GetBotName()),
 	}
 }
 
@@ -60,15 +62,10 @@ func (c *playerCmd) SendAndGetResponse() neomega.ResponseHandle {
 type generalCmd struct {
 	cmd string
 	neomega.CmdSender
-	inOverWorld bool
 }
 
 func (c *generalCmd) Send() {
-	if !c.inOverWorld {
-		(&wsCmd{c.cmd, c.CmdSender}).Send()
-	} else {
-		(&woCmd{c.cmd, c.CmdSender}).Send()
-	}
+	(&woCmd{c.cmd, c.CmdSender}).Send()
 }
 
 func (c *generalCmd) AsWebSocket() neomega.CmdCanGetResponse {
@@ -102,11 +99,14 @@ func (c *CommandHelper) constructPlayerCommand(cmd string) neomega.CmdCanGetResp
 
 func (c *CommandHelper) ConstructDimensionLimitedGeneralCommand(cmd string) neomega.GeneralCommand {
 	dimension, _ := c.uq.GetBotDimension()
-	return &generalCmd{cmd, c.CmdSender, dimension == 0}
+	if dimension != 0 {
+		cmd = c.botExecutePrefix + cmd
+	}
+	return &generalCmd{cmd, c.CmdSender}
 }
 
 func (c *CommandHelper) ConstructGeneralCommand(cmd string) neomega.GeneralCommand {
-	return &generalCmd{cmd, c.CmdSender, true}
+	return &generalCmd{cmd, c.CmdSender}
 }
 
 func (c *CommandHelper) ReplaceHotBarItemCmd(slotID int32, item string) neomega.CmdCanGetResponse {
