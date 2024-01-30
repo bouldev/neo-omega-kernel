@@ -7,6 +7,7 @@ import (
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/blocks"
+	"neo-omega-kernel/neomega/mirror"
 	"neo-omega-kernel/neomega/mirror/define"
 	"neo-omega-kernel/nodes"
 	"strings"
@@ -921,4 +922,49 @@ func (o *BotActionHighLevel) highLevelSetContainerItems(pos define.CubePos, cont
 		}
 	}
 	return
+}
+
+func (o *BotActionHighLevel) HighLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider) error {
+	release, err := o.occupyBot(time.Second * 3)
+	if err != nil {
+		return err
+	}
+	defer release()
+	return o.highLevelRequestLargeArea(startPos, size, dst)
+}
+
+func (o *BotActionHighLevel) highLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider) error {
+	chunkRangesX := neomega.RangeSplits(startPos.X(), size.X(), 16)
+	chunkRangesZ := neomega.RangeSplits(startPos.Z(), size.Z(), 16)
+	for _, xRange := range chunkRangesX {
+		startX := xRange[0]
+		for _, zRange := range chunkRangesZ {
+			startZ := zRange[0]
+			o.highLevelEnsureBotNearby(define.CubePos{startX, 320, startZ}, 16)
+			var err error
+			for i := 0; i < 3; i++ {
+				var resp neomega.StructureResponse
+				var structure *neomega.DecodedStructure
+				if err != nil {
+					time.Sleep(time.Second)
+				}
+				resp, err = o.structureRequester.RequestStructure(define.CubePos{startX, startPos.Y(), startZ}, define.CubePos{xRange[1], size.Y(), zRange[1]}, "_tmp").BlockGetResult()
+				if err != nil {
+					continue
+				}
+				structure, err = resp.Decode()
+				if err != nil {
+					continue
+				}
+				err = structure.DumpToChunkProvider(dst)
+				if err != nil {
+					return err
+				}
+			}
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
