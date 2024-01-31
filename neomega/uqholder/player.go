@@ -19,6 +19,8 @@ type Player struct {
 	knownUUID                    bool
 	EntityUniqueID               int64
 	knownEntityUniqueID          bool
+	NeteaseUID                   int64
+	knownNeteaseUID              bool
 	LoginTime                    time.Time
 	knownLoginTime               bool
 	Username                     string
@@ -87,6 +89,18 @@ func (p *Player) GetEntityUniqueID() (id int64, found bool) {
 func (p *Player) setEntityUniqueID(id int64) {
 	p.EntityUniqueID = id
 	p.knownEntityUniqueID = true
+}
+
+func (p *Player) GetNeteaseUID() (id int64, found bool) {
+	if p == nil {
+		return
+	}
+	return p.NeteaseUID, p.knownNeteaseUID
+}
+
+func (p *Player) setNeteaseUID(id int64) {
+	p.NeteaseUID = id
+	p.knownNeteaseUID = true
 }
 
 func (p *Player) GetLoginTime() (t time.Time, found bool) {

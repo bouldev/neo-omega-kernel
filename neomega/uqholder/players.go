@@ -10,6 +10,7 @@ import (
 	"neo-omega-kernel/neomega/encoding/little_endian"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -114,6 +115,9 @@ func (players *Players) Marshal() (data []byte, err error) {
 		return true
 	})
 	err = little_endian.WriteUint32(writer, uint32(len(playersByUUID)))
+	if err != nil {
+		return nil, err
+	}
 	for _, player := range playersByUUID {
 		playerData, err := player.Marshal()
 		if err != nil {
@@ -330,6 +334,57 @@ func (uq *Players) UpdateFromPacket(pk packet.Packet) {
 		player.setDeviceID(p.DeviceID)
 		player.setEntityRuntimeID(p.EntityRuntimeID)
 		player.setEntityMetadata(p.EntityMetadata)
+	case *packet.PyRpc:
+		// [ModEventS2C [Minecraft chatExtension PlayerAddRoom map[id2DimId:map[-25769000000:0] id2Uid:map[-25769000000:2149000000] prefixInfo:map[-25769000000:map[]] uids:[2149000000]]] <nil>]
+		valueList, ok := p.Value.MakeGo().([]any)
+		if !ok || len(valueList) != 3 {
+			return
+		}
+		// Convert first item to string and check event type
+		eventType, ok := valueList[0].(string)
+		if !ok || eventType != "ModEventS2C" {
+			return
+		}
+		// Convert second item to []any and check length
+		contentList, ok := valueList[1].([]any)
+		if !ok || len(contentList) != 4 {
+			return
+		}
+		// Check event name
+		eventName, ok := contentList[2].(string)
+		if !ok || eventName != "PlayerAddRoom" {
+			return
+		}
+		// Convert event data to map[string]any and get details
+		eventData, ok := contentList[3].(map[string]any)
+		if !ok {
+			return
+		}
+		// Convert id2Uid to map[string]any
+		id2Uid, ok := eventData["id2Uid"].(map[string]any)
+		if !ok {
+			return
+		}
+		for sUid, aNeteaseUid := range id2Uid {
+			sNeteaseUid, ok := aNeteaseUid.(string)
+			if !ok {
+				continue
+			}
+			uid, err := strconv.ParseInt(sUid, 10, 64)
+			if err != nil {
+				continue
+			}
+			neteaseUid, err := strconv.ParseInt(sNeteaseUid, 10, 64)
+			if err != nil {
+				continue
+			}
+			playerReader, found := uq.GetPlayerByUniqueID(uid)
+			if !found {
+				continue
+			}
+			player := playerReader.(*Player)
+			player.setNeteaseUID(neteaseUid)
+		}
 	}
 }
 

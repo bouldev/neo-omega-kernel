@@ -28,6 +28,14 @@ func (p *Player) Marshal() (data []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
+	err = little_endian.WriteInt64(writer, p.NeteaseUID)
+	if err != nil {
+		return nil, err
+	}
+	err = writer.WriteByte(boolToByte(p.knownNeteaseUID))
+	if err != nil {
+		return nil, err
+	}
 	err = little_endian.WriteInt64(writer, p.LoginTime.Unix())
 	if err != nil {
 		return nil, err
@@ -177,6 +185,14 @@ func (p *Player) Unmarshal(data []byte) (err error) {
 		return err
 	}
 	p.knownEntityUniqueID, err = readAndGetBool()
+	if err != nil {
+		return err
+	}
+	p.NeteaseUID, err = little_endian.Int64(reader)
+	if err != nil {
+		return err
+	}
+	p.knownNeteaseUID, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
