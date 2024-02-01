@@ -3,6 +3,7 @@ package snbt
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -77,8 +78,14 @@ func NBToSNBT(input interface{}) (string, error) {
 
 func ConvertCompoundToString(input map[string]interface{}) (string, error) {
 	ans := make([]string, 0)
-	for key, value := range input {
+	keys := make([]string, 0, len(input))
+	for k, _ := range input {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
 		key = strings.Replace(key, "\"", "\\\"", -1)
+		value := input[key]
 		if value == nil {
 			return "", fmt.Errorf("empty value in %#v", key)
 		}
