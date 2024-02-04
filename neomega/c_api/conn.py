@@ -597,7 +597,7 @@ class ThreadOmega:
             elif eventType=="MCPacket":
                 packetTypeName=retriever
                 # print(f"mc packet {packetTypeName}")
-                listeners=self._packet_listeners[packetTypeName]
+                listeners=self._packet_listeners.get(packetTypeName,[])
                 if len(listeners)==0:
                     LIB.OmitEvent()
                 else:
