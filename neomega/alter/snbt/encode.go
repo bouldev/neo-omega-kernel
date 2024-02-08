@@ -93,15 +93,15 @@ func ConvertCompoundToString(input map[string]interface{}) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if got[len(got)-1] == "b"[0] {
-			if got == "0b" {
-				got = "false"
-			} else if got == "1b" {
-				got = "true"
-			} else {
-				return "", fmt.Errorf("unexpected input %v", got)
-			}
-		}
+		// if got[len(got)-1] == "b"[0] {
+		// 	if got == "0b" {
+		// 		got = "false"
+		// 	} else if got == "1b" {
+		// 		got = "true"
+		// 	} else {
+		// 		return "", fmt.Errorf("unexpected input %v", got)
+		// 	}
+		// }
 		ans = append(ans, fmt.Sprintf("\"%v\": %v", key, got))
 	}
 	return fmt.Sprintf("{%v}", strings.Join(ans, ", ")), nil
