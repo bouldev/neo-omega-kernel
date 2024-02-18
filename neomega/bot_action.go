@@ -107,7 +107,7 @@ type BotActionHighLevel interface {
 	HighLevelWriteBookAndClose(slotID uint8, pages []string, bookTitle string, bookAuthor string) (err error)
 	HighLevelPlaceItemFrameItem(pos define.CubePos, slotID uint8) error
 	HighLevelMakeItem(item *Item, slotID uint8, anvilPos, nextContainerPos define.CubePos) error
-	HighLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider) error
+	HighLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider, withMove bool) error
 }
 
 type BotAction interface {

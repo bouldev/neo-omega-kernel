@@ -924,23 +924,25 @@ func (o *BotActionHighLevel) highLevelSetContainerItems(pos define.CubePos, cont
 	return
 }
 
-func (o *BotActionHighLevel) HighLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider) error {
+func (o *BotActionHighLevel) HighLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider, withMove bool) error {
 	release, err := o.occupyBot(time.Second * 3)
 	if err != nil {
 		return err
 	}
 	defer release()
-	return o.highLevelRequestLargeArea(startPos, size, dst)
+	return o.highLevelRequestLargeArea(startPos, size, dst, withMove)
 }
 
-func (o *BotActionHighLevel) highLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider) error {
+func (o *BotActionHighLevel) highLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider, withMove bool) error {
 	chunkRangesX := neomega.RangeSplits(startPos.X(), size.X(), 16)
 	chunkRangesZ := neomega.RangeSplits(startPos.Z(), size.Z(), 16)
 	for _, xRange := range chunkRangesX {
 		startX := xRange[0]
 		for _, zRange := range chunkRangesZ {
 			startZ := zRange[0]
-			o.highLevelEnsureBotNearby(define.CubePos{startX, 320, startZ}, 16)
+			if withMove {
+				o.highLevelEnsureBotNearby(define.CubePos{startX, 320, startZ}, 16)
+			}
 			var err error
 			for i := 0; i < 3; i++ {
 				var resp neomega.StructureResponse
