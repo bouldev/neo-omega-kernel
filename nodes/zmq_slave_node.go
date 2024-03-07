@@ -48,16 +48,16 @@ func (n *ZMQSlaveNode) PublishMessage(topic string, msg Values) {
 	n.localTopicNet.publishMessage(topic, msg)
 }
 
-func (n *ZMQSlaveNode) ExposeAPI(apiName string, api API) error {
+func (n *ZMQSlaveNode) ExposeAPI(apiName string, api API, newGoroutine bool) error {
 	r := n.client.CallWithResponse("/reg_api", FromString(apiName)).SetTimeout(time.Second).BlockGetResponse()
 	if r.EqualString("ok") {
 		// salve to master & salve (other call)
 		n.client.ExposeAPI(apiName, func(args Values) Values {
 			result, err := api(args)
 			return wrapOutput(result, err)
-		})
+		}, false)
 		// salve to salve (self) call
-		n.localAPI.ExposeAPI(apiName, api)
+		n.localAPI.ExposeAPI(apiName, api, newGoroutine)
 		return nil
 	} else {
 		return fmt.Errorf(r.ToString())
@@ -181,7 +181,7 @@ func NewZMQSlaveNode(client ZMQAPIClient) (Node, error) {
 	}
 	client.ExposeAPI("/ping", func(args Values) Values {
 		return Values{[]byte("pong")}
-	})
+	}, false)
 	client.ExposeAPI("/on_new_msg", func(args Values) Values {
 		topic, err := args.ToString()
 		if err != nil {
@@ -190,7 +190,7 @@ func NewZMQSlaveNode(client ZMQAPIClient) (Node, error) {
 		msg := args.ConsumeHead()
 		slave.localTopicNet.PublishMessage(topic, msg)
 		return Empty
-	})
+	}, false)
 
 	go slave.run()
 

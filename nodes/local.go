@@ -33,15 +33,20 @@ type LocalAPINode struct {
 var ErrAPIExist = errors.New("API already exposed")
 var ErrAPINotExist = errors.New("API not exist")
 
-func (n *LocalAPINode) ExposeAPI(apiName string, api API) error {
+func (n *LocalAPINode) ExposeAPI(apiName string, api API, newGoroutine bool) error {
 	if n.HasAPI(apiName) {
 		return ErrAPIExist
 	}
 	n.RegedApi.Set(apiName, func(args Values, setResult func(Values, error)) {
-		go func() {
+		if newGoroutine {
+			go func() {
+				rets, err := api(args)
+				setResult(rets, err)
+			}()
+		} else {
 			rets, err := api(args)
 			setResult(rets, err)
-		}()
+		}
 	})
 	return nil
 }

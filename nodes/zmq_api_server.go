@@ -79,12 +79,17 @@ func (s *SimpleZMQServer) Serve() (err error) {
 	}
 }
 
-func (c *SimpleZMQServer) ExposeAPI(apiName string, api ZMQServerAPI) {
+func (c *SimpleZMQServer) ExposeAPI(apiName string, api ZMQServerAPI, newGoroutine bool) {
 	c.apis.Set(apiName, func(caller ZMQCaller, args Values, setResult func(Values)) {
-		go func() {
+		if newGoroutine {
+			go func() {
+				ret := api(caller, args)
+				setResult(ret)
+			}()
+		} else {
 			ret := api(caller, args)
 			setResult(ret)
-		}()
+		}
 	})
 }
 
@@ -120,6 +125,9 @@ func (h *serverRespHandler) SetContext(ctx context.Context) ZMQResultHandler {
 }
 
 func (h *serverRespHandler) SetTimeout(timeout time.Duration) ZMQResultHandler {
+	if h.ctx == nil {
+		h.ctx = context.Background()
+	}
 	h.ctx, _ = context.WithTimeout(h.ctx, timeout)
 	return h
 }
@@ -130,6 +138,9 @@ func (h *serverRespHandler) BlockGetResponse() Values {
 		resolver <- ret
 	})
 	h.doSend()
+	if h.ctx == nil {
+		return <-resolver
+	}
 	select {
 	case ret := <-resolver:
 		return ret
@@ -140,20 +151,24 @@ func (h *serverRespHandler) BlockGetResponse() Values {
 }
 
 func (h *serverRespHandler) AsyncGetResponse(callback func(Values)) {
-	resolver := make(chan Values, 1)
-	h.c.cbs.Set(h.idx, func(ret Values) {
-		resolver <- ret
-	})
-	go func() {
-		select {
-		case ret := <-resolver:
-			callback(ret)
-		case <-h.ctx.Done():
-			h.c.cbs.Delete(h.idx)
-			callback(Empty)
-			return
-		}
-	}()
+	if h.ctx == nil {
+		h.c.cbs.Set(h.idx, callback)
+	} else {
+		resolver := make(chan Values, 1)
+		h.c.cbs.Set(h.idx, func(ret Values) {
+			resolver <- ret
+		})
+		go func() {
+			select {
+			case ret := <-resolver:
+				callback(ret)
+			case <-h.ctx.Done():
+				h.c.cbs.Delete(h.idx)
+				callback(Empty)
+				return
+			}
+		}()
+	}
 	h.doSend()
 }
 
@@ -161,6 +176,6 @@ func (c *SimpleZMQServer) CallWithResponse(callee ZMQCaller, api string, args Va
 	idx := uuid.New().String()
 	frames := append([][]byte{callee, []byte(api), []byte(idx)}, args...)
 	return &serverRespHandler{
-		idx, frames, c, context.Background(),
+		idx, frames, c, nil,
 	}
 }

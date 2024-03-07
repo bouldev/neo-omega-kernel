@@ -20,12 +20,12 @@ type ZMQResultHandler interface {
 type ZMQAPIClient interface {
 	CallOmitResponse(api string, args Values)
 	CallWithResponse(api string, args Values) ZMQResultHandler
-	ExposeAPI(apiName string, api ZMQClientAPI)
+	ExposeAPI(apiName string, api ZMQClientAPI, newGoroutine bool)
 	Run() error
 }
 
 type ZMQAPIServer interface {
-	ExposeAPI(apiName string, api ZMQServerAPI)
+	ExposeAPI(apiName string, api ZMQServerAPI, newGoroutine bool)
 	ConcealAPI(apiName string)
 	CallOmitResponse(callee ZMQCaller, api string, args Values)
 	CallWithResponse(callee ZMQCaller, api string, args Values) ZMQResultHandler

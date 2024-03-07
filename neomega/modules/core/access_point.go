@@ -36,11 +36,11 @@ func NewAccessPointInteractCore(node nodes.APINode, conn *minecraft.Conn) neomeg
 		}
 		core.SendPacketBytes(pktIDBytes, packetDataBytes)
 		return nodes.Empty, nil
-	})
+	}, false)
 	node.ExposeAPI("get-shield-id", func(args nodes.Values) (result nodes.Values, err error) {
 		shieldID := conn.GetShieldID()
 		return nodes.FromInt32(shieldID), nil
-	})
+	}, false)
 	return core
 }
 

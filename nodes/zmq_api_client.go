@@ -93,6 +93,9 @@ func (h *clientRespHandler) SetContext(ctx context.Context) ZMQResultHandler {
 }
 
 func (h *clientRespHandler) SetTimeout(timeout time.Duration) ZMQResultHandler {
+	if h.ctx == nil {
+		h.ctx = context.Background()
+	}
 	h.ctx, _ = context.WithTimeout(h.ctx, timeout)
 	return h
 }
@@ -103,6 +106,9 @@ func (h *clientRespHandler) BlockGetResponse() Values {
 		resolver <- ret
 	})
 	h.doSend()
+	if h.ctx == nil {
+		return <-resolver
+	}
 	select {
 	case ret := <-resolver:
 		return ret
@@ -113,20 +119,24 @@ func (h *clientRespHandler) BlockGetResponse() Values {
 }
 
 func (h *clientRespHandler) AsyncGetResponse(callback func(Values)) {
-	resolver := make(chan Values, 1)
-	h.c.cbs.Set(h.idx, func(ret Values) {
-		resolver <- ret
-	})
-	go func() {
-		select {
-		case ret := <-resolver:
-			callback(ret)
-		case <-h.ctx.Done():
-			h.c.cbs.Delete(h.idx)
-			callback(Empty)
-			return
-		}
-	}()
+	if h.ctx == nil {
+		h.c.cbs.Set(h.idx, callback)
+	} else {
+		resolver := make(chan Values, 1)
+		h.c.cbs.Set(h.idx, func(ret Values) {
+			resolver <- ret
+		})
+		go func() {
+			select {
+			case ret := <-resolver:
+				callback(ret)
+			case <-h.ctx.Done():
+				h.c.cbs.Delete(h.idx)
+				callback(Empty)
+				return
+			}
+		}()
+	}
 	h.doSend()
 }
 
@@ -134,15 +144,20 @@ func (c *SimpleZMQAPIClient) CallWithResponse(api string, args Values) ZMQResult
 	idx := uuid.New().String()
 	frames := append([][]byte{[]byte(api), []byte(idx)}, args...)
 	return &clientRespHandler{
-		idx, frames, c, context.Background(),
+		idx, frames, c, nil,
 	}
 }
 
-func (c *SimpleZMQAPIClient) ExposeAPI(apiName string, api ZMQClientAPI) {
+func (c *SimpleZMQAPIClient) ExposeAPI(apiName string, api ZMQClientAPI, newGoroutine bool) {
 	c.apis.Set(apiName, func(args Values, setResult func(Values)) {
-		go func() {
+		if newGoroutine {
+			go func() {
+				ret := api(args)
+				setResult(ret)
+			}()
+		} else {
 			ret := api(args)
 			setResult(ret)
-		}()
+		}
 	})
 }

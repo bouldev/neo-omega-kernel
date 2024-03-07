@@ -78,7 +78,7 @@ func NewAccessPointCmdSender(node nodes.APINode, reactable neomega.ReactCore, in
 		pkt := c.packCmdWithUUID(cmd, ud, false)
 		c.launchOrDeferPlayerCommand(pkt)
 		return nodes.Empty, nil
-	})
+	}, false)
 
 	// deduce command feed back
 	// no we cannot do this since bot currently not pass the challenge

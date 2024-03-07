@@ -20,8 +20,8 @@ func (n *group) translateName(name string) string {
 	}
 }
 
-func (n *group) ExposeAPI(apiName string, api API) error {
-	return n.Node.ExposeAPI(n.translateName(apiName), api)
+func (n *group) ExposeAPI(apiName string, api API, newGoroutine bool) error {
+	return n.Node.ExposeAPI(n.translateName(apiName), api, newGoroutine)
 }
 func (n *group) CallOmitResponse(api string, args Values) {
 	n.Node.CallOmitResponse(n.translateName(api), args)

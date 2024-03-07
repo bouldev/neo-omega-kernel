@@ -18,7 +18,7 @@ type RemoteResultHandler interface {
 
 type APINode interface {
 	// Point-to-Point Remote Process Call
-	ExposeAPI(apiName string, api API) error
+	ExposeAPI(apiName string, api API, newGoroutine bool) error
 	CallOmitResponse(api string, args Values)
 	CallWithResponse(api string, args Values) RemoteResultHandler
 }

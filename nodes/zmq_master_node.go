@@ -95,6 +95,7 @@ func (n *ZMQMasterNode) publishMessage(source string, topic string, msg Values) 
 			select {
 			case msgC <- msgWithTopic:
 			default:
+				fmt.Println("communication between nodes too slow, msg queued!")
 				go func() {
 					msgC <- msgWithTopic
 				}()
@@ -108,14 +109,14 @@ func (n *ZMQMasterNode) PublishMessage(topic string, msg Values) {
 	n.publishMessage("", topic, msg)
 }
 
-func (n *ZMQMasterNode) ExposeAPI(apiName string, api API) error {
+func (n *ZMQMasterNode) ExposeAPI(apiName string, api API, newGoroutine bool) error {
 	// master to master call
-	n.LocalAPINode.ExposeAPI(apiName, api)
+	n.LocalAPINode.ExposeAPI(apiName, api, newGoroutine)
 	// slave to master call
 	n.server.ExposeAPI(apiName, func(caller ZMQCaller, args Values) Values {
 		result, err := api(args)
 		return wrapOutput(result, err)
-	})
+	}, newGoroutine)
 	return nil
 }
 
@@ -186,7 +187,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 	}()
 	server.ExposeAPI("/ping", func(caller ZMQCaller, args Values) Values {
 		return Values{[]byte("pong")}
-	})
+	}, false)
 	server.ExposeAPI("/new_client", func(caller ZMQCaller, args Values) Values {
 		nodeInfo := master.onNewNode(string(caller))
 		go func() {
@@ -212,7 +213,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 			}
 		}()
 		return FromString("ok")
-	})
+	}, false)
 	server.ExposeAPI("/subscribe", func(caller ZMQCaller, args Values) Values {
 		slaveInfo, ok := master.slaves.Get(string(caller))
 		if !ok {
@@ -231,7 +232,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 			return val
 		})
 		return Empty
-	})
+	}, false)
 	server.ExposeAPI("/publish", func(caller ZMQCaller, args Values) Values {
 		topic, err := args.ToString()
 		if err != nil {
@@ -240,7 +241,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 		msg := args.ConsumeHead()
 		master.publishMessage(string(caller), topic, msg)
 		return Empty
-	})
+	}, false)
 	server.ExposeAPI("/reg_api", func(provider ZMQCaller, args Values) Values {
 		apiName, err := args.ToString()
 		if err != nil {
@@ -264,7 +265,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 			} else {
 				return unwrapOutput(server.CallWithResponse(provider, apiName, args).SetContext(callerInfo.Ctx).BlockGetResponse())
 			}
-		})
+		}, false)
 		// slave to salve call
 		server.ExposeAPI(apiName, func(caller ZMQCaller, args Values) Values {
 			callerInfo, ok := master.slaves.Get(string(provider))
@@ -272,9 +273,9 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 				return Empty
 			}
 			return server.CallWithResponse(provider, apiName, args).SetContext(callerInfo.Ctx).BlockGetResponse()
-		})
+		}, false)
 		return FromString("ok")
-	})
+	}, false)
 	master.ExposeAPI("/set-value", func(args Values) (result Values, err error) {
 		key, err := args.ToString()
 		if err != nil {
@@ -282,7 +283,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 		}
 		master.values.Set(key, args.ConsumeHead())
 		return Empty, nil
-	})
+	}, false)
 	master.ExposeAPI("/get-value", func(args Values) (result Values, err error) {
 		key, err := args.ToString()
 		if err != nil {
@@ -294,7 +295,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 		} else {
 			return Empty, nil
 		}
-	})
+	}, false)
 	server.ExposeAPI("/set-tags", func(caller ZMQCaller, args Values) Values {
 		tags := args.ToStrings()
 		slaveInfo, ok := master.slaves.Get(string(caller))
@@ -305,7 +306,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 			slaveInfo.Tags.Set(tag, struct{}{})
 		}
 		return Empty
-	})
+	}, false)
 	server.ExposeAPI("/check-tag", func(caller ZMQCaller, args Values) Values {
 		tag, err := args.ToString()
 		if err != nil {
@@ -313,7 +314,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 		}
 		has := master.CheckNetTag(tag)
 		return wrapOutput(FromBool(has), nil)
-	})
+	}, false)
 	server.ExposeAPI("/try-lock", func(caller ZMQCaller, args Values) Values {
 		lockName, err := args.ToString()
 		if err != nil {
@@ -326,7 +327,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 		lockTime := time.Duration(ms * int64(time.Millisecond))
 		has := master.tryLock(lockName, lockTime, string(caller))
 		return wrapOutput(FromBool(has), nil)
-	})
+	}, false)
 	server.ExposeAPI("/reset-lock-time", func(caller ZMQCaller, args Values) Values {
 		lockName, err := args.ToString()
 		if err != nil {
@@ -339,7 +340,7 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 		lockTime := time.Duration(ms * int64(time.Millisecond))
 		has := master.resetLockTime(lockName, lockTime, string(caller))
 		return wrapOutput(FromBool(has), nil)
-	})
+	}, false)
 	server.ExposeAPI("/unlock", func(caller ZMQCaller, args Values) Values {
 		lockName, err := args.ToString()
 		if err != nil {
@@ -347,6 +348,6 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 		}
 		master.unlock(lockName, string(caller))
 		return Empty
-	})
+	}, false)
 	return master
 }

@@ -127,6 +127,23 @@ func NewMicroOmega(
 			})
 		}
 	})
+
+	if !isAccessPoint {
+		omega.PostponeActionsAfterChallengePassed("check bot command status each 10s", func() {
+			go func() {
+				for {
+					ret := omega.SendWebSocketCmdNeedResponse("list").SetTimeout(time.Second * 5).BlockGetResult()
+					if ret == nil {
+						panic("for some reason, end point cannot communicate with server, reload")
+					} else {
+						// fmt.Println(ret)
+					}
+					time.Sleep(time.Second * 10)
+				}
+			}()
+		})
+	}
+
 	reactCore.Start()
 	return omega
 }

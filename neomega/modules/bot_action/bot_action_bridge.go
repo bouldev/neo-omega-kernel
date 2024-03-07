@@ -41,7 +41,7 @@ func (a *AccessPointBotActionWithPersistData) ExposeUseHotBarItemOnBlock() {
 		}
 		err = a.UseHotBarItemOnBlock(blockPos, blockNEMCRuntimeID, face, slot)
 		return nodes.Empty, err
-	})
+	}, true)
 }
 
 func (e *EndPointBotAction) UseHotBarItemOnBlock(blockPos define.CubePos, blockNEMCRuntimeID uint32, face int32, slot uint8) (err error) {
@@ -58,7 +58,7 @@ func (a *AccessPointBotActionWithPersistData) ExposeSelectHotBar() {
 		}
 		err = a.selectHotBar(slot)
 		return nodes.Empty, err
-	})
+	}, true)
 }
 
 func (e *EndPointBotAction) SelectHotBar(slotID uint8) error {
@@ -87,7 +87,7 @@ func (a *AccessPointBotActionWithPersistData) ExposeMoveItemFromInventoryToEmpty
 		}
 		err = a.MoveItemFromInventoryToEmptyContainerSlots(pos, blockNEMCRuntimeID, blockName, switchOperations)
 		return nodes.Empty, err
-	})
+	}, true)
 }
 
 func (e *EndPointBotAction) MoveItemFromInventoryToEmptyContainerSlots(pos define.CubePos, blockNemcRtid uint32, blockName string, switchOperations map[uint8]uint8) error {
@@ -109,7 +109,7 @@ func (a *AccessPointBotActionWithPersistData) ExposeUseAnvil() {
 		}
 		err = a.UseAnvil(pos, slot, newName)
 		return nodes.Empty, err
-	})
+	}, true)
 }
 
 func (e *EndPointBotAction) UseAnvil(pos define.CubePos, slot uint8, newName string) error {
@@ -126,7 +126,7 @@ func (a *AccessPointBotActionWithPersistData) ExposeDropItemFromHotBar() {
 		}
 		err = a.DropItemFromHotBar(slot)
 		return nodes.Empty, err
-	})
+	}, true)
 }
 
 func (e *EndPointBotAction) DropItemFromHotBar(slot uint8) error {
@@ -143,7 +143,7 @@ func (a *AccessPointBotActionWithPersistData) ExposeMoveItemInsideHotBarOrInvent
 		}
 		err = a.MoveItemInsideHotBarOrInventory(sourceSlot, targetSlot, count)
 		return nodes.Empty, err
-	})
+	}, true)
 }
 
 func (e *EndPointBotAction) MoveItemInsideHotBarOrInventory(sourceSlot, targetSlot, count uint8) error {
@@ -160,7 +160,7 @@ func (a *AccessPointBotActionWithPersistData) ExposeUseHotBarItem() {
 		}
 		err = a.UseHotBarItem(slot)
 		return nodes.Empty, err
-	})
+	}, true)
 }
 
 func (e *EndPointBotAction) UseHotBarItem(slot uint8) (err error) {
