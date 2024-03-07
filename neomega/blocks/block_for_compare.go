@@ -475,6 +475,9 @@ func PropsForSearchFromStr(stringProps string) (*PropsForSearch, error) {
 			} else {
 				elems = strings.Split(frag, ":")
 			}
+			if len(elems) == 0 {
+				continue
+			}
 			if len(elems) != 2 {
 				return nil, fmt.Errorf("prop has no key-value structure: %v", frag)
 			}
