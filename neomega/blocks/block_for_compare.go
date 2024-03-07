@@ -459,6 +459,9 @@ func PropsForSearchFromStr(stringProps string) (*PropsForSearch, error) {
 	}
 	for _, frag := range frags {
 		frag = strings.TrimSpace(frag)
+		if len(frag) == 0 {
+			continue
+		}
 		var elems []string
 		if strings.Contains(frag, "=") {
 			elems = strings.Split(frag, "=")
