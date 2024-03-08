@@ -38,9 +38,9 @@ func (n *ZMQSlaveNode) Dead() chan error {
 	return n.runErrs
 }
 
-func (n *ZMQSlaveNode) ListenMessage(topic string, listener MsgListener) {
+func (n *ZMQSlaveNode) ListenMessage(topic string, listener MsgListener, newGoroutine bool) {
 	n.client.CallOmitResponse("/subscribe", FromString(topic))
-	n.localTopicNet.ListenMessage(topic, listener)
+	n.localTopicNet.ListenMessage(topic, listener, newGoroutine)
 }
 
 func (n *ZMQSlaveNode) PublishMessage(topic string, msg Values) {

@@ -32,8 +32,8 @@ func (n *group) CallWithResponse(api string, args Values) RemoteResultHandler {
 func (n *group) PublishMessage(topic string, msg Values) {
 	n.Node.PublishMessage(n.translateName(topic), msg)
 }
-func (n *group) ListenMessage(topic string, listener MsgListener) {
-	n.Node.ListenMessage(n.translateName(topic), listener)
+func (n *group) ListenMessage(topic string, listener MsgListener, newGoroutine bool) {
+	n.Node.ListenMessage(n.translateName(topic), listener, newGoroutine)
 }
 func (n *group) GetValue(key string) (val Values, found bool) {
 	return n.Node.GetValue(n.translateName(key))

@@ -286,9 +286,13 @@ func NewLocalTopicNet() *LocalTopicNet {
 	}
 }
 
-func (n *LocalTopicNet) ListenMessage(topic string, listener MsgListener) {
+func (n *LocalTopicNet) ListenMessage(topic string, listener MsgListener, newGoroutine bool) {
 	wrappedListener := func(msg Values) {
-		go listener(msg)
+		if newGoroutine {
+			go listener(msg)
+		} else {
+			listener(msg)
+		}
 	}
 	n.listenedTopics.UnsafeGetAndUpdate(topic, func(currentListeners []MsgListener) []MsgListener {
 		if currentListeners == nil {

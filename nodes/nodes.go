@@ -26,7 +26,7 @@ type APINode interface {
 type TopicNetNode interface {
 	// Multi-to-Multi Message Publish & Subscribe
 	PublishMessage(topic string, msg Values)
-	ListenMessage(topic string, listener MsgListener)
+	ListenMessage(topic string, listener MsgListener, newGoroutine bool)
 }
 
 type FundamentalNode interface {

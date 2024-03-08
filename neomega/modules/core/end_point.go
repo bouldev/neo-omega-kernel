@@ -2,11 +2,13 @@ package core
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/utils/block_prob"
 	"time"
 )
 
@@ -82,33 +84,38 @@ func safeDecode(pkt packet.Packet, r *protocol.Reader) (p packet.Packet, err err
 	return pkt, nil
 }
 
-func NewEndPointReactCore(node nodes.TopicNetNode) interface {
+func NewEndPointReactCore(node nodes.Node) interface {
 	neomega.UnStartedReactCore
 	canNotifyShieldIDChange
 } {
 	core := NewReactCore()
+	go func() {
+		nodeDead := <-node.Dead()
+		core.DeadReason <- nodeDead
+	}()
 	shieldIDUpdateNotifier := &ShieldIDUpdateNotifier{
 		first:           true,
 		currentShieldID: 0,
 		listeners:       make([]func(int32), 0, 1),
 	}
+	prob := block_prob.NewBlockProb("End Point MC Packet Handle Block Prob", time.Second/10)
 	node.ListenMessage("packet", func(msg nodes.Values) {
 		shieldID, err := msg.ToInt32()
 		if err != nil {
-			core.deadReason <- err
+			core.DeadReason <- err
 			return
 		}
 		shieldIDUpdateNotifier.updateShieldID(shieldID)
 		msg = msg.ConsumeHead()
 		packetData, err := msg.ToBytes()
 		if err != nil {
-			core.deadReason <- err
+			core.DeadReason <- err
 			return
 		}
 		reader := bytes.NewBuffer(packetData)
 		header := &packet.Header{}
 		if err := header.Read(reader); err != nil {
-			core.deadReason <- fmt.Errorf("error reading packet header: %v", err)
+			core.DeadReason <- fmt.Errorf("error reading packet header: %v", err)
 			return
 		}
 		r := protocol.NewReader(reader, shieldID)
@@ -118,12 +125,17 @@ func NewEndPointReactCore(node nodes.TopicNetNode) interface {
 			if err != nil {
 				// fmt.Println(err)
 			} else {
+				mark := prob.MarkEventStartByTimeout(func() string {
+					bs, _ := json.Marshal(pk)
+					return fmt.Sprint(pk.ID()) + string(bs)
+				}, time.Second/5)
 				core.handlePacket(pk)
+				prob.MarkEventFinished(mark)
 			}
 		} else {
 			// fmt.Printf("pktID %v not found\n", header.PacketID)
 		}
-	})
+	}, false)
 	return struct {
 		neomega.UnStartedReactCore
 		canNotifyShieldIDChange

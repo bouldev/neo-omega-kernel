@@ -29,7 +29,7 @@ type ReactCore struct {
 	onAnyPacketCallBack           []func(packet.Packet)
 	onTypedPacketCallBacks        [][]func(packet.Packet)
 	noBlockAndDetachableCallbacks []*sync_wrapper.SyncKVMap[string, neomega.NoBlockAndDetachablePacketCallback]
-	deadReason                    chan error
+	DeadReason                    chan error
 	deferredStart                 func()
 	// oneTimeTypedPacketCallBacks *sync_wrapper.SyncKVMap[string,*sync_wrapper.SyncKVMap[string,func(packet.Packet) bool]]
 	// slowPacketChan              chan packet.Packet
@@ -40,7 +40,7 @@ func NewReactCore() *ReactCore {
 		onAnyPacketCallBack:           make([]func(packet.Packet), 0),
 		onTypedPacketCallBacks:        make([][]func(packet.Packet), 0, 300),
 		noBlockAndDetachableCallbacks: make([]*sync_wrapper.SyncKVMap[string, neomega.NoBlockAndDetachablePacketCallback], 0, 300),
-		deadReason:                    make(chan error, 16),
+		DeadReason:                    make(chan error, 16),
 		// oneTimeTypedPacketCallBacks: sync_wrapper.NewSyncKVMap[string,*sync_wrapper.SyncKVMap[string,func(packet.Packet) bool]](),
 		// slowPacketChan:              make(chan packet.Packet, 1024),
 	}
@@ -63,7 +63,7 @@ func NewReactCore() *ReactCore {
 }
 
 func (r *ReactCore) Dead() chan error {
-	return r.deadReason
+	return r.DeadReason
 }
 
 func (r *ReactCore) Start() {
