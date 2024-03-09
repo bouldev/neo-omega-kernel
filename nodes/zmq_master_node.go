@@ -49,7 +49,7 @@ func (n *ZMQMasterNode) onNewNode(id string) *SlaveNodeInfo {
 	nodeInfo := &SlaveNodeInfo{
 		Ctx:              ctx,
 		cancelFn:         cancelFn,
-		MsgToPub:         make(chan Values, 128),
+		MsgToPub:         make(chan Values, 1024),
 		SubScribedTopics: sync_wrapper.NewSyncKVMap[string, struct{}](),
 		ExposedApis:      sync_wrapper.NewSyncKVMap[string, struct{}](),
 		AcquiredLocks:    sync_wrapper.NewSyncKVMap[string, struct{}](),

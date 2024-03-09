@@ -115,7 +115,7 @@ func (p *BlockProb) startBlockCheckRoutine() {
 func NewBlockProb(probName string, checkSchedule time.Duration) *BlockProb {
 	p := &BlockProb{
 		probName:      probName,
-		eventChan:     make(chan *Event, 128),
+		eventChan:     make(chan *Event, 1024),
 		runningEvents: make(map[uuid.UUID]*Event),
 		checkSchedule: checkSchedule,
 	}

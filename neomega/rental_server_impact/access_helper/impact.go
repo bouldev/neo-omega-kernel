@@ -89,6 +89,6 @@ func ImpactServer(ctx context.Context, node nodes.Node, options *Options) (omega
 	go waitDead(omegaCore, omegaCore.Dead())
 	// wait everything stable
 	// we need to wait until some packets received before using some api
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 3)
 	return omegaCore, nil
 }

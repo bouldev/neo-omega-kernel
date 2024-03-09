@@ -51,7 +51,8 @@ func NewAccessPointReactCore(node nodes.Node, conn *minecraft.Conn) neomega.UnSt
 	core := NewReactCore()
 	go func() {
 		nodeDead := <-node.Dead()
-		core.DeadReason <- nodeDead
+		err := fmt.Errorf("node dead: %v", nodeDead)
+		core.DeadReason <- err
 	}()
 	botRuntimeID := conn.GameData().EntityRuntimeID
 	// go core.handleSlowPacketChan()
@@ -60,6 +61,16 @@ func NewAccessPointReactCore(node nodes.Node, conn *minecraft.Conn) neomega.UnSt
 		var pkt packet.Packet
 		var err error
 		var packetData []byte
+		// packets before conn.ReadPacketAndBytes will be queued until conn.ReadPacketAndBytes is called,
+		// so at the very beginning there will be a packet burst
+		initPacketBurstEnd := time.Now().Add(time.Second * 1)
+		for time.Now().Before(initPacketBurstEnd) {
+			pkt, _, err = conn.ReadPacketAndBytes()
+			if err != nil {
+				break
+			}
+			core.handlePacket(pkt)
+		}
 		prob := block_prob.NewBlockProb("Access Point MC Packet Handle Block Prob", time.Second/10)
 		for {
 			pkt, packetData, err = conn.ReadPacketAndBytes()
