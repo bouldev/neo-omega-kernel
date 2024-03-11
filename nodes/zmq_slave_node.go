@@ -39,7 +39,7 @@ func (n *ZMQSlaveNode) Dead() chan error {
 }
 
 func (n *ZMQSlaveNode) ListenMessage(topic string, listener MsgListener, newGoroutine bool) {
-	n.client.CallOmitResponse("/subscribe", FromString(topic))
+	n.client.CallWithResponse("/subscribe", FromString(topic)).BlockGetResponse()
 	n.localTopicNet.ListenMessage(topic, listener, newGoroutine)
 }
 
