@@ -32,12 +32,12 @@ func MakeDefaultClientOptions() *ClientOptions {
 }
 
 type ClientInfo struct {
-	FBUCUsername string
-	RespondTo    string
-	Uid          string
-	CertSigning  bool
-	LocalKey     string
-	LocalCert    string
+	BotUid      string
+	BotName     string
+	RespondTo   string
+	CertSigning bool
+	LocalKey    string
+	LocalCert   string
 }
 
 type Client struct {
@@ -136,10 +136,10 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 		}
 		return "", "", "", fmt.Errorf("%s", err)
 	}
-	uc_username, _ := resp["username"].(string)
-	u_uid, _ := resp["uid"].(string)
-	client.FBUCUsername = uc_username
-	client.Uid = u_uid
+	bot_name, _ := resp["username"].(string)
+	bot_uid, _ := resp["uid"].(string)
+	client.BotName = bot_name
+	client.BotUid = bot_uid
 	str, _ := resp["chainInfo"].(string)
 	client.CertSigning = true
 	if signingKey, success := resp["privateSigningKey"].(string); success {
@@ -217,5 +217,5 @@ func (client *Client) TransferCheckNum(data string) (string, error) {
 }
 
 func (client *Client) GetUID() string {
-	return client.Uid
+	return client.BotUid
 }
