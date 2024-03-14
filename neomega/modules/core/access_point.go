@@ -2,14 +2,12 @@ package core
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/minecraft"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/nodes"
-	"neo-omega-kernel/utils/block_prob"
 	"time"
 )
 
@@ -71,7 +69,7 @@ func NewAccessPointReactCore(node nodes.Node, conn *minecraft.Conn) neomega.UnSt
 			}
 			core.handlePacket(pkt)
 		}
-		prob := block_prob.NewBlockProb("Access Point MC Packet Handle Block Prob", time.Second/10)
+		// prob := block_prob.NewBlockProb("Access Point MC Packet Handle Block Prob", time.Second/10)
 		for {
 			pkt, packetData, err = conn.ReadPacketAndBytes()
 			if err != nil {
@@ -80,34 +78,34 @@ func NewAccessPointReactCore(node nodes.Node, conn *minecraft.Conn) neomega.UnSt
 			// counter++
 			// fmt.Printf("recv packet %v\n", counter)
 			// fmt.Println(pkt.ID(), pkt)
-			mark := prob.MarkEventStartByTimeout(func() string {
-				bs, _ := json.Marshal(pkt)
-				return fmt.Sprint(pkt.ID()) + string(bs)
-			}, time.Second/5)
+			// mark := prob.MarkEventStartByTimeout(func() string {
+			// 	bs, _ := json.Marshal(pkt)
+			// 	return fmt.Sprint(pkt.ID()) + string(bs)
+			// }, time.Second/5)
 
 			core.handlePacket(pkt)
 			if pkt.ID() == packet.IDMovePlayer {
 				pk := pkt.(*packet.MovePlayer)
 				if pk.EntityRuntimeID != botRuntimeID {
-					prob.MarkEventFinished(mark)
+					// prob.MarkEventFinished(mark)
 					continue
 				}
 			} else if pkt.ID() == packet.IDMoveActorDelta {
 				pk := pkt.(*packet.MoveActorDelta)
 				if pk.EntityRuntimeID != botRuntimeID {
-					prob.MarkEventFinished(mark)
+					// prob.MarkEventFinished(mark)
 					continue
 				}
 			} else if pkt.ID() == packet.IDSetActorData {
 				pk := pkt.(*packet.SetActorData)
 				if pk.EntityRuntimeID != botRuntimeID {
-					prob.MarkEventFinished(mark)
+					// prob.MarkEventFinished(mark)
 					continue
 				}
 			} else if pkt.ID() == packet.IDSetActorMotion {
 				pk := pkt.(*packet.SetActorMotion)
 				if pk.EntityRuntimeID != botRuntimeID {
-					prob.MarkEventFinished(mark)
+					// prob.MarkEventFinished(mark)
 					continue
 				}
 			}
@@ -115,7 +113,7 @@ func NewAccessPointReactCore(node nodes.Node, conn *minecraft.Conn) neomega.UnSt
 			// 也许未来可以优化? 然而事实是我们并不知道此数据何时被利用完成
 			packetDataCloned := bytes.Clone(packetData)
 			node.PublishMessage("packet", nodes.FromInt32(conn.GetShieldID()).ExtendFrags(packetDataCloned))
-			prob.MarkEventFinished(mark)
+			// prob.MarkEventFinished(mark)
 		}
 		core.DeadReason <- fmt.Errorf("%v: %v", ErrRentalServerDisconnected, i18n.FuzzyTransErr(err))
 	}

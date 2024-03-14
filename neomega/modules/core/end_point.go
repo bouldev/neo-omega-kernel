@@ -2,13 +2,11 @@ package core
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/nodes"
-	"neo-omega-kernel/utils/block_prob"
 	"time"
 )
 
@@ -99,7 +97,7 @@ func NewEndPointReactCore(node nodes.Node) interface {
 		currentShieldID: 0,
 		listeners:       make([]func(int32), 0, 1),
 	}
-	prob := block_prob.NewBlockProb("End Point MC Packet Handle Block Prob", time.Second/10)
+	// prob := block_prob.NewBlockProb("End Point MC Packet Handle Block Prob", time.Second/10)
 	node.ListenMessage("packet", func(msg nodes.Values) {
 		shieldID, err := msg.ToInt32()
 		if err != nil {
@@ -128,12 +126,12 @@ func NewEndPointReactCore(node nodes.Node) interface {
 			if err != nil {
 				// fmt.Println(err)
 			} else {
-				mark := prob.MarkEventStartByTimeout(func() string {
-					bs, _ := json.Marshal(pk)
-					return fmt.Sprint(pk.ID()) + string(bs)
-				}, time.Second/5)
+				// mark := prob.MarkEventStartByTimeout(func() string {
+				// 	bs, _ := json.Marshal(pk)
+				// 	return fmt.Sprint(pk.ID()) + string(bs)
+				// }, time.Second/5)
 				core.handlePacket(pk)
-				prob.MarkEventFinished(mark)
+				// prob.MarkEventFinished(mark)
 			}
 		} else {
 			// fmt.Printf("pktID %v not found\n", header.PacketID)

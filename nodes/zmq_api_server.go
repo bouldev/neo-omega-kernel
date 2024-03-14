@@ -3,7 +3,6 @@ package nodes
 import (
 	"bytes"
 	"context"
-	"neo-omega-kernel/utils/block_prob"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"os"
 	"strings"
@@ -45,17 +44,17 @@ func NewSimpleZMQServer(socket zmq.Socket) ZMQAPIServer {
 }
 
 func (s *SimpleZMQServer) Serve() (err error) {
-	prob := block_prob.NewBlockProb("ZMQ Server Handle Msg Block Prob", time.Second/10)
+	// prob := block_prob.NewBlockProb("ZMQ Server Handle Msg Block Prob", time.Second/10)
 	for {
 		var msg zmq.Msg
 		msg, err = s.Socket.Recv()
-		mark := prob.MarkEventStartByTimeout(func() string {
-			ev := "Msg: "
-			for _, f := range msg.Frames {
-				ev += string(f) + " "
-			}
-			return ev
-		}, time.Second/5)
+		// mark := prob.MarkEventStartByTimeout(func() string {
+		// 	ev := "Msg: "
+		// 	for _, f := range msg.Frames {
+		// 		ev += string(f) + " "
+		// 	}
+		// 	return ev
+		// }, time.Second/5)
 		if err != nil {
 			return err
 		}
@@ -85,7 +84,7 @@ func (s *SimpleZMQServer) Serve() (err error) {
 				cb(msg.Frames[2:])
 			}
 		}
-		prob.MarkEventFinished(mark)
+		// prob.MarkEventFinished(mark)
 	}
 }
 

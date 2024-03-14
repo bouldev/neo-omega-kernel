@@ -3,7 +3,6 @@ package nodes
 import (
 	"context"
 	"fmt"
-	"neo-omega-kernel/utils/block_prob"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"strings"
 	"time"
@@ -38,20 +37,20 @@ func NewSimpleZMQAPIClient(socket zmq.Socket) (c ZMQAPIClient) {
 }
 
 func (c *SimpleZMQAPIClient) Run() (err error) {
-	prob := block_prob.NewBlockProb("ZMQ Client Handle Msg Block Prob", time.Second/10)
+	// prob := block_prob.NewBlockProb("ZMQ Client Handle Msg Block Prob", time.Second/10)
 	var msg zmq.Msg
 	for {
 		msg, err = c.Socket.Recv()
 		if err != nil {
 			return err
 		}
-		mark := prob.MarkEventStartByTimeout(func() string {
-			ev := "Msg: "
-			for _, f := range msg.Frames {
-				ev += string(f) + " "
-			}
-			return ev
-		}, time.Second/5)
+		// mark := prob.MarkEventStartByTimeout(func() string {
+		// 	ev := "Msg: "
+		// 	for _, f := range msg.Frames {
+		// 		ev += string(f) + " "
+		// 	}
+		// 	return ev
+		// }, time.Second/5)
 		indexOrApi := string(msg.Frames[0])
 		if strings.HasPrefix(indexOrApi, "/") {
 			index := msg.Frames[1]
@@ -71,7 +70,7 @@ func (c *SimpleZMQAPIClient) Run() (err error) {
 				cb(msg.Frames[1:])
 			}
 		}
-		prob.MarkEventFinished(mark)
+		// prob.MarkEventFinished(mark)
 	}
 }
 
