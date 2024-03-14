@@ -30,8 +30,9 @@ func Entry(args *Args) {
 		node = nodes.NewGroup("neo-omega-kernel/neomega", slave, false)
 		node.ListenMessage("reboot", func(msg nodes.Values) {
 			reason, _ := msg.ToString()
-			panic(reason)
-		})
+			fmt.Println(reason)
+			os.Exit(3)
+		}, false)
 		if !node.CheckNetTag("access-point") {
 			panic(i18n.T(i18n.S_no_access_point_in_network))
 		}
