@@ -59,9 +59,11 @@ type CmdSender interface {
 	SendWOCmd(cmd string)
 	SendWebSocketCmdOmitResponse(cmd string)
 	SendPlayerCmdOmitResponse(cmd string)
+	SendAICommandOmitResponse(runtimeid string, cmd string)
 
 	SendWebSocketCmdNeedResponse(cmd string) ResponseHandle
 	SendPlayerCmdNeedResponse(cmd string) ResponseHandle
+	SendAICommandNeedResponse(runtimeid string, cmd string) ResponseHandle
 }
 
 // type CmdSender interface {
