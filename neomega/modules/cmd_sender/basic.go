@@ -32,21 +32,40 @@ func (c *CmdSenderBasic) onNewCommandOutput(p *packet.CommandOutput) {
 func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string]any) {
 	switch eventName {
 	case "AfterExecuteCommandEvent":
-		if cmdExecuteResult, _ := eventArgs["executeResult"].(bool); cmdExecuteResult {
+		if cmdExecuteResult, ok := eventArgs["executeResult"]; !ok || cmdExecuteResult.(bool) {
 			return
 		}
-		if cmdUUID, ok := eventArgs["uuid"].(string); ok {
-			c.cbByUUID.Delete(cmdUUID)
+		uuid, ok := eventArgs["uuid"]
+		if !ok {
+			return
 		}
+		cmdUUID := uuid.(string)
+		cb, ok := c.cbByUUID.GetAndDelete(cmdUUID)
+		if !ok {
+			return
+		}
+		fakeResp := &packet.CommandOutput{
+			CommandOrigin: protocol.CommandOrigin{
+				RequestID: cmdUUID,
+			},
+			OutputMessages: []protocol.CommandOutputMessage{
+				{
+					Success: false,
+					Message: "failed to exec cmd",
+				},
+			},
+		}
+		cb(fakeResp)
 	case "ExecuteCommandOutputEvent":
-		cmdMsg, ok := eventArgs["msg"].(string)
+		cmdMsg, ok := eventArgs["msg"]
 		if !ok {
 			return
 		}
-		cmdUUID, ok := eventArgs["uuid"].(string)
+		uuid, ok := eventArgs["uuid"]
 		if !ok {
 			return
 		}
+		cmdUUID := uuid.(string)
 		cb, ok := c.cbByUUID.GetAndDelete(cmdUUID)
 		if !ok {
 			return
@@ -59,7 +78,7 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 			OutputMessages: []protocol.CommandOutputMessage{
 				{
 					Success: true,
-					Message: cmdMsg,
+					Message: cmdMsg.(string),
 				},
 			},
 		}
