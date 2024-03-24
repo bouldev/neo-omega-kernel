@@ -7,13 +7,15 @@ import (
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/py_rpc"
 	"neo-omega-kernel/utils/sync_wrapper"
+	"strings"
 
 	"github.com/google/uuid"
 )
 
 type CmdSenderBasic struct {
 	neomega.InteractCore
-	cbByUUID *sync_wrapper.SyncKVMap[string, func(*packet.CommandOutput)]
+	cbByUUID          *sync_wrapper.SyncKVMap[string, func(*packet.CommandOutput)]
+	aiCmdResultByUUID *sync_wrapper.SyncKVMap[string, string]
 }
 
 // func (c *CmdSender) SendWebSocketCmdOmitResponse(cmd string) {
@@ -32,32 +34,37 @@ func (c *CmdSenderBasic) onNewCommandOutput(p *packet.CommandOutput) {
 func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string]any) {
 	switch eventName {
 	case "AfterExecuteCommandEvent":
-		if cmdExecuteResult, ok := eventArgs["executeResult"]; !ok || cmdExecuteResult.(bool) {
-			return
-		}
-		uuid, ok := eventArgs["uuid"]
+		cmdExecuteResult, ok := eventArgs["executeResult"]
 		if !ok {
 			return
 		}
-		cmdUUID := uuid.(string)
+		uid, ok := eventArgs["uuid"]
+		if !ok {
+			return
+		}
+		cmdUUID := uid.(string)
 		cb, ok := c.cbByUUID.GetAndDelete(cmdUUID)
 		if !ok {
 			return
 		}
+		// We can ensure all the "ExecuteCommandOutputEvent" are sent before "AfterExecuteCommandEvent"
+		res, _ := c.aiCmdResultByUUID.GetAndDelete(cmdUUID)
+		// CommandOutput packet can be received, but it hold an invalid(random) RequestID
 		fakeResp := &packet.CommandOutput{
 			CommandOrigin: protocol.CommandOrigin{
-				RequestID: cmdUUID,
+				UUID:      uuid.MustParse(cmdUUID),
+				RequestID: "96045347-a6a3-4114-94c0-1bc4cc561694",
 			},
 			OutputMessages: []protocol.CommandOutputMessage{
 				{
-					Success: false,
-					Message: "failed to exec cmd",
+					Success: cmdExecuteResult.(bool),
+					Message: res,
 				},
 			},
 		}
 		cb(fakeResp)
 	case "ExecuteCommandOutputEvent":
-		cmdMsg, ok := eventArgs["msg"]
+		msg, ok := eventArgs["msg"]
 		if !ok {
 			return
 		}
@@ -65,24 +72,14 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 		if !ok {
 			return
 		}
+		// Cache result of cmd because it may have multiple outputs
 		cmdUUID := uuid.(string)
-		cb, ok := c.cbByUUID.GetAndDelete(cmdUUID)
+		cmdMsg := strings.TrimPrefix(msg.(string), "命令输出：")
+		res, ok := c.aiCmdResultByUUID.GetOrSet(cmdUUID, cmdMsg)
 		if !ok {
 			return
 		}
-		// CommandOutput packet can be received, but it hold an invalid(random) RequestID
-		fakeResp := &packet.CommandOutput{
-			CommandOrigin: protocol.CommandOrigin{
-				RequestID: cmdUUID,
-			},
-			OutputMessages: []protocol.CommandOutputMessage{
-				{
-					Success: true,
-					Message: cmdMsg.(string),
-				},
-			},
-		}
-		cb(fakeResp)
+		c.aiCmdResultByUUID.Set(cmdUUID, res+"\n"+cmdMsg)
 	}
 }
 
@@ -114,8 +111,9 @@ func (c *CmdSenderBasic) onNewPyRpc(p *packet.PyRpc) {
 
 func NewCmdSenderBasic(reactable neomega.ReactCore, interactable neomega.InteractCore) *CmdSenderBasic {
 	c := &CmdSenderBasic{
-		InteractCore: interactable,
-		cbByUUID:     sync_wrapper.NewSyncKVMap[string, func(*packet.CommandOutput)](),
+		InteractCore:      interactable,
+		cbByUUID:          sync_wrapper.NewSyncKVMap[string, func(*packet.CommandOutput)](),
+		aiCmdResultByUUID: sync_wrapper.NewSyncKVMap[string, string](),
 	}
 	reactable.SetTypedPacketCallBack(packet.IDCommandOutput, func(p packet.Packet) {
 		c.onNewCommandOutput(p.(*packet.CommandOutput))
