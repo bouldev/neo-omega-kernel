@@ -2,12 +2,14 @@ package cmd_sender
 
 import (
 	"context"
+	"fmt"
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/py_rpc"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"strings"
+	"sync"
 
 	"github.com/google/uuid"
 )
@@ -15,7 +17,7 @@ import (
 type CmdSenderBasic struct {
 	neomega.InteractCore
 	cbByUUID          *sync_wrapper.SyncKVMap[string, func(*packet.CommandOutput)]
-	aiCmdResultByUUID *sync_wrapper.SyncKVMap[string, string]
+	aiCmdResultByUUID *sync_wrapper.SyncKVMap[string, *aiCommandOnGoingOutputs]
 }
 
 // func (c *CmdSender) SendWebSocketCmdOmitResponse(cmd string) {
@@ -31,9 +33,51 @@ func (c *CmdSenderBasic) onNewCommandOutput(p *packet.CommandOutput) {
 	}
 }
 
+type aiCommandOnGoingOutputs struct {
+	outputs []string
+	mu      sync.Mutex
+}
+
+func newAiCommandOnGoingOutputs() *aiCommandOnGoingOutputs {
+	return &aiCommandOnGoingOutputs{
+		outputs: make([]string, 0, 1),
+		mu:      sync.Mutex{},
+	}
+}
+
+func (o *aiCommandOnGoingOutputs) appendOutput(msg string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	inferredConsoleTranslatedOutputMsg := strings.TrimPrefix(msg, "命令输出：")
+	o.outputs = append(o.outputs, inferredConsoleTranslatedOutputMsg)
+}
+
+func (o *aiCommandOnGoingOutputs) genInferredConsoleOutput(executeResult bool, origUUIDStr string) *packet.CommandOutput {
+	outputMsgs := []protocol.CommandOutputMessage{}
+	for _, msg := range o.outputs {
+		outputMsgs = append(outputMsgs, protocol.CommandOutputMessage{
+			Success: executeResult,
+			Message: msg,
+		})
+	}
+	successCount := uint32(0) // seems related infer not provided
+	if executeResult {
+		successCount = 1
+	}
+	return &packet.CommandOutput{
+		CommandOrigin: protocol.CommandOrigin{
+			UUID:      uuid.MustParse(origUUIDStr),
+			RequestID: "server-agent-in-ai-command",
+		},
+		SuccessCount:   successCount,
+		OutputMessages: outputMsgs,
+	}
+}
+
 func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string]any) {
 	switch eventName {
 	case "AfterExecuteCommandEvent":
+		fmt.Println("AfterExecuteCommandEvent", eventArgs)
 		executeResult, ok := eventArgs["executeResult"]
 		if !ok {
 			return
@@ -49,27 +93,17 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 			return
 		}
 		// We can ensure all the "ExecuteCommandOutputEvent" are sent before "AfterExecuteCommandEvent"
-		res, _ := c.aiCmdResultByUUID.GetAndDelete(cmdUUID)
+		outputs, ok := c.aiCmdResultByUUID.GetAndDelete(cmdUUID)
 		// CommandOutput packet can be received, but it hold an invalid(random) UUID
-		var SuccessCount uint32
-		if cmdExecuteResult {
-			SuccessCount = 1
+		if ok {
+			inferredConsoleResp := outputs.genInferredConsoleOutput(cmdExecuteResult, cmdUUID)
+			cb(inferredConsoleResp)
+		} else {
+			// debug info: dose ExecuteCommandOutputEvent actually sent before AfterExecuteCommandEvent in every case?
+			panic("Assert Fail: ExecuteCommandOutputEvent not actually received before AfterExecuteCommandEvent")
 		}
-		fakeResp := &packet.CommandOutput{
-			CommandOrigin: protocol.CommandOrigin{
-				UUID:      uuid.MustParse(cmdUUID),
-				RequestID: "96045347-a6a3-4114-94c0-1bc4cc561694",
-			},
-			SuccessCount: SuccessCount,
-			OutputMessages: []protocol.CommandOutputMessage{
-				{
-					Success: cmdExecuteResult,
-					Message: res,
-				},
-			},
-		}
-		cb(fakeResp)
 	case "ExecuteCommandOutputEvent":
+		fmt.Println("ExecuteCommandOutputEvent", eventArgs)
 		msg, ok := eventArgs["msg"]
 		if !ok {
 			return
@@ -80,12 +114,12 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 		}
 		// Cache result of cmd because it may have multiple outputs
 		cmdUUID := uuid.(string)
-		cmdMsg := strings.TrimPrefix(msg.(string), "命令输出：")
-		res, ok := c.aiCmdResultByUUID.GetOrSet(cmdUUID, cmdMsg)
+		existOutputs, ok := c.aiCmdResultByUUID.Get(cmdUUID)
 		if !ok {
-			return
+			existOutputs = newAiCommandOnGoingOutputs()
+			existOutputs, _ = c.aiCmdResultByUUID.GetOrSet(cmdUUID, existOutputs)
 		}
-		c.aiCmdResultByUUID.Set(cmdUUID, res+"\n"+cmdMsg)
+		existOutputs.appendOutput(msg.(string))
 	}
 }
 
@@ -119,7 +153,7 @@ func NewCmdSenderBasic(reactable neomega.ReactCore, interactable neomega.Interac
 	c := &CmdSenderBasic{
 		InteractCore:      interactable,
 		cbByUUID:          sync_wrapper.NewSyncKVMap[string, func(*packet.CommandOutput)](),
-		aiCmdResultByUUID: sync_wrapper.NewSyncKVMap[string, string](),
+		aiCmdResultByUUID: sync_wrapper.NewSyncKVMap[string, *aiCommandOnGoingOutputs](),
 	}
 	reactable.SetTypedPacketCallBack(packet.IDCommandOutput, func(p packet.Packet) {
 		c.onNewCommandOutput(p.(*packet.CommandOutput))
@@ -191,7 +225,7 @@ func (c *CmdSenderBasic) SendAICommandNeedResponse(runtimeid string, cmd string)
 }
 
 func (c *CmdSenderBasic) packCmdWithUUID(cmd string, ud uuid.UUID, ws bool) *packet.CommandRequest {
-	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
+	requestId := uuid.New()
 	origin := protocol.CommandOrigin{
 		Origin:         protocol.CommandOriginAutomationPlayer,
 		UUID:           ud,
