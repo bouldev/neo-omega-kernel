@@ -54,11 +54,13 @@ func (o *aiCommandOnGoingOutputs) appendOutput(msg string) {
 
 func (o *aiCommandOnGoingOutputs) genInferredConsoleOutput(executeResult bool, origUUIDStr string) *packet.CommandOutput {
 	outputMsgs := []protocol.CommandOutputMessage{}
-	for _, msg := range o.outputs {
-		outputMsgs = append(outputMsgs, protocol.CommandOutputMessage{
-			Success: executeResult,
-			Message: msg,
-		})
+	if o != nil {
+		for _, msg := range o.outputs {
+			outputMsgs = append(outputMsgs, protocol.CommandOutputMessage{
+				Success: executeResult,
+				Message: msg,
+			})
+		}
 	}
 	successCount := uint32(0) // seems related infer not provided
 	if executeResult {
@@ -95,13 +97,8 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 		// We can ensure all the "ExecuteCommandOutputEvent" are sent before "AfterExecuteCommandEvent"
 		outputs, ok := c.aiCmdResultByUUID.GetAndDelete(cmdUUID)
 		// CommandOutput packet can be received, but it hold an invalid(random) UUID
-		if ok {
-			inferredConsoleResp := outputs.genInferredConsoleOutput(cmdExecuteResult, cmdUUID)
-			cb(inferredConsoleResp)
-		} else {
-			// debug info: dose ExecuteCommandOutputEvent actually sent before AfterExecuteCommandEvent in every case?
-			panic("Assert Fail: ExecuteCommandOutputEvent not actually received before AfterExecuteCommandEvent")
-		}
+		inferredConsoleResp := outputs.genInferredConsoleOutput(cmdExecuteResult, cmdUUID)
+		cb(inferredConsoleResp)
 	case "ExecuteCommandOutputEvent":
 		fmt.Println("ExecuteCommandOutputEvent", eventArgs)
 		msg, ok := eventArgs["msg"]
