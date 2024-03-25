@@ -25,7 +25,7 @@ type CmdSenderBasic struct {
 
 func (c *CmdSenderBasic) onNewCommandOutput(p *packet.CommandOutput) {
 	s := p.CommandOrigin.UUID.String()
-	cb, ok := c.cbByUUID.GetAndDelete(s)
+	cb, ok := c.cbByUUID.Get(s)
 	if ok {
 		cb(p)
 	}
@@ -34,10 +34,11 @@ func (c *CmdSenderBasic) onNewCommandOutput(p *packet.CommandOutput) {
 func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string]any) {
 	switch eventName {
 	case "AfterExecuteCommandEvent":
-		cmdExecuteResult, ok := eventArgs["executeResult"]
+		executeResult, ok := eventArgs["executeResult"]
 		if !ok {
 			return
 		}
+		cmdExecuteResult := executeResult.(bool)
 		uid, ok := eventArgs["uuid"]
 		if !ok {
 			return
@@ -49,15 +50,20 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 		}
 		// We can ensure all the "ExecuteCommandOutputEvent" are sent before "AfterExecuteCommandEvent"
 		res, _ := c.aiCmdResultByUUID.GetAndDelete(cmdUUID)
-		// CommandOutput packet can be received, but it hold an invalid(random) RequestID
+		// CommandOutput packet can be received, but it hold an invalid(random) UUID
+		var SuccessCount uint32
+		if cmdExecuteResult {
+			SuccessCount = 1
+		}
 		fakeResp := &packet.CommandOutput{
 			CommandOrigin: protocol.CommandOrigin{
 				UUID:      uuid.MustParse(cmdUUID),
 				RequestID: "96045347-a6a3-4114-94c0-1bc4cc561694",
 			},
+			SuccessCount: SuccessCount,
 			OutputMessages: []protocol.CommandOutputMessage{
 				{
-					Success: cmdExecuteResult.(bool),
+					Success: cmdExecuteResult,
 					Message: res,
 				},
 			},
