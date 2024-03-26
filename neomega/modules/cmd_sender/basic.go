@@ -2,7 +2,6 @@ package cmd_sender
 
 import (
 	"context"
-	"fmt"
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
@@ -79,7 +78,7 @@ func (o *aiCommandOnGoingOutputs) genInferredConsoleOutput(executeResult bool, o
 func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string]any) {
 	switch eventName {
 	case "AfterExecuteCommandEvent":
-		fmt.Println("AfterExecuteCommandEvent", eventArgs)
+		// fmt.Println("AfterExecuteCommandEvent", eventArgs)
 		executeResult, ok := eventArgs["executeResult"]
 		if !ok {
 			return
@@ -100,7 +99,7 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 		inferredConsoleResp := outputs.genInferredConsoleOutput(cmdExecuteResult, cmdUUID)
 		cb(inferredConsoleResp)
 	case "ExecuteCommandOutputEvent":
-		fmt.Println("ExecuteCommandOutputEvent", eventArgs)
+		// fmt.Println("ExecuteCommandOutputEvent", eventArgs)
 		msg, ok := eventArgs["msg"]
 		if !ok {
 			return
@@ -203,22 +202,6 @@ func (c *CmdSenderBasic) SendAICommandOmitResponse(runtimeid string, cmd string)
 	ud, _ := uuid.NewUUID()
 	pkt := c.packAICmdWithUUID(runtimeid, cmd, ud)
 	c.SendPacket(pkt)
-}
-
-func (c *CmdSenderBasic) SendAICommandNeedResponse(runtimeid string, cmd string) neomega.ResponseHandle {
-	ud, _ := uuid.NewUUID()
-	pkt := c.packAICmdWithUUID(runtimeid, cmd, ud)
-	deferredAction := func() {
-		c.SendPacket(pkt)
-	}
-	return &CmdResponseHandle{
-		deferredActon:         deferredAction,
-		timeoutSpecificResult: nil,
-		terminated:            false,
-		uuidStr:               ud.String(),
-		cbByUUID:              c.cbByUUID,
-		ctx:                   context.Background(),
-	}
 }
 
 func (c *CmdSenderBasic) packCmdWithUUID(cmd string, ud uuid.UUID, ws bool) *packet.CommandRequest {

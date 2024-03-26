@@ -20,7 +20,7 @@ func init() {
 }
 
 type needFeedBackPacket struct {
-	p      packet.Packet
+	do     func()
 	waitor chan struct{}
 }
 
@@ -76,10 +76,35 @@ func NewAccessPointCmdSender(node nodes.APINode, reactable neomega.ReactCore, in
 			return
 		}
 		pkt := c.packCmdWithUUID(cmd, ud, false)
-		c.launchOrDeferPlayerCommand(pkt)
+		do := func() {
+			c.SendPacket(pkt)
+		}
+		c.launchOrDeferPlayerCommand(do)
 		return nodes.Empty, nil
 	}, false)
-
+	node.ExposeAPI("send-ai-command", func(args nodes.Values) (result nodes.Values, err error) {
+		// fmt.Println("ai command")
+		runtimeid, err := args.ToString()
+		if err != nil {
+			return
+		}
+		args = args.ConsumeHead()
+		cmd, err := args.ToString()
+		if err != nil {
+			return
+		}
+		args = args.ConsumeHead()
+		ud, err := args.ToUUID()
+		if err != nil {
+			return
+		}
+		pkt := c.packAICmdWithUUID(runtimeid, cmd, ud)
+		do := func() {
+			c.SendPacket(pkt)
+		}
+		c.launchOrDeferPlayerCommand(do)
+		return nodes.Empty, nil
+	}, false)
 	// deduce command feed back
 	// no we cannot do this since bot currently not pass the challenge
 	// go func() {
@@ -111,7 +136,10 @@ func (c *AccessPointCmdSender) SendPlayerCmdNeedResponse(cmd string) neomega.Res
 	ud, _ := uuid.NewUUID()
 	pkt := c.packCmdWithUUID(cmd, ud, false)
 	deferredAction := func() {
-		c.launchOrDeferPlayerCommand(pkt)
+		do := func() {
+			c.SendPacket(pkt)
+		}
+		c.launchOrDeferPlayerCommand(do)
 	}
 	return &CmdResponseHandle{
 		deferredActon:         deferredAction,
@@ -123,14 +151,33 @@ func (c *AccessPointCmdSender) SendPlayerCmdNeedResponse(cmd string) neomega.Res
 	}
 }
 
-func (c *AccessPointCmdSender) launchOrDeferPlayerCommand(pkt *packet.CommandRequest) {
+func (c *AccessPointCmdSender) SendAICommandNeedResponse(runtimeid string, cmd string) neomega.ResponseHandle {
+	ud, _ := uuid.NewUUID()
+	pkt := c.packAICmdWithUUID(runtimeid, cmd, ud)
+	deferredAction := func() {
+		do := func() {
+			c.SendPacket(pkt)
+		}
+		c.launchOrDeferPlayerCommand(do)
+	}
+	return &CmdResponseHandle{
+		deferredActon:         deferredAction,
+		timeoutSpecificResult: nil,
+		terminated:            false,
+		uuidStr:               ud.String(),
+		cbByUUID:              c.cbByUUID,
+		ctx:                   context.Background(),
+	}
+}
+
+func (c *AccessPointCmdSender) launchOrDeferPlayerCommand(do func()) {
 	c.commandFeedbackCtrlLock.Lock()
 	defer c.commandFeedbackCtrlLock.Unlock()
 	if !c.cmdFeedbackOffSent {
 		// the major problem is, whether sendcommandfeedback is on and user expect sendcommandfeedback on? If both, just send
 		if c.expectedCmdFeedback && c.currentCmdFeedback {
 			c.SendWOCmd("gamerule sendcommandfeedback true")
-			c.SendPacket(pkt)
+			do()
 			return
 		}
 		// and if not, there exists two problems:
@@ -138,7 +185,7 @@ func (c *AccessPointCmdSender) launchOrDeferPlayerCommand(pkt *packet.CommandReq
 		// 2. the effect on server and what we receive is not sync
 		if !c.expectedCmdFeedback && c.currentCmdFeedback {
 			c.SendWOCmd("gamerule sendcommandfeedback true")
-			c.SendPacket(pkt)
+			do()
 			return
 		}
 	}
@@ -149,7 +196,7 @@ func (c *AccessPointCmdSender) launchOrDeferPlayerCommand(pkt *packet.CommandReq
 	if c.cmdFeedbackOffSent {
 		// server and client status not sync, just put packets in pending queue
 		c.needFeedBackPackets = append(c.needFeedBackPackets, &needFeedBackPacket{
-			pkt, waitor,
+			do, waitor,
 		})
 	} else {
 		// if !c.currentCmdFeedback {
@@ -157,7 +204,7 @@ func (c *AccessPointCmdSender) launchOrDeferPlayerCommand(pkt *packet.CommandReq
 		c.SendWOCmd("gamerule sendcommandfeedback true")
 
 		c.needFeedBackPackets = append(c.needFeedBackPackets, &needFeedBackPacket{
-			pkt, waitor,
+			do, waitor,
 		})
 		// }
 	}
@@ -178,7 +225,7 @@ func (c *AccessPointCmdSender) emitNeedFeedBackPackets(force bool) {
 		pkts := c.needFeedBackPackets
 		c.needFeedBackPackets = make([]*needFeedBackPacket, 0)
 		for _, p := range pkts {
-			c.SendPacket(p.p)
+			p.do()
 			close(p.waitor)
 		}
 	}

@@ -42,3 +42,19 @@ func (c *EndPointCmdSender) SendPlayerCmdNeedResponse(cmd string) neomega.Respon
 		ctx:                   context.Background(),
 	}
 }
+
+func (c *EndPointCmdSender) SendAICommandNeedResponse(runtimeid string, cmd string) neomega.ResponseHandle {
+	ud, _ := uuid.NewUUID()
+	args := nodes.FromString(runtimeid).Extend(nodes.FromString(cmd), nodes.FromUUID(ud))
+	deferredAction := func() {
+		c.node.CallOmitResponse("send-ai-command", args)
+	}
+	return &CmdResponseHandle{
+		deferredActon:         deferredAction,
+		timeoutSpecificResult: nil,
+		terminated:            false,
+		uuidStr:               ud.String(),
+		cbByUUID:              c.cbByUUID,
+		ctx:                   context.Background(),
+	}
+}
