@@ -71,7 +71,7 @@ func (o *OperatorChallenge) WaitForPrivilege(ctx context.Context) (err error) {
 		}
 		time.Sleep(1 * time.Second)
 		if !o.hasOpPrivilege {
-			o.GetGameControl().BotSay(i18n.T(i18n.S_please_grant_bot_operator_privilege))
+			// o.GetGameControl().BotSay(i18n.T(i18n.S_please_grant_bot_operator_privilege))
 			fmt.Println(i18n.T(i18n.S_please_grant_bot_operator_privilege))
 		}
 	}

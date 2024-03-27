@@ -155,7 +155,7 @@ var I18nDict_zh_cn map[string]string = map[string]string{
 	S_fail_to_dispatch_packet_to_remote:                        "[neOmega 接入点] -> [neOmega 访问点] 数据包分发失败",
 	S_no_response_after_a_long_time_bot_is_down:                "持续 %v 秒未能从网易租赁服获得数据, 机器人已确认掉线 (机器人在线时间 %vs)",
 	S_bot_operator_privilege_granted:                           "机器人已获得操作员权限",
-	S_please_grant_bot_operator_privilege:                      "请给予机器人Op权限",
+	S_please_grant_bot_operator_privilege:                      "缺少许可，请给予许可",
 	S_bot_operator_privilege_timeout:                           "机器人未能在指定时限内获得操作员权限 -> 在机器人再次上线时，请及时给予机器人操作员权限",
 	S_switching_bot_to_creative_mode:                           "正在将机器人切换为创造模式",
 	S_debug_remove_everything_under:                            "Debug: 正在移除目录下所有 neOmega 文件",
