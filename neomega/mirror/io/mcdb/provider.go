@@ -110,11 +110,11 @@ func (p *Provider) initDefaultLevelDat() {
 	p.D.Generator = 1
 	p.D.Abilities.WalkSpeed = 0.1
 	p.D.Abilities.AttackMobs = true
-	p.D.Abilities.AttackPlayers = true
+	p.D.Abilities.AttackPlayers = false
 	p.D.Abilities.Mine = true
 	p.D.Abilities.DoorsAndSwitches = true
 	p.D.Abilities.FlySpeed = 0.05
-	p.D.Abilities.Flying = false
+	p.D.Abilities.Flying = true
 	p.D.Abilities.InstantBuild = true
 	p.D.Abilities.Mine = true
 	p.D.Abilities.OpenContainers = true
@@ -124,9 +124,9 @@ func (p *Provider) initDefaultLevelDat() {
 	p.D.PVP = false
 	p.D.WorldStartCount = 1
 	p.D.RandomTickSpeed = 1
-	p.D.FallDamage = true
-	p.D.FireDamage = true
-	p.D.DrowningDamage = true
+	p.D.FallDamage = false
+	p.D.FireDamage = false
+	p.D.DrowningDamage = false
 	p.D.CommandsEnabled = true
 	p.D.MultiPlayerGame = true
 	p.D.SpawnX = 0
@@ -134,11 +134,14 @@ func (p *Provider) initDefaultLevelDat() {
 	p.D.SpawnY = 330
 	p.D.ShowCoordinates = true
 	p.D.Difficulty = 1 //peaceful
-	p.D.DoWeatherCycle = true
+	p.D.DoWeatherCycle = false
 	p.D.RainLevel = 1.0
 	p.D.LightningLevel = 1.0
 	p.D.ServerChunkTickRange = 6
 	p.D.NetherScale = 8
+	p.D.FlatWorldLayers = "{\"biome_id\":1,\"block_layers\":[{\"block_name\":\"minecraft:bedrock\",\"count\":1},{\"block_name\":\"minecraft:dirt\",\"count\":2},{\"block_name\":\"minecraft:grass\",\"count\":1}],\"encoding_version\":6,\"structure_options\":null,\"world_version\":\"version.post_1_18\"}\n"
+	p.D.FireDamage = false
+	p.D.RandomTickSpeed = 0
 }
 
 // LoadChunk loads a chunk at the position passed from the leveldb database. If it doesn't exist, exists is
