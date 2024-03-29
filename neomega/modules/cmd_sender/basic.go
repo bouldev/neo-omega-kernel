@@ -120,6 +120,9 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 }
 
 func (c *CmdSenderBasic) onNewPyRpc(p *packet.PyRpc) {
+	if p == nil || p.Value == nil {
+		return
+	}
 	pkt, ok := p.Value.MakeGo().([]any)
 	if !ok || len(pkt) != 3 {
 		return
