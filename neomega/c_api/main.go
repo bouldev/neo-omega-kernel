@@ -15,7 +15,7 @@ import (
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/bundle"
-	"neo-omega-kernel/neomega/mirror/define"
+	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
 	"neo-omega-kernel/neomega/rental_server_impact/info_collect_utils"
 	"neo-omega-kernel/nodes"

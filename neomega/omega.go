@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega/blocks"
-	"neo-omega-kernel/neomega/mirror/define"
+	"neo-omega-kernel/neomega/chunks/define"
 	"time"
 
 	"github.com/google/uuid"

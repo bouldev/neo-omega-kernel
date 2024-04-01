@@ -7,8 +7,8 @@ import (
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/blocks"
-	"neo-omega-kernel/neomega/mirror"
-	"neo-omega-kernel/neomega/mirror/define"
+	"neo-omega-kernel/neomega/chunks"
+	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/nodes"
 	"strings"
 	"time"
@@ -924,7 +924,7 @@ func (o *BotActionHighLevel) highLevelSetContainerItems(pos define.CubePos, cont
 	return
 }
 
-func (o *BotActionHighLevel) HighLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider, withMove bool) error {
+func (o *BotActionHighLevel) HighLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst chunks.ChunkProvider, withMove bool) error {
 	release, err := o.occupyBot(time.Second * 3)
 	if err != nil {
 		return err
@@ -933,7 +933,7 @@ func (o *BotActionHighLevel) HighLevelRequestLargeArea(startPos define.CubePos, 
 	return o.highLevelRequestLargeArea(startPos, size, dst, withMove)
 }
 
-func (o *BotActionHighLevel) highLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst mirror.ChunkProvider, withMove bool) error {
+func (o *BotActionHighLevel) highLevelRequestLargeArea(startPos define.CubePos, size define.CubePos, dst chunks.ChunkProvider, withMove bool) error {
 	chunkRangesX := neomega.RangeSplits(startPos.X(), size.X(), 16)
 	chunkRangesZ := neomega.RangeSplits(startPos.Z(), size.Z(), 16)
 	for _, xRange := range chunkRangesX {

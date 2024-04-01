@@ -6,7 +6,7 @@ import (
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/mirror/define"
+	"neo-omega-kernel/neomega/chunks/define"
 	"strings"
 	"sync"
 	"time"

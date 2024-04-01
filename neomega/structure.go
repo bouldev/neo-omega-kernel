@@ -4,9 +4,9 @@ import (
 	"context"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega/blocks"
-	"neo-omega-kernel/neomega/mirror"
-	"neo-omega-kernel/neomega/mirror/chunk"
-	"neo-omega-kernel/neomega/mirror/define"
+	"neo-omega-kernel/neomega/chunks"
+	"neo-omega-kernel/neomega/chunks/chunk"
+	"neo-omega-kernel/neomega/chunks/define"
 	"time"
 )
 
@@ -51,12 +51,12 @@ func RangeSplits(start int, len int, algin int) (ranges [][2]int) {
 	return ranges
 }
 
-func (structure *DecodedStructure) DumpToChunkProvider(chunkProvider mirror.ChunkProvider) (err error) {
+func (structure *DecodedStructure) DumpToChunkProvider(chunkProvider chunks.ChunkProvider) (err error) {
 	background, foreground := structure.BackGround, structure.ForeGround
 	rtid := uint32(0)
 	chunkRangesX := RangeSplits(structure.Origin.X(), structure.Size[0], 16)
 	chunkRangesZ := RangeSplits(structure.Origin.Z(), structure.Size[2], 16)
-	var chunkData *mirror.ChunkData
+	var chunkData *chunks.ChunkWithAuxInfo
 	for _, xRange := range chunkRangesX {
 		for _, zRange := range chunkRangesZ {
 			blockPos00 := define.CubePos{int(xRange[0]), int(structure.Origin.Y()), int(zRange[0])}
@@ -68,7 +68,7 @@ func (structure *DecodedStructure) DumpToChunkProvider(chunkProvider mirror.Chun
 			}
 			chunkData = chunkProvider.Get(chunkPos)
 			if chunkData == nil {
-				chunkData = &mirror.ChunkData{
+				chunkData = &chunks.ChunkWithAuxInfo{
 					Chunk:     chunk.New(blocks.AIR_RUNTIMEID, define.WorldRange),
 					BlockNbts: make(map[define.CubePos]map[string]interface{}),
 					SyncTime:  time.Now().Unix(),

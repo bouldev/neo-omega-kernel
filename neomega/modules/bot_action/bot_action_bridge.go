@@ -2,7 +2,7 @@ package bot_action
 
 import (
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/mirror/define"
+	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/nodes"
 	"time"
 )

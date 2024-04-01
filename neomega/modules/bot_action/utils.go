@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/mirror/define"
+	"neo-omega-kernel/neomega/chunks/define"
 	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
