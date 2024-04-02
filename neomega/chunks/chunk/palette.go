@@ -101,8 +101,8 @@ func (p PaletteSize) padded() bool {
 	return p == 3 || p == 5 || p == 6
 }
 
-// paletteSizeFor finds a suitable paletteSize for the amount of values passed n.
-func paletteSizeFor(n int) PaletteSize {
+// PaletteSizeFor finds a suitable paletteSize for the amount of values passed n.
+func PaletteSizeFor(n int) PaletteSize {
 	for _, size := range sizes {
 		if n <= (1 << size) {
 			return size
