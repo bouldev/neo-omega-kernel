@@ -207,6 +207,11 @@ var SchemToNemcConvertor = &ToNEMCConverter{
 	mu:        sync.RWMutex{},
 }
 
+var schematicToNemcConvertor = &ToNEMCConverter{
+	BaseNames: map[string]*ToNEMCBaseNames{},
+	mu:        sync.RWMutex{},
+}
+
 func ConvertStringToBlockNameAndPropsForSearch(blockString string) (blockNameForSearch BaseWithNameSpace, propsForSearch *PropsForSearch) {
 	blockString = strings.ReplaceAll(blockString, "{", "[")
 	inFrags := strings.Split(blockString, "[")

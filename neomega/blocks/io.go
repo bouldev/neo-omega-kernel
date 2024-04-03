@@ -72,10 +72,10 @@ func SchemBlockStrToRuntimeID(blockNameWithOrWithoutState string) (runtimeID uin
 	return rtid, found
 }
 
-func SchematicToRuntimeID(blockIdx uint8, data uint8) (runtimeID uint32, found bool) {
-	if int(blockIdx) >= len(SchematicBlockStrings) {
-		return AIR_RUNTIMEID, false
-	}
-	blockName := SchematicBlockStrings[blockIdx]
-	return LegacyBlockToRuntimeID(blockName, uint16(data))
-}
+// func SchematicToRuntimeID(blockIdx uint8, data uint8) (runtimeID uint32, found bool) {
+// 	if int(blockIdx) >= len(SchematicBlockStrings) {
+// 		return AIR_RUNTIMEID, false
+// 	}
+// 	blockName := SchematicBlockStrings[blockIdx]
+// 	return LegacyBlockToRuntimeID(blockName, uint16(data))
+// }

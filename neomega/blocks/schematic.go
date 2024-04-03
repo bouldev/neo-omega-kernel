@@ -2,7 +2,7 @@ package blocks
 
 import "fmt"
 
-var SchematicBlockStrings = []string{
+var schematicBlockStrings = []string{
 	"air",
 	"stone",
 	"grass",
@@ -261,12 +261,34 @@ var SchematicBlockStrings = []string{
 	"structure_block",
 }
 
+var quickSchematicMapping [256][16]uint32
+
+func SchematicToRuntimeID(block uint8, value uint8) uint32 {
+	value = value & 0xF
+	return quickSchematicMapping[block][value]
+}
+
 func initSchematicBlockCheck() {
+	quickSchematicMapping = [256][16]uint32{}
 	for i := 0; i < 256; i++ {
-		blockName := SchematicBlockStrings[i]
+		blockName := schematicBlockStrings[i]
 		_, found := DefaultAnyToNemcConvertor.TryBestSearchByLegacyValue(BlockNameForSearch(blockName), 0)
 		if !found {
 			panic(fmt.Errorf("schematic %v 0 not found", blockName))
 		}
 	}
+	for blockI := 0; blockI < 256; blockI++ {
+		blockName := schematicBlockStrings[blockI]
+		// if blockName == "stone_slab" {
+		// 	fmt.Println("slab")
+		// }
+		for dataI := 0; dataI < 16; dataI++ {
+			rtid, found := schematicToNemcConvertor.TryBestSearchByLegacyValue(BlockNameForSearch(blockName), int16(dataI))
+			if !found || rtid == AIR_RUNTIMEID {
+				rtid, _ = schematicToNemcConvertor.TryBestSearchByLegacyValue(BlockNameForSearch(blockName), 0)
+			}
+			quickSchematicMapping[blockI][dataI] = rtid
+		}
+	}
+	schematicToNemcConvertor = nil
 }

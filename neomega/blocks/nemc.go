@@ -118,6 +118,11 @@ func initNemcBlocks() {
 		} else if exist {
 			panic("should not happen")
 		}
+		if exist, err := schematicToNemcConvertor.AddAnchorByLegacyValue(BlockNameForSearch(blockName), int16(blockVal), uint32(runtimeID)); err != nil {
+			panic(err)
+		} else if exist {
+			panic("should not happen")
+		}
 		if propsForSearch, err := PropsForSearchFromStr(stateSNBT); err != nil {
 			panic(err)
 		} else {
@@ -131,8 +136,12 @@ func initNemcBlocks() {
 			} else if exist {
 				panic("should not happen")
 			}
+			if exist, err := schematicToNemcConvertor.AddAnchorByState(BlockNameForSearch(blockName), propsForSearch, uint32(runtimeID), false); err != nil {
+				panic(err)
+			} else if exist {
+				panic("should not happen")
+			}
 		}
-
 	}
 	if NEMC_AIR_RUNTIMEID == 0 || AIR_RUNTIMEID == 0 {
 		panic("cannot found air runtime id")

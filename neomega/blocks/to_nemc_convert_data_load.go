@@ -58,6 +58,9 @@ func initToNemcDataLoadBedrockJava() {
 			if exist, err := SchemToNemcConvertor.AddAnchorByLegacyValue(blockNameToAdd, int16(legacyBlockValue), uint32(rtid)); err != nil || exist == true {
 				panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, legacyBlockValue, rtid))
 			}
+			if exist, err := schematicToNemcConvertor.AddAnchorByLegacyValue(blockNameToAdd, int16(legacyBlockValue), uint32(rtid)); err != nil || exist == true {
+				panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, legacyBlockValue, rtid))
+			}
 		} else {
 			props, err := PropsForSearchFromStr(snbtState)
 			if err != nil {
@@ -68,6 +71,9 @@ func initToNemcDataLoadBedrockJava() {
 				panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, props.InPreciseSNBT(), rtid))
 			}
 			if exist, err := SchemToNemcConvertor.AddAnchorByState(blockNameToAdd, props, uint32(rtid), false); err != nil || exist == true {
+				panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, props.InPreciseSNBT(), rtid))
+			}
+			if exist, err := schematicToNemcConvertor.AddAnchorByState(blockNameToAdd, props, uint32(rtid), false); err != nil || exist == true {
 				panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, props.InPreciseSNBT(), rtid))
 			}
 		}
