@@ -30,57 +30,54 @@ func initializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 		Enabled: false,
 	})
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
+	// conn.WritePacket(&packet.PyRpc{
+	// 	Value: py_rpc.FromGo([]any{
+	// 		"e",
+	// 		[]any{},
+	// 		nil,
+	// 	}),
+	// })
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc.FromGo([]any{
 			"SyncUsingMod",
-			[]interface{}{},
+			[]any{},
 			nil,
 		}),
 	})
+
+	// Only this packet is necessary
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
-			"SyncVipSkinUuid",
-			[]interface{}{nil},
-			nil,
-		}),
-	})
-	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc.FromGo([]any{
 			"ClientLoadAddonsFinishedFromGac",
-			[]interface{}{},
+			[]any{},
 			nil,
 		}),
 	})
+
+	// Generally, following packets are sent after "SetStartType"
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
-			"ModEventC2S",
-			[]interface{}{
-				"Minecraft",
-				"preset",
-				"GetLoadedInstances",
-				map[string]interface{}{
-					"playerId": runtimeid,
-				},
-			},
-			nil,
-		}),
-	})
-	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc.FromGo([]any{
 			"arenaGamePlayerFinishLoad",
-			[]interface{}{},
+			[]any{},
 			nil,
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc.FromGo([]any{
 			"ModEventC2S",
-			[]interface{}{
+			[]any{
 				"Minecraft",
 				"vipEventSystem",
 				"PlayerUiInit",
 				runtimeid,
 			},
+			nil,
+		}),
+	})
+	conn.WritePacket(&packet.PyRpc{
+		Value: py_rpc.FromGo([]any{
+			"ClientInitUIFinishedEventFromGac",
+			[]any{},
 			nil,
 		}),
 	})
