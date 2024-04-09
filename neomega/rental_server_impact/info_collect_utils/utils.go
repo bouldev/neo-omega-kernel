@@ -50,7 +50,15 @@ func GetUserPasswordInput(prompt string) (string, error) {
 	fmt.Print(prompt)
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Printf("\n")
-	return strings.TrimSpace(string(bytePassword)), err
+	if err != nil {
+		return strings.TrimSpace(string(bytePassword)), err
+	}
+	password := strings.TrimSpace(string(bytePassword))
+	if password != "" {
+		return password, nil
+	} else {
+		return GetUserPasswordInput(prompt)
+	}
 }
 
 func GetRentalServerCode() (string, string, error) {
@@ -63,7 +71,15 @@ func GetRentalServerCode() (string, string, error) {
 	fmt.Print(i18n.T(i18n.S_please_enter_rental_server_password))
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Printf("\n")
-	return strings.TrimRight(code, "\r\n"), strings.TrimSpace(string(bytePassword)), err
+	code, password := strings.TrimRight(code, "\r\n"), strings.TrimSpace(string(bytePassword))
+	if err != nil {
+		return code, password, err
+	}
+	if code != "" {
+		return code, password, nil
+	} else {
+		return GetRentalServerCode()
+	}
 }
 
 func WriteFBToken(token string, tokenPath string) {
@@ -233,7 +249,7 @@ func ReadUserInfo(userName, userPassword, userToken, serverCode, serverPassword,
 		}
 	}
 	// read server code and password
-	if serverCode == "" {
+	for serverCode == "" {
 		serverCode, serverPassword, err = GetRentalServerCode()
 		if err != nil {
 			return userName, userPassword, userToken, serverCode, serverPassword, authServer, err
