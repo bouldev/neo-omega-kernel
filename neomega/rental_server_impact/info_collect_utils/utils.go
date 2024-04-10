@@ -68,18 +68,18 @@ func GetRentalServerCode() (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
+	code = strings.TrimSpace(strings.TrimRight(code, "\r\n"))
+	if code == "" {
+		return GetRentalServerCode()
+	}
 	fmt.Print(i18n.T(i18n.S_please_enter_rental_server_password))
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Printf("\n")
-	code, password := strings.TrimRight(code, "\r\n"), strings.TrimSpace(string(bytePassword))
+	password := strings.TrimSpace(string(bytePassword))
 	if err != nil {
 		return code, password, err
 	}
-	if code != "" {
-		return code, password, nil
-	} else {
-		return GetRentalServerCode()
-	}
+	return code, password, nil
 }
 
 func WriteFBToken(token string, tokenPath string) {
