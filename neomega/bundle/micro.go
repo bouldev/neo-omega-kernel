@@ -5,7 +5,8 @@ import (
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/modules/block/placer"
+
+	// "neo-omega-kernel/neomega/modules/block/placer"
 	"neo-omega-kernel/neomega/modules/bot_action"
 	"neo-omega-kernel/neomega/modules/info_sender"
 	"neo-omega-kernel/neomega/modules/player_interact"
@@ -27,7 +28,7 @@ type MicroOmega struct {
 	neomega.InfoSender
 	neomega.CmdSender
 	neomega.MicroUQHolder
-	neomega.BlockPlacer
+	// neomega.BlockPlacer
 	neomega.PlayerInteract
 	neomega.StructureRequester
 	neomega.CommandHelper
@@ -50,7 +51,7 @@ func NewMicroOmega(
 ) neomega.UnReadyMicroOmega {
 	infoSender := info_sender.NewInfoSender(interactCore, cmdSender, microUQHolder.GetBotBasicInfo())
 	playerInteract := player_interact.NewPlayerInteract(reactCore, microUQHolder.GetPlayersInfo(), microUQHolder.GetBotBasicInfo(), cmdSender, infoSender, interactCore)
-	asyncNbtBlockPlacer := placer.NewAsyncNbtBlockPlacer(reactCore, cmdSender, interactCore)
+	// asyncNbtBlockPlacer := placer.NewAsyncNbtBlockPlacer(reactCore, cmdSender, interactCore)
 	structureRequester := structure.NewStructureRequester(interactCore, reactCore, microUQHolder)
 	cmdHelper := bot_action.NewCommandHelper(cmdSender, microUQHolder)
 	var botAction neomega.BotAction
@@ -60,14 +61,14 @@ func NewMicroOmega(
 		botAction = bot_action.NewEndPointBotAction(node, microUQHolder, interactCore)
 	}
 
-	botActionHighLevel := bot_action.NewBotActionHighLevel(microUQHolder, interactCore, reactCore, cmdSender, cmdHelper, structureRequester, asyncNbtBlockPlacer, botAction, node)
+	botActionHighLevel := bot_action.NewBotActionHighLevel(microUQHolder, interactCore, reactCore, cmdSender, cmdHelper, structureRequester, botAction, node)
 	omega := &MicroOmega{
 		reactCore,
 		interactCore,
 		infoSender,
 		cmdSender,
 		microUQHolder,
-		asyncNbtBlockPlacer,
+		// asyncNbtBlockPlacer,
 		playerInteract,
 		structureRequester,
 		cmdHelper,

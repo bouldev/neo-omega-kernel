@@ -3,6 +3,7 @@ package neomega
 import (
 	"context"
 	"fmt"
+	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/chunks/define"
@@ -98,13 +99,40 @@ type PlaceCommandBlockOption struct {
 	ExecuteOnFirstTick bool
 }
 
-func (o *PlaceCommandBlockOption) GenFromNBT(pos define.CubePos, blockNameAndState string, nbt map[string]interface{}) (err error) {
+func (opt *PlaceCommandBlockOption) GenCommandBlockUpdateFromOption() *packet.CommandBlockUpdate {
+	var mode uint32
+	if opt.BlockName == "command_block" {
+		mode = packet.CommandBlockImpulse
+	} else if opt.BlockName == "repeating_command_block" {
+		mode = packet.CommandBlockRepeating
+	} else if opt.BlockName == "chain_command_block" {
+		mode = packet.CommandBlockChain
+	} else {
+		opt.BlockName = "command_block"
+		mode = packet.CommandBlockImpulse
+	}
+	return &packet.CommandBlockUpdate{
+		Block:              true,
+		Position:           protocol.BlockPos{int32(opt.X), int32(opt.Y), int32(opt.Z)},
+		Mode:               mode,
+		NeedsRedstone:      opt.NeedRedStone,
+		Conditional:        opt.Conditional,
+		Command:            opt.Command,
+		LastOutput:         "",
+		Name:               opt.Name,
+		TickDelay:          int32(opt.TickDelay),
+		ExecuteOnFirstTick: opt.ExecuteOnFirstTick,
+		ShouldTrackOutput:  opt.ShouldTrackOutput,
+	}
+}
+
+func NewPlaceCommandBlockOptionFromNBT(pos define.CubePos, blockNameAndState string, nbt map[string]interface{}) (o *PlaceCommandBlockOption, err error) {
 	_, exist := nbt["__tag"]
 	if exist {
-		return fmt.Errorf("flatten nemc nbt, cannot handle")
+		return nil, fmt.Errorf("flatten nemc nbt, cannot handle")
 	}
 	if nbt == nil {
-		return fmt.Errorf("nbt is empty, cannot handle")
+		return nil, fmt.Errorf("nbt is empty, cannot handle")
 	}
 	var mode uint32
 	defer func() {
@@ -115,7 +143,7 @@ func (o *PlaceCommandBlockOption) GenFromNBT(pos define.CubePos, blockNameAndSta
 	}()
 	rtid, found := blocks.BlockStrToRuntimeID(blockNameAndState)
 	if !found {
-		return fmt.Errorf("cannot recognize this block %v", blockNameAndState)
+		return nil, fmt.Errorf("cannot recognize this block %v", blockNameAndState)
 	}
 	block, _ := blocks.RuntimeIDToBlock(rtid)
 	if block.Name == "command_block" {
@@ -125,7 +153,7 @@ func (o *PlaceCommandBlockOption) GenFromNBT(pos define.CubePos, blockNameAndSta
 	} else if block.Name == "chain_command_block" {
 		mode = packet.CommandBlockChain
 	} else {
-		return fmt.Errorf("this block %v is not command block", blockNameAndState)
+		return nil, fmt.Errorf("this block %v is not command block", blockNameAndState)
 	}
 	mode = mode // just make compiler happy
 	cmd, _ := nbt["Command"].(string)
@@ -177,20 +205,20 @@ func (o *PlaceCommandBlockOption) GenFromNBT(pos define.CubePos, blockNameAndSta
 		ShouldTrackOutput:  trackOutputBit,
 		ExecuteOnFirstTick: executeOnFirstTickBit,
 	}
-	return nil
+	return o, nil
 }
 
-type AsyncNBTBlockPlacer interface {
-	GenCommandBlockUpdateFromNbt(pos define.CubePos, blockName string, blockState map[string]interface{}, nbt map[string]interface{}) (cfg *packet.CommandBlockUpdate, err error)
-	GenCommandBlockUpdateFromOption(opt *PlaceCommandBlockOption) *packet.CommandBlockUpdate
-	AsyncPlaceCommandBlock(pos define.CubePos, commandBlockName string, blockDataOrStateStr string, withMove, withAirPrePlace bool, updatePacket *packet.CommandBlockUpdate,
-		onDone func(done bool), timeOut time.Duration)
-	// PlaceSignBlock(pos define.CubePos, signBlockName string, blockDataOrStateStr string, withMove, withAirPrePlace bool, updatePacket *packet.BlockActorData, onDone func(done bool), timeOut time.Duration)
-}
+// type AsyncNBTBlockPlacer interface {
+// 	GenCommandBlockUpdateFromNbt(pos define.CubePos, blockName string, blockState map[string]interface{}, nbt map[string]interface{}) (cfg *packet.CommandBlockUpdate, err error)
+// 	GenCommandBlockUpdateFromOption(opt *PlaceCommandBlockOption) *packet.CommandBlockUpdate
+// 	AsyncPlaceCommandBlock(pos define.CubePos, commandBlockName string, blockDataOrStateStr string, withMove, withAirPrePlace bool, updatePacket *packet.CommandBlockUpdate,
+// 		onDone func(done bool), timeOut time.Duration)
+// 	// PlaceSignBlock(pos define.CubePos, signBlockName string, blockDataOrStateStr string, withMove, withAirPrePlace bool, updatePacket *packet.BlockActorData, onDone func(done bool), timeOut time.Duration)
+// }
 
-type BlockPlacer interface {
-	AsyncNBTBlockPlacer
-}
+// type BlockPlacer interface {
+// 	AsyncNBTBlockPlacer
+// }
 
 type GameChat struct {
 	// 玩家名（去除前缀, e.g. <乱七八糟的前缀> 张三 -> 张三）
@@ -256,7 +284,7 @@ type GameCtrl interface {
 	InteractCore
 	CmdSender
 	InfoSender
-	BlockPlacer
+	// BlockPlacer
 }
 
 type MicroOmega interface {

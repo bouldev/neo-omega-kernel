@@ -15,12 +15,10 @@ import (
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/bundle"
-	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
 	"neo-omega-kernel/neomega/rental_server_impact/info_collect_utils"
 	"neo-omega-kernel/nodes"
 	"neo-omega-kernel/utils/sync_wrapper"
-	"time"
 	"unsafe"
 
 	"neo-omega-kernel/minecraft/protocol"
@@ -181,16 +179,17 @@ func JsonStrAsIsGamePacketBytes(packetID int, jsonStr *C.char) (pktBytes *C.char
 func PlaceCommandBlock(option *C.char) {
 	opt := neomega.PlaceCommandBlockOption{}
 	json.Unmarshal([]byte(C.GoString(option)), &opt)
-	ba := GOmegaCore.GetGameControl().GenCommandBlockUpdateFromOption(&opt)
-	GOmegaCore.GetGameControl().AsyncPlaceCommandBlock(define.CubePos{
-		opt.X, opt.Y, opt.Z,
-	}, opt.BlockName, opt.BlockState, false, false, ba, func(done bool) {
-		if !done {
-			fmt.Printf("place command block @ [%v,%v,%v] fail\n", opt.X, opt.Y, opt.Z)
-		} else {
-			fmt.Printf("place command block @ [%v,%v,%v] ok\n", opt.X, opt.Y, opt.Z)
-		}
-	}, time.Second*10)
+	GOmegaCore.GetBotAction().HighLevelPlaceCommandBlock(&opt, 3)
+	// ba := GOmegaCore.GetGameControl().GenCommandBlockUpdateFromOption(&opt)
+	// GOmegaCore.GetGameControl().AsyncPlaceCommandBlock(define.CubePos{
+	// 	opt.X, opt.Y, opt.Z,
+	// }, opt.BlockName, opt.BlockState, false, false, ba, func(done bool) {
+	// 	if !done {
+	// 		fmt.Printf("place command block @ [%v,%v,%v] fail\n", opt.X, opt.Y, opt.Z)
+	// 	} else {
+	// 		fmt.Printf("place command block @ [%v,%v,%v] ok\n", opt.X, opt.Y, opt.Z)
+	// 	}
+	// }, time.Second*10)
 }
 
 // listeners

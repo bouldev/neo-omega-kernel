@@ -17,34 +17,34 @@ import (
 )
 
 type BotActionHighLevel struct {
-	uq                  neomega.MicroUQHolder
-	ctrl                neomega.InteractCore
-	cmdSender           neomega.CmdSender
-	cmdHelper           neomega.CommandHelper
-	structureRequester  neomega.StructureRequester
-	asyncNBTBlockPlacer neomega.AsyncNBTBlockPlacer
-	microAction         neomega.BotAction
-	pickedItemChan      chan protocol.InventoryAction
-	muChan              chan struct{}
-	node                nodes.Node
+	uq                 neomega.MicroUQHolder
+	ctrl               neomega.InteractCore
+	cmdSender          neomega.CmdSender
+	cmdHelper          neomega.CommandHelper
+	structureRequester neomega.StructureRequester
+	microAction        neomega.BotAction
+	pickedItemChan     chan protocol.InventoryAction
+	muChan             chan struct{}
+	node               nodes.Node
+	// asyncNBTBlockPlacer neomega.AsyncNBTBlockPlacer
 }
 
 func NewBotActionHighLevel(
-	uq neomega.MicroUQHolder, ctrl neomega.InteractCore, react neomega.ReactCore, cmdSender neomega.CmdSender, cmdHelper neomega.CommandHelper, structureRequester neomega.StructureRequester, asyncNBTBlockPlacer neomega.AsyncNBTBlockPlacer, microAction neomega.BotAction,
+	uq neomega.MicroUQHolder, ctrl neomega.InteractCore, react neomega.ReactCore, cmdSender neomega.CmdSender, cmdHelper neomega.CommandHelper, structureRequester neomega.StructureRequester, microAction neomega.BotAction,
 	node nodes.Node,
 ) neomega.BotActionHighLevel {
 	muChan := make(chan struct{}, 1)
 	muChan <- struct{}{}
 	bah := &BotActionHighLevel{
-		uq:                  uq,
-		ctrl:                ctrl,
-		cmdSender:           cmdSender,
-		cmdHelper:           cmdHelper,
-		structureRequester:  structureRequester,
-		asyncNBTBlockPlacer: asyncNBTBlockPlacer,
-		microAction:         microAction,
-		muChan:              muChan,
-		node:                node,
+		uq:                 uq,
+		ctrl:               ctrl,
+		cmdSender:          cmdSender,
+		cmdHelper:          cmdHelper,
+		structureRequester: structureRequester,
+		// asyncNBTBlockPlacer: asyncNBTBlockPlacer,
+		microAction: microAction,
+		muChan:      muChan,
+		node:        node,
 	}
 
 	react.SetTypedPacketCallBack(packet.IDInventoryTransaction, func(p packet.Packet) {
@@ -261,20 +261,14 @@ func (o *BotActionHighLevel) highLevelPlaceCommandBlock(option *neomega.PlaceCom
 	if err := o.highLevelEnsureBotNearby(define.CubePos{option.X, option.Y, option.Z}, 8); err != nil {
 		return err
 	}
-	updateOption := o.asyncNBTBlockPlacer.GenCommandBlockUpdateFromOption(option)
+	updateOption := option.GenCommandBlockUpdateFromOption()
 	sleepTime := 1
 	for maxRetry > 0 {
 		maxRetry--
-		ok := make(chan bool, 1)
-		o.asyncNBTBlockPlacer.AsyncPlaceCommandBlock(
-			define.CubePos{option.X, option.Y, option.Z},
-			option.BlockName, option.BlockState, true, false, updateOption,
-			func(done bool) { ok <- done }, time.Second*3,
-		)
-		if <-ok {
-			return nil
-		}
-		time.Sleep(time.Second * time.Duration(sleepTime))
+		cmd := fmt.Sprintf("setblock %v %v %v %v %v", option.X, option.Y, option.Z, strings.Replace(option.BlockName, "minecraft:", "", 1), option.BlockState)
+		o.cmdSender.SendWebSocketCmdNeedResponse(cmd).SetTimeout(time.Second * 3).BlockGetResult()
+		o.ctrl.SendPacket(updateOption)
+		time.Sleep(100 * time.Millisecond)
 		r, err := o.structureRequester.RequestStructure(define.CubePos{option.X, option.Y, option.Z}, define.CubePos{1, 1, 1}, "_temp").BlockGetResult()
 		if err != nil {
 		} else {
