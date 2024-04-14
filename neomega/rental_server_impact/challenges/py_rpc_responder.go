@@ -74,10 +74,7 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 	if !ok {
 		return
 	}
-	if pkt == nil || pkt.Value == nil {
-		return
-	}
-	goContentData := pkt.Value.MakeGo()
+	goContentData := pkt.Value.Value
 	if goContentData == nil {
 		return
 	}

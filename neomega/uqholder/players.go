@@ -336,10 +336,7 @@ func (uq *Players) UpdateFromPacket(pk packet.Packet) {
 		player.setEntityMetadata(p.EntityMetadata)
 	case *packet.PyRpc:
 		// [ModEventS2C [Minecraft chatExtension PlayerAddRoom map[id2DimId:map[-25769000000:0] id2Uid:map[-25769000000:2149000000] prefixInfo:map[-25769000000:map[]] uids:[2149000000]]] <nil>]
-		if p.Value == nil {
-			return
-		}
-		valueList, ok := p.Value.MakeGo().([]any)
+		valueList, ok := p.Value.Value.([]any)
 		if !ok || len(valueList) != 3 {
 			return
 		}
@@ -359,12 +356,12 @@ func (uq *Players) UpdateFromPacket(pk packet.Packet) {
 			return
 		}
 		// Convert event data to map[string]any and get details
-		eventData, ok := contentList[3].(map[string]any)
+		eventData, ok := contentList[3].(map[any]any)
 		if !ok {
 			return
 		}
 		// Convert id2Uid to map[string]any
-		id2Uid, ok := eventData["id2Uid"].(map[string]any)
+		id2Uid, ok := eventData["id2Uid"].(map[any]any)
 		if !ok {
 			return
 		}
@@ -373,7 +370,7 @@ func (uq *Players) UpdateFromPacket(pk packet.Packet) {
 			if !ok {
 				continue
 			}
-			uid, err := strconv.ParseInt(sUid, 10, 64)
+			uid, err := strconv.ParseInt(sUid.(string), 10, 64)
 			if err != nil {
 				continue
 			}

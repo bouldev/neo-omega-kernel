@@ -75,7 +75,7 @@ func (o *aiCommandOnGoingOutputs) genInferredConsoleOutput(executeResult bool, o
 	}
 }
 
-func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string]any) {
+func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[any]any) {
 	switch eventName {
 	case "AfterExecuteCommandEvent":
 		// fmt.Println("AfterExecuteCommandEvent", eventArgs)
@@ -94,7 +94,7 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 			return
 		}
 		// We can ensure all the "ExecuteCommandOutputEvent" are sent before "AfterExecuteCommandEvent"
-		outputs, ok := c.aiCmdResultByUUID.GetAndDelete(cmdUUID)
+		outputs, _ := c.aiCmdResultByUUID.GetAndDelete(cmdUUID)
 		// CommandOutput packet can be received, but it hold an invalid(random) UUID
 		inferredConsoleResp := outputs.genInferredConsoleOutput(cmdExecuteResult, cmdUUID)
 		cb(inferredConsoleResp)
@@ -120,10 +120,7 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[string
 }
 
 func (c *CmdSenderBasic) onNewPyRpc(p *packet.PyRpc) {
-	if p == nil || p.Value == nil {
-		return
-	}
-	pkt, ok := p.Value.MakeGo().([]any)
+	pkt, ok := p.Value.Value.([]any)
 	if !ok || len(pkt) != 3 {
 		return
 	}
@@ -141,7 +138,7 @@ func (c *CmdSenderBasic) onNewPyRpc(p *packet.PyRpc) {
 	if !ok {
 		return
 	}
-	eventArgs, ok := pktData[3].(map[string]any)
+	eventArgs, ok := pktData[3].(map[any]any)
 	if !ok {
 		return
 	}
