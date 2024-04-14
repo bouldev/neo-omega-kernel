@@ -136,6 +136,14 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 		}
 		ret_p := []interface{}{}
 		json.Unmarshal([]byte(ret), &ret_p)
+
+		if len(ret_p) > 7 {
+			ret6, ok := ret_p[6].(float64)
+			if ok {
+				ret_p[6] = int64(ret6)
+			}
+		}
+
 		o.GetGameControl().SendPacket(&packet.PyRpc{
 			Value: py_rpc.FromGo([]interface{}{
 				"SetMCPCheckNum",

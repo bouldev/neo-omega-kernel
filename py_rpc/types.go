@@ -7,4 +7,5 @@ const (
 	BytesType
 	ListType
 	MapType
+	FloatType
 )
