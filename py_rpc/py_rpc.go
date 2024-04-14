@@ -81,11 +81,11 @@ func FromGo(v interface{}) PyRpcObject {
 	} else if kind == reflect.Uint32 {
 		return &PyRpcIntObject{Value: int64(v.(uint32))}
 	} else if kind == reflect.Uint64 {
-		return &PyRpcFloatObject{Value: v.(float64)}
+		return &PyRpcIntObject{Value: int64(v.(uint64))}
 	} else if kind == reflect.Float32 {
 		return &PyRpcFloatObject{Value: float64(v.(float32))}
 	} else if kind == reflect.Float64 {
-		return &PyRpcIntObject{Value: int64(v.(float64))}
+		return &PyRpcFloatObject{Value: v.(float64)}
 	} else if kind == reflect.Map {
 		o := &PyRpcMapObject{}
 		o.FromGo(v)
