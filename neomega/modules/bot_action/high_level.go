@@ -279,8 +279,11 @@ func (o *BotActionHighLevel) highLevelPlaceCommandBlock(option *neomega.PlaceCom
 						ok := true
 						if tnbt["id"].(string) != "CommandBlock" {
 							ok = false
-						} else if tnbt["Command"].(string) != option.Command {
+						} else if strings.TrimSpace(tnbt["Command"].(string)) != strings.TrimSpace(option.Command) {
 							ok = false
+							if strings.TrimSpace(tnbt["Command"].(string)) == "***" {
+								return fmt.Errorf("netease make command to ***")
+							}
 						} else if tnbt["CustomName"].(string) != option.Name {
 							ok = false
 						}
