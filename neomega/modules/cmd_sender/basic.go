@@ -5,7 +5,6 @@ import (
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/py_rpc"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"strings"
 	"sync"
@@ -120,7 +119,7 @@ func (c *CmdSenderBasic) onAICommandEvent(eventName string, eventArgs map[any]an
 }
 
 func (c *CmdSenderBasic) onNewPyRpc(p *packet.PyRpc) {
-	pkt, ok := p.Value.Value.([]any)
+	pkt, ok := p.Value.([]any)
 	if !ok || len(pkt) != 3 {
 		return
 	}
@@ -226,7 +225,7 @@ func (c *CmdSenderBasic) packCmdWithUUID(cmd string, ud uuid.UUID, ws bool) *pac
 
 func (c *CmdSenderBasic) packAICmdWithUUID(runtimeid string, cmd string, ud uuid.UUID) *packet.PyRpc {
 	commandRequest := &packet.PyRpc{
-		Value: py_rpc.FromGo([]any{
+		Value: []any{
 			"ModEventC2S",
 			[]any{
 				"Minecraft",
@@ -239,7 +238,7 @@ func (c *CmdSenderBasic) packAICmdWithUUID(runtimeid string, cmd string, ud uuid
 				},
 			},
 			nil,
-		}),
+		},
 	}
 	return commandRequest
 }

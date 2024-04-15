@@ -336,7 +336,7 @@ func (uq *Players) UpdateFromPacket(pk packet.Packet) {
 		player.setEntityMetadata(p.EntityMetadata)
 	case *packet.PyRpc:
 		// [ModEventS2C [Minecraft chatExtension PlayerAddRoom map[id2DimId:map[-25769000000:0] id2Uid:map[-25769000000:2149000000] prefixInfo:map[-25769000000:map[]] uids:[2149000000]]] <nil>]
-		valueList, ok := p.Value.Value.([]any)
+		valueList, ok := p.Value.([]any)
 		if !ok || len(valueList) != 3 {
 			return
 		}

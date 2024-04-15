@@ -7,7 +7,6 @@ import (
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/py_rpc"
 )
 
 type CanSolveChallenge interface {
@@ -74,7 +73,7 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 	if !ok {
 		return
 	}
-	goContentData := pkt.Value.Value
+	goContentData := pkt.Value
 	if goContentData == nil {
 		return
 	}
@@ -92,11 +91,11 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 	}
 	if command == "S2CHeartBeat" {
 		o.GetGameControl().SendPacket(&packet.PyRpc{
-			Value: py_rpc.FromGo([]interface{}{
+			Value: []interface{}{
 				"C2SHeartBeat",
 				data,
 				nil,
-			}),
+			},
 		})
 	} else if command == "GetStartType" {
 		if len(data) < 1 {
@@ -107,11 +106,11 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 			o.solveFail <- err
 		}
 		o.GetGameControl().SendPacket(&packet.PyRpc{
-			Value: py_rpc.FromGo([]interface{}{
+			Value: []interface{}{
 				"SetStartType",
 				[]interface{}{response},
 				nil,
-			}),
+			},
 		})
 		if !o.isGetStartTypeResponded {
 			o.isGetStartTypeResponded = true
@@ -142,13 +141,13 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 		}
 
 		o.GetGameControl().SendPacket(&packet.PyRpc{
-			Value: py_rpc.FromGo([]interface{}{
+			Value: []interface{}{
 				"SetMCPCheckNum",
 				[]interface{}{
 					ret_p,
 				},
 				nil,
-			}),
+			},
 		})
 		o.isCheckNumResponded = true
 		close(o.chanCheckNumResponded)

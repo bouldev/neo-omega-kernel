@@ -13,7 +13,6 @@ import (
 	"neo-omega-kernel/neomega/fbauth"
 	"neo-omega-kernel/neomega/rental_server_impact/challenges"
 	"neo-omega-kernel/nodes"
-	"neo-omega-kernel/py_rpc"
 	"time"
 )
 
@@ -38,32 +37,32 @@ func initializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 	// 	}),
 	// })
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]any{
+		Value: []any{
 			"SyncUsingMod",
 			[]any{},
 			nil,
-		}),
+		},
 	})
 
 	// Only this packet is necessary
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]any{
+		Value: []any{
 			"ClientLoadAddonsFinishedFromGac",
 			[]any{},
 			nil,
-		}),
+		},
 	})
 
 	// Generally, following packets are sent after "SetStartType"
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]any{
+		Value: []any{
 			"arenaGamePlayerFinishLoad",
 			[]any{},
 			nil,
-		}),
+		},
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]any{
+		Value: []any{
 			"ModEventC2S",
 			[]any{
 				"Minecraft",
@@ -72,14 +71,14 @@ func initializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 				runtimeid,
 			},
 			nil,
-		}),
+		},
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]any{
+		Value: []any{
 			"ClientInitUIFinishedEventFromGac",
 			[]any{},
 			nil,
-		}),
+		},
 	})
 	return
 }
