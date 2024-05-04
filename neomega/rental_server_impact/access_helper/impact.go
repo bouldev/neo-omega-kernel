@@ -44,7 +44,11 @@ func ImpactServer(ctx context.Context, node nodes.Node, options *Options) (omega
 		if options.ServerConnectionTimeout != 0 {
 			mcServerConnectCtx, _ = context.WithTimeout(ctx, options.ServerConnectionTimeout)
 		}
-		fmt.Printf(i18n.T(i18n.S_connecting_to_mc_server)+"\n", options.ImpactOption.ServerCode, options.ImpactOption.ServerPassword)
+		password := "No"
+		if options.ImpactOption.ServerPassword != "" {
+			password = "Yes"
+		}
+		fmt.Printf(i18n.T(i18n.S_connecting_to_mc_server)+"\n", options.ImpactOption.ServerCode, password)
 		conn, err = connectMCServerWithRetry(mcServerConnectCtx, authenticator, options.ServerConnectRetryTimes)
 		if err != nil {
 			return nil, err
