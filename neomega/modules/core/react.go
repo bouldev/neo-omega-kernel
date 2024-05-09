@@ -38,8 +38,8 @@ type ReactCore struct {
 func NewReactCore() *ReactCore {
 	core := &ReactCore{
 		onAnyPacketCallBack:           make([]func(packet.Packet), 0),
-		onTypedPacketCallBacks:        make([][]func(packet.Packet), 0, 300),
-		noBlockAndDetachableCallbacks: make([]*sync_wrapper.SyncKVMap[string, neomega.NoBlockAndDetachablePacketCallback], 0, 300),
+		onTypedPacketCallBacks:        make([][]func(packet.Packet), 0, 400),
+		noBlockAndDetachableCallbacks: make([]*sync_wrapper.SyncKVMap[string, neomega.NoBlockAndDetachablePacketCallback], 0, 400),
 		DeadReason:                    make(chan error, 16),
 		// oneTimeTypedPacketCallBacks: sync_wrapper.NewSyncKVMap[string,*sync_wrapper.SyncKVMap[string,func(packet.Packet) bool]](),
 		// slowPacketChan:              make(chan packet.Packet, 1024),
@@ -50,10 +50,10 @@ func NewReactCore() *ReactCore {
 			maxID = int(id)
 		}
 	}
-	if maxID < 300 {
+	if maxID < 400 {
 		// we already know netease mc packet could have id 228 and maybe even greater\
 		// these packet event not registered in code so we make room for this
-		maxID = 300
+		maxID = 400
 	}
 	for i := 0; i < maxID; i++ {
 		core.noBlockAndDetachableCallbacks = append(core.noBlockAndDetachableCallbacks, sync_wrapper.NewSyncKVMap[string, neomega.NoBlockAndDetachablePacketCallback]())
