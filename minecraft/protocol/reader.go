@@ -706,8 +706,8 @@ func (r *Reader) panic(err error) {
 
 // Netease's Python MsgPack
 func (r *Reader) MsgPack(x *any) {
-	var data []byte
-	if _, err := r.r.Read(data); err != nil {
+	data, err := io.ReadAll(r.r)
+	if err != nil {
 		r.panic(err)
 	}
 	var msgPackHandler codec.MsgpackHandle
