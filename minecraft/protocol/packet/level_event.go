@@ -8,7 +8,6 @@ import (
 
 // noinspection SpellCheckingInspection
 const (
-	LevelEventUndefined                    = 0
 	LevelEventSoundClick                   = 1000
 	LevelEventSoundClickFail               = 1001
 	LevelEventSoundLaunch                  = 1002
@@ -43,6 +42,7 @@ const (
 	LevelEventSoundPointedDripstoneLand    = 1064
 	LevelEventSoundDyeUsed                 = 1065
 	LevelEventSoundInkSacUsed              = 1066
+	LevelEventSoundAmethystResonate        = 1067
 	LevelEventQueueCustomMusic             = 1900
 	LevelEventPlayCustomMusic              = 1901
 	LevelEventStopCustomMusic              = 1902
@@ -86,6 +86,7 @@ const (
 	LevelEventSculkCatalystBloom           = 2036
 	LevelEventSculkCharge                  = 2037
 	LevelEventSculkChargePop               = 2038
+	LevelEventSonicExplosion               = 2039
 	LevelEventStartRaining                 = 3001
 	LevelEventStartThunderstorm            = 3002
 	LevelEventStopRaining                  = 3003
@@ -112,6 +113,12 @@ const (
 	LevelEventStartBlockCracking           = 3600
 	LevelEventStopBlockCracking            = 3601
 	LevelEventUpdateBlockCracking          = 3602
+	LevelEventParticlesCrackBlockDown      = 3603
+	LevelEventParticlesCrackBlockUp        = 3604
+	LevelEventParticlesCrackBlockNorth     = 3605
+	LevelEventParticlesCrackBlockSouth     = 3606
+	LevelEventParticlesCrackBlockWest      = 3607
+	LevelEventParticlesCrackBlockEast      = 3608
 	LevelEventAllPlayersSleeping           = 9800
 	LevelEventSleepingPlayers              = 9801
 	LevelEventJumpPrevented                = 9810
@@ -137,16 +144,8 @@ func (*LevelEvent) ID() uint32 {
 	return IDLevelEvent
 }
 
-// Marshal ...
-func (pk *LevelEvent) Marshal(w *protocol.Writer) {
-	w.Varint32(&pk.EventType)
-	w.Vec3(&pk.Position)
-	w.Varint32(&pk.EventData)
-}
-
-// Unmarshal ...
-func (pk *LevelEvent) Unmarshal(r *protocol.Reader) {
-	r.Varint32(&pk.EventType)
-	r.Vec3(&pk.Position)
-	r.Varint32(&pk.EventData)
+func (pk *LevelEvent) Marshal(io protocol.IO) {
+	io.Varint32(&pk.EventType)
+	io.Vec3(&pk.Position)
+	io.Varint32(&pk.EventData)
 }

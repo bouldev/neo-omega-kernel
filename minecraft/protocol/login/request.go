@@ -8,10 +8,11 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
 	"strings"
 	"time"
+
+	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 // chain holds a chain with claims, each with their own headers, payloads and signatures. Each claim holds
@@ -125,8 +126,9 @@ func Parse(request []byte) (IdentityData, ClientData, AuthResult, error) {
 		return iData, cData, res, fmt.Errorf("parse client data: %w", err)
 	}
 	if strings.Count(cData.ServerAddress, ":") > 1 {
-		// IPv6: We can't net.ResolveUDPAddr this directly, because Mojang does not put [] around the IP. We'll have to
-		// do this manually:
+		// IPv6: We can't net.ResolveUDPAddr this directly, because Mojang does
+		// not always put [] around the IP if it isn't added by the player in
+		// the External Server adding screen. We'll have to do this manually:
 		ind := strings.LastIndex(cData.ServerAddress, ":")
 		cData.ServerAddress = "[" + cData.ServerAddress[:ind] + "]" + cData.ServerAddress[ind:]
 	}

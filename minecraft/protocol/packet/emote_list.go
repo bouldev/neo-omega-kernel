@@ -24,28 +24,7 @@ func (*EmoteList) ID() uint32 {
 	return IDEmoteList
 }
 
-// Marshal ...
-func (pk *EmoteList) Marshal(w *protocol.Writer) {
-	l := uint32(len(pk.EmotePieces))
-	w.Varuint64(&pk.PlayerRuntimeID)
-	w.Varuint32(&l)
-	if len(pk.EmotePieces) > 6 {
-		panic("player can have at most 6 emotes set")
-	}
-	for _, piece := range pk.EmotePieces {
-		w.UUID(&piece)
-	}
-}
-
-// Unmarshal ...
-func (pk *EmoteList) Unmarshal(r *protocol.Reader) {
-	var count uint32
-	r.Varuint64(&pk.PlayerRuntimeID)
-	r.Varuint32(&count)
-	r.LimitUint32(count, 6)
-
-	pk.EmotePieces = make([]uuid.UUID, count)
-	for i := uint32(0); i < count; i++ {
-		r.UUID(&pk.EmotePieces[i])
-	}
+func (pk *EmoteList) Marshal(io protocol.IO) {
+	io.Varuint64(&pk.PlayerRuntimeID)
+	protocol.FuncSlice(io, &pk.EmotePieces, io.UUID)
 }

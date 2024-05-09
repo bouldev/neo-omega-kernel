@@ -65,9 +65,10 @@ type Dependency struct {
 }
 
 // Capability is a particular feature that the pack utilises of that isn't necessarily enabled by default.
-//   experimental_custom_ui: Allows HTML files in the pack to be used for custom UI, and scripts in the pack
-//                           to call and manipulate custom UI.
-//   chemistry:              Allows the pack to add, change or replace Chemistry functionality.
+//
+//	experimental_custom_ui: Allows HTML files in the pack to be used for custom UI, and scripts in the pack
+//	                        to call and manipulate custom UI.
+//	chemistry:              Allows the pack to add, change or replace Chemistry functionality.
 type Capability string
 
 // Metadata contains additional information about the pack that is otherwise optional.

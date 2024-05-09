@@ -183,5 +183,27 @@ const (
 	IDDimensionData
 	IDAgentAction
 	IDChangeMobProperty
-	IDPyRpc = 0xC8
+	IDLessonProgress
+	IDRequestAbility
+	IDRequestPermissions
+	IDToastRequest
+	IDUpdateAbilities
+	IDUpdateAdventureSettings
+	IDDeathInfo
+	IDEditorNetwork
+	IDFeatureRegistry
+	IDServerStats
+	IDRequestNetworkSettings
+	IDGameTestRequest
+	IDGameTestResults
+	IDUpdateClientInputLocks
+	IDClientCheatAbility
+	IDCameraPresets
+	IDUnlockedRecipes
+	IDPyRpc             // TODO: Need to check if this is correct
+	IDCameraInstruction = iota + 101
+	IDCompressedBiomeDefinitionList
+	IDTrimData
+	IDOpenSign
+	IDAgentAnimation
 )

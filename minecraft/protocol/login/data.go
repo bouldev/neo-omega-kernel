@@ -49,11 +49,6 @@ type IdentityData struct {
 	TitleID string `json:"titleId,omitempty"`
 }
 
-// checkUsername is used to check if a username is valid according to the Microsoft specification: "You can
-// use up to 15 characters: Aa-Zz, 0-9, and single spaces. It cannot start with a number and cannot start or
-// end with a space."
-var checkUsername = regexp.MustCompile("[A-Za-z0-9 ]").MatchString
-
 // Validate validates the identity data. It returns an error if any data contained in the IdentityData is
 // invalid.
 func (data IdentityData) Validate() error {
@@ -67,24 +62,6 @@ func (data IdentityData) Validate() error {
 	// were enabled to use. We are not going to open a server as it's not
 	// possible for NetEase's Minecraft, so these checks below could be
 	// ignored.
-	return nil
-	if len(data.DisplayName) == 0 || len(data.DisplayName) > 15 {
-		return fmt.Errorf("DisplayName must not be empty or longer than 15 characters, but got %v characters", len(data.DisplayName))
-	}
-	if data.DisplayName[0] == ' ' || data.DisplayName[len(data.DisplayName)-1] == ' ' {
-		return fmt.Errorf("DisplayName may not have a space as first/last character, but got %v", data.DisplayName)
-	}
-	if data.DisplayName[0] >= '0' && data.DisplayName[0] <= '9' {
-		return fmt.Errorf("DisplayName may not have a number as first character, but got %v", data.DisplayName)
-	}
-	if !checkUsername(data.DisplayName) {
-		return fmt.Errorf("DisplayName must only contain numbers, letters and spaces, but got %v", data.DisplayName)
-	}
-	// We check here if the name contains at least 2 spaces after each other, which is not allowed. The name
-	// is only allowed to have single spaces.
-	if strings.Contains(data.DisplayName, "  ") {
-		return fmt.Errorf("DisplayName must only have single spaces, but got %v", data.DisplayName)
-	}
 	return nil
 }
 
@@ -118,13 +95,16 @@ type ClientData struct {
 	DeviceModel string
 	// DeviceOS is a numerical ID indicating the OS of the device.
 	DeviceOS protocol.DeviceOS
-	// DeviceID is a UUID specific to the device. A different user will have the same UUID for this.
+	// DeviceID is usually a UUID specific to the device. A different user will have the same UUID for this.
+	// DeviceID is not guaranteed to always be a UUID. It is a base64 encoded string under some circumstances.
 	DeviceID string `json:"DeviceId"`
 	// GameVersion is the game version of the player that attempted to join, for example '1.11.0'.
 	GameVersion string
 	// GUIScale is the GUI scale of the player. It is by default 0, and is otherwise -1 or -2 for a smaller
 	// GUI scale than usual.
 	GUIScale int `json:"GuiScale"`
+	// IsEditorMode is a value to dictate if the player is in editor mode.
+	IsEditorMode bool
 	// LanguageCode is the language code of the player. It looks like 'en_UK'. It follows the ISO language
 	// codes, but hyphens ('-') are replaced with underscores. ('_')
 	LanguageCode string
@@ -200,6 +180,13 @@ type ClientData struct {
 	ThirdPartyNameOnly bool
 	// UIProfile is the UI profile used. For the 'Pocket' UI, this is 1. For the 'Classic' UI, this is 0.
 	UIProfile int
+	// TrustedSkin is a boolean indicating if the skin the client is using is trusted.
+	TrustedSkin bool
+	// OverrideSkin is a boolean that does not make sense to be here. The current usage of this field is unknown.
+	OverrideSkin bool
+	// CompatibleWithClientSideChunkGen is a boolean indicating if the client's hardware is capable of using the client
+	// side chunk generation system.
+	CompatibleWithClientSideChunkGen bool
 }
 
 // PersonaPiece represents a piece of a persona skin. All pieces are sent separately.
@@ -282,11 +269,8 @@ var checkVersion = regexp.MustCompile("[0-9.]").MatchString
 // Validate validates the client data. It returns an error if any of the fields checked did not carry a valid
 // value.
 func (data ClientData) Validate() error {
-	if data.DeviceOS <= 0 || data.DeviceOS > 13 {
-		return fmt.Errorf("DeviceOS must carry a value between 1 and 13, but got %v", data.DeviceOS)
-	}
-	if _, err := uuid.Parse(data.DeviceID); err != nil {
-		return fmt.Errorf("DeviceID must be parseable as a valid UUID, but got %v", data.DeviceID)
+	if data.DeviceOS <= 0 || data.DeviceOS > 15 {
+		return fmt.Errorf("DeviceOS must carry a value between 1 and 15, but got %v", data.DeviceOS)
 	}
 	if !checkVersion(data.GameVersion) {
 		return fmt.Errorf("GameVersion must only contain dots and numbers, but got %v", data.GameVersion)
@@ -339,10 +323,9 @@ func (data ClientData) Validate() error {
 	if data.SkinID == "" {
 		return fmt.Errorf("SkinID must not be an empty string")
 	}
-	if data.UIProfile != 0 && data.UIProfile != 1 {
-		return fmt.Errorf("UIProfile must be either 0 or 1, but got %v", data.UIProfile)
+	if data.UIProfile < 0 || data.UIProfile > 2 {
+		return fmt.Errorf("UIProfile must be between 0-2, but got %v", data.UIProfile)
 	}
-
 	return nil
 }
 

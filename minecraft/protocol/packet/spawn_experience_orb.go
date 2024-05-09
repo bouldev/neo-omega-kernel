@@ -23,14 +23,7 @@ func (*SpawnExperienceOrb) ID() uint32 {
 	return IDSpawnExperienceOrb
 }
 
-// Marshal ...
-func (pk *SpawnExperienceOrb) Marshal(w *protocol.Writer) {
-	w.Vec3(&pk.Position)
-	w.Varint32(&pk.ExperienceAmount)
-}
-
-// Unmarshal ...
-func (pk *SpawnExperienceOrb) Unmarshal(r *protocol.Reader) {
-	r.Vec3(&pk.Position)
-	r.Varint32(&pk.ExperienceAmount)
+func (pk *SpawnExperienceOrb) Marshal(io protocol.IO) {
+	io.Vec3(&pk.Position)
+	io.Varint32(&pk.ExperienceAmount)
 }

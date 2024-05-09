@@ -2,7 +2,6 @@ package packet
 
 import (
 	"image/color"
-	"math"
 	"neo-omega-kernel/minecraft/protocol"
 )
 
@@ -29,6 +28,8 @@ type ClientBoundMapItemData struct {
 	// LockedMap specifies if the map that was updated was a locked map, which may be done using a cartography
 	// table.
 	LockedMap bool
+	// Origin is the center position of the map being updated.
+	Origin protocol.BlockPos
 	// Scale is the scale of the map as it is shown in-game. It is written when any of the MapUpdateFlags are
 	// set to the UpdateFlags field.
 	Scale byte
@@ -65,9 +66,8 @@ type ClientBoundMapItemData struct {
 	// YOffset is the Y offset in pixels at which the updated texture area starts. From this Y, the updated
 	// texture will extend exactly Height pixels up.
 	YOffset int32
-	// Pixels is a list of pixel colours for the new texture of the map. It is indexed as Pixels[y][x], with
-	// the length of the outer slice having to be exactly Height long and the inner slices exactly Width long.
-	Pixels [][]color.RGBA
+	// Pixels is a list of pixel colours for the new texture of the map. It is indexed as Pixels[y*height + x].
+	Pixels []color.RGBA
 }
 
 // ID ...
@@ -75,112 +75,28 @@ func (*ClientBoundMapItemData) ID() uint32 {
 	return IDClientBoundMapItemData
 }
 
-// Marshal ...
-func (pk *ClientBoundMapItemData) Marshal(w *protocol.Writer) {
-	w.Varint64(&pk.MapID)
-	w.Varuint32(&pk.UpdateFlags)
-	w.Uint8(&pk.Dimension)
-	w.Bool(&pk.LockedMap)
+func (pk *ClientBoundMapItemData) Marshal(io protocol.IO) {
+	io.Varint64(&pk.MapID)
+	io.Varuint32(&pk.UpdateFlags)
+	io.Uint8(&pk.Dimension)
+	io.Bool(&pk.LockedMap)
+	io.BlockPos(&pk.Origin)
 
 	if pk.UpdateFlags&MapUpdateFlagInitialisation != 0 {
-		l := uint32(len(pk.MapsIncludedIn))
-		w.Varuint32(&l)
-		for _, mapID := range pk.MapsIncludedIn {
-			w.Varint64(&mapID)
-		}
+		protocol.FuncSlice(io, &pk.MapsIncludedIn, io.Varint64)
 	}
 	if pk.UpdateFlags&(MapUpdateFlagInitialisation|MapUpdateFlagDecoration|MapUpdateFlagTexture) != 0 {
-		w.Uint8(&pk.Scale)
+		io.Uint8(&pk.Scale)
 	}
 	if pk.UpdateFlags&MapUpdateFlagDecoration != 0 {
-		l := uint32(len(pk.TrackedObjects))
-		w.Varuint32(&l)
-		for _, obj := range pk.TrackedObjects {
-			protocol.MapTrackedObj(w, &obj)
-		}
-		l = uint32(len(pk.TrackedObjects))
-		w.Varuint32(&l)
-		for _, decoration := range pk.Decorations {
-			protocol.MapDeco(w, &decoration)
-		}
+		protocol.Slice(io, &pk.TrackedObjects)
+		protocol.Slice(io, &pk.Decorations)
 	}
 	if pk.UpdateFlags&MapUpdateFlagTexture != 0 {
-		// Some basic validation for the values passed into the packet.
-		if pk.Width <= 0 || pk.Height <= 0 {
-			panic("invalid map texture update: width and height must be at least 1")
-		}
-
-		w.Varint32(&pk.Width)
-		w.Varint32(&pk.Height)
-		w.Varint32(&pk.XOffset)
-		w.Varint32(&pk.YOffset)
-
-		l := uint32(pk.Width * pk.Height)
-		w.Varuint32(&l)
-
-		if len(pk.Pixels) != int(pk.Height) {
-			panic("invalid map texture update: length of outer pixels array must be equal to height")
-		}
-		for y := int32(0); y < pk.Height; y++ {
-			if len(pk.Pixels[y]) != int(pk.Width) {
-				panic("invalid map texture update: length of inner pixels array must be equal to width")
-			}
-			for x := int32(0); x < pk.Width; x++ {
-				w.VarRGBA(&pk.Pixels[y][x])
-			}
-		}
-	}
-}
-
-// Unmarshal ...
-func (pk *ClientBoundMapItemData) Unmarshal(r *protocol.Reader) {
-	// IGNORED !!!
-	return
-	r.Varint64(&pk.MapID)
-	r.Varuint32(&pk.UpdateFlags)
-	r.Uint8(&pk.Dimension)
-	r.Bool(&pk.LockedMap)
-
-	var count uint32
-	if pk.UpdateFlags&MapUpdateFlagInitialisation != 0 {
-		r.Varuint32(&count)
-		pk.MapsIncludedIn = make([]int64, count)
-		for i := uint32(0); i < count; i++ {
-			r.Varint64(&pk.MapsIncludedIn[i])
-		}
-	}
-	if pk.UpdateFlags&(MapUpdateFlagInitialisation|MapUpdateFlagDecoration|MapUpdateFlagTexture) != 0 {
-		r.Uint8(&pk.Scale)
-	}
-	if pk.UpdateFlags&MapUpdateFlagDecoration != 0 {
-		r.Varuint32(&count)
-		pk.TrackedObjects = make([]protocol.MapTrackedObject, count)
-		for i := uint32(0); i < count; i++ {
-			protocol.MapTrackedObj(r, &pk.TrackedObjects[i])
-		}
-		r.Varuint32(&count)
-		pk.Decorations = make([]protocol.MapDecoration, count)
-		for i := uint32(0); i < count; i++ {
-			protocol.MapDeco(r, &pk.Decorations[i])
-		}
-	}
-	if pk.UpdateFlags&MapUpdateFlagTexture != 0 {
-		r.Varint32(&pk.Width)
-		r.Varint32(&pk.Height)
-		r.Varint32(&pk.XOffset)
-		r.Varint32(&pk.YOffset)
-		r.Varuint32(&count)
-
-		r.LimitInt32(pk.Width, 0, math.MaxInt16)
-		r.LimitInt32(pk.Height, 0, math.MaxInt16)
-		r.LimitInt32(pk.Width*pk.Height, int32(count), int32(count))
-
-		pk.Pixels = make([][]color.RGBA, pk.Height)
-		for y := int32(0); y < pk.Height; y++ {
-			pk.Pixels[y] = make([]color.RGBA, pk.Width)
-			for x := int32(0); x < pk.Width; x++ {
-				r.VarRGBA(&pk.Pixels[y][x])
-			}
-		}
+		io.Varint32(&pk.Width)
+		io.Varint32(&pk.Height)
+		io.Varint32(&pk.XOffset)
+		io.Varint32(&pk.YOffset)
+		protocol.FuncSlice(io, &pk.Pixels, io.VarRGBA)
 	}
 }

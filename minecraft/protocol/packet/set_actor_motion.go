@@ -22,14 +22,7 @@ func (*SetActorMotion) ID() uint32 {
 	return IDSetActorMotion
 }
 
-// Marshal ...
-func (pk *SetActorMotion) Marshal(w *protocol.Writer) {
-	w.Varuint64(&pk.EntityRuntimeID)
-	w.Vec3(&pk.Velocity)
-}
-
-// Unmarshal ...
-func (pk *SetActorMotion) Unmarshal(r *protocol.Reader) {
-	r.Varuint64(&pk.EntityRuntimeID)
-	r.Vec3(&pk.Velocity)
+func (pk *SetActorMotion) Marshal(io protocol.IO) {
+	io.Varuint64(&pk.EntityRuntimeID)
+	io.Vec3(&pk.Velocity)
 }
