@@ -78,7 +78,7 @@ func safeDecode(pkt packet.Packet, r *protocol.Reader) (p packet.Packet, err err
 			err = fmt.Errorf("%T: %w", pkt, recoveredErr.(error))
 		}
 	}()
-	pkt.Unmarshal(r)
+	pkt.Marshal(r)
 	return pkt, nil
 }
 
@@ -119,7 +119,7 @@ func NewEndPointReactCore(node nodes.Node) interface {
 			core.DeadReason <- fmt.Errorf("end point error reading packet header: %v", err)
 			return
 		}
-		r := protocol.NewReader(reader, shieldID)
+		r := protocol.NewReader(reader, shieldID, false)
 		if pktMake, found := pool[header.PacketID]; found {
 			pk := pktMake()
 			pk, err = safeDecode(pk, r)

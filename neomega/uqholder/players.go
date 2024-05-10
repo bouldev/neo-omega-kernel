@@ -323,10 +323,10 @@ func (uq *Players) UpdateFromPacket(pk packet.Packet) {
 		player.setOPPermissionLevel(p.PermissionLevel)
 		player.setCustomStoredPermissions(p.CustomStoredPermissions)
 	case *packet.AddPlayer:
-		playerReader, found := uq.GetPlayerByUniqueID(p.EntityUniqueID)
+		playerReader, found := uq.GetPlayerByUniqueID(p.AbilityData.EntityUniqueID)
 		if !found {
 			uq.pendingMu.Lock()
-			uq.pendingAddPlayerPacket[p.PlayerUniqueID] = p
+			uq.pendingAddPlayerPacket[p.AbilityData.EntityUniqueID] = p
 			uq.pendingMu.Unlock()
 			return
 		}

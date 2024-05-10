@@ -293,7 +293,7 @@ func (p *Player) Unmarshal(data []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	protocol.NewReader(basicReader, 0).EntityMetadata(&p.EntityMetadata)
+	protocol.NewReader(basicReader, 0, false).EntityMetadata(&p.EntityMetadata)
 	p.knownEntityMetadata, err = readAndGetBool()
 	if err != nil {
 		return err

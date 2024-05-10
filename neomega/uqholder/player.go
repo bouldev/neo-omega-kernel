@@ -280,6 +280,7 @@ var AdventureFlagMap = map[string]uint32{
 	"AdventureFlagWorldImmutable":        packet.AdventureFlagWorldImmutable,
 	"AdventureSettingsFlagsNoPvM":        packet.AdventureSettingsFlagsNoPvM,
 	"AdventureSettingsFlagsNoMvP":        packet.AdventureSettingsFlagsNoMvP,
+	"AdventureSettingsFlagsUnused":       packet.AdventureSettingsFlagsUnused,
 	"AdventureSettingsFlagsShowNameTags": packet.AdventureSettingsFlagsShowNameTags,
 	"AdventureFlagAutoJump":              packet.AdventureFlagAutoJump,
 	"AdventureFlagAllowFlight":           packet.AdventureFlagAllowFlight,
@@ -296,9 +297,9 @@ var ActionPermissionMap = map[string]uint32{
 	"ActionPermissionAttackPlayers":    packet.ActionPermissionAttackPlayers,
 	"ActionPermissionAttackMobs":       packet.ActionPermissionAttackMobs,
 	"ActionPermissionOperator":         packet.ActionPermissionOperator,
-	"ActionPermissionUnknown":          packet.ActionPermissionUnknown,
 	"ActionPermissionTeleport":         packet.ActionPermissionTeleport,
 	"ActionPermissionBuild":            packet.ActionPermissionBuild,
+	"ActionPermissionDefault":          packet.ActionPermissionDefault,
 }
 
 func (p *Player) GetAbilityString() (adventureFlagsMap, actionPermissionMap map[string]bool, found bool) {
