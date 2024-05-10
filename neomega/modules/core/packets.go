@@ -10,7 +10,7 @@ var mcPacketNameIDMapping map[string]uint32
 var pool packet.Pool
 
 func init() {
-	pool = packet.NewServerPool()
+	pool = packet.NewPool()
 	mcPacketNameIDMapping = map[string]uint32{}
 	for id, pkMaker := range pool {
 		pk := pkMaker()

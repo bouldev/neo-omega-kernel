@@ -578,7 +578,7 @@ func prepareOmegaAPIs(omegaCore neomega.MicroOmega) {
 			GPacketIDNameMapping[id] = name
 		}
 	}
-	GPool = packet.NewServerPool()
+	GPool = packet.NewPool()
 	go func() {
 		err := <-omegaCore.Dead()
 		GOmegaCore = nil

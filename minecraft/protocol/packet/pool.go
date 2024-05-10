@@ -43,6 +43,8 @@ func NewServerPool() Pool {
 	return p
 }
 
+var NewPool = NewServerPool
+
 func init() {
 	// TODO: Remove packets from this list that are not sent by the server.
 	serverOriginating := map[uint32]func() Packet{
