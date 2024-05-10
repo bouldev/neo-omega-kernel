@@ -142,7 +142,7 @@ type Conn struct {
 
 	shieldID atomic.Int32
 
-	additional chan packet.Packet
+	// additional chan packet.Packet
 }
 
 // newConn creates a new Minecraft connection for the net.Conn passed, reading and writing compressed
@@ -151,11 +151,11 @@ type Conn struct {
 // key is generated.
 func newConn(netConn net.Conn, key *ecdsa.PrivateKey, log *log.Logger, proto Protocol, flushRate time.Duration, limits bool) *Conn {
 	conn := &Conn{
-		enc:          packet.NewEncoder(netConn),
-		dec:          packet.NewDecoder(netConn),
-		salt:         make([]byte, 16),
-		packets:      make(chan *packetData, 8),
-		additional:   make(chan packet.Packet, 16),
+		enc:     packet.NewEncoder(netConn),
+		dec:     packet.NewDecoder(netConn),
+		salt:    make([]byte, 16),
+		packets: make(chan *packetData, 8),
+		// additional:   make(chan packet.Packet, 16),
 		close:        make(chan struct{}),
 		spawn:        make(chan struct{}),
 		conn:         netConn,
@@ -336,14 +336,42 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	_ = conn.hdr.Write(buf)
 	l := buf.Len()
 
-	for _, converted := range conn.proto.ConvertFromLatest(pk, conn) {
-		converted.Marshal(conn.proto.NewWriter(buf, conn.shieldID.Load()))
+	// for _, converted := range conn.proto.ConvertFromLatest(pk, conn) {
+	pk.Marshal(conn.proto.NewWriter(buf, conn.shieldID.Load()))
 
-		if conn.packetFunc != nil {
-			conn.packetFunc(*conn.hdr, buf.Bytes()[l:], conn.LocalAddr(), conn.RemoteAddr())
-		}
-		conn.bufferedSend = append(conn.bufferedSend, append([]byte(nil), buf.Bytes()...))
+	if conn.packetFunc != nil {
+		conn.packetFunc(*conn.hdr, buf.Bytes()[l:], conn.LocalAddr(), conn.RemoteAddr())
 	}
+	conn.bufferedSend = append(conn.bufferedSend, append([]byte(nil), buf.Bytes()...))
+	// }
+	return nil
+}
+
+func (conn *Conn) WriteRawPacket(pkID uint32, data []byte) error {
+	select {
+	case <-conn.close:
+		return conn.closeErr("write packet")
+	default:
+	}
+	conn.sendMu.Lock()
+	defer conn.sendMu.Unlock()
+
+	buf := internal.BufferPool.Get().(*bytes.Buffer)
+	defer func() {
+		// Reset the buffer so we can return it to the buffer pool safely.
+		buf.Reset()
+		internal.BufferPool.Put(buf)
+	}()
+
+	conn.hdr.PacketID = pkID
+	_ = conn.hdr.Write(buf)
+	l := buf.Len()
+	buf.Write(data)
+	if conn.packetFunc != nil {
+		conn.packetFunc(*conn.hdr, buf.Bytes()[l:], conn.LocalAddr(), conn.RemoteAddr())
+	}
+
+	conn.bufferedSend = append(conn.bufferedSend, append([]byte(nil), buf.Bytes()...))
 	return nil
 }
 
@@ -354,9 +382,9 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 // If the packet read was not implemented, a *packet.Unknown is returned, containing the raw payload of the
 // packet read.
 func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
-	if len(conn.additional) > 0 {
-		return <-conn.additional, nil
-	}
+	// if len(conn.additional) > 0 {
+	// 	return <-conn.additional, nil
+	// }
 	if data, ok := conn.takeDeferredPacket(); ok {
 		pk, err := data.decode(conn)
 		if err != nil {
@@ -366,8 +394,8 @@ func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
 		if len(pk) == 0 {
 			return conn.ReadPacket()
 		}
-		for _, additional := range pk[1:] {
-			conn.additional <- additional
+		if len(pk) != 1 {
+			panic(fmt.Errorf("ConvertToLatestChanged"))
 		}
 		return pk[0], nil
 	}
@@ -386,10 +414,47 @@ func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
 		if len(pk) == 0 {
 			return conn.ReadPacket()
 		}
-		for _, additional := range pk[1:] {
-			conn.additional <- additional
+		if len(pk) != 1 {
+			panic(fmt.Errorf("ConvertToLatestChanged"))
 		}
 		return pk[0], nil
+	}
+}
+
+func (conn *Conn) ReadPacketAndBytes() (pk packet.Packet, data []byte, err error) {
+	if data, ok := conn.takeDeferredPacket(); ok {
+		pk, err := data.decode(conn)
+		if err != nil {
+			conn.log.Println(err)
+			return conn.ReadPacketAndBytes()
+		}
+		if len(pk) == 0 {
+			return conn.ReadPacketAndBytes()
+		}
+		if len(pk) != 1 {
+			panic(fmt.Errorf("ConvertToLatestChanged"))
+		}
+		return pk[0], data.full, nil
+	}
+
+	select {
+	case <-conn.close:
+		return nil, nil, conn.closeErr("read packet")
+	case <-conn.readDeadline:
+		return nil, nil, conn.wrap(context.DeadlineExceeded, "read packet")
+	case data := <-conn.packets:
+		pk, err := data.decode(conn)
+		if err != nil {
+			conn.log.Println(err)
+			return conn.ReadPacketAndBytes()
+		}
+		if len(pk) == 0 {
+			return conn.ReadPacketAndBytes()
+		}
+		if len(pk) != 1 {
+			panic(fmt.Errorf("ConvertToLatestChanged"))
+		}
+		return pk[0], data.full, nil
 	}
 }
 
