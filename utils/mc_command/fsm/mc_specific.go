@@ -22,26 +22,44 @@ func (n *selectorOrNameLeadingCharNode) Do(r TextReader, currentRead *Text) {
 }
 
 // Start -> [1.@orNot(WhiteSpaceOrEof)]
-// [1] -if@->[2.StringWithQuoteExcept`[]`]
+// [1] -if@->[2.AnySpecifics:p,r,a,e,s,c,v,initiator]
 // [1] -ifNot(WhiteSpaceOrEof)->[3.StringWithQuote]
-// [2] ->[4.MiddleBracketStringOrElse]
+// [2] -> [4.WhiteSpaceOrElse]
+// [4] -> [5.MiddleBracketString]
 // [3] -> Next
-// [4] -> Next
+// [5] -> Next
 // `@abc` `@abc[ ... ]` `" sth "` `name`
 func MCSelectorOrNameLogic(end, fail AutomataNode) AutomataNode {
 	_1 := &selectorOrNameLeadingCharNode{}
-	_2 := MakeQuoteMixtureNonExceptStringNode("\r\n\t []")
 	_3 := MakeQuoteMixtureNonExceptStringNode("\r\n\t ")
-	_4 := MakeMiddleBracketStringNode()
+	_4 := MakeWhiteSpaceStringNode()
+	_2 := &MatchSpecificsNode{
+		Targets: []struct {
+			Target string
+			Fold   bool
+			Next   AutomataNode
+		}{
+			{"p", true, _4},
+			{"r", true, _4},
+			{"a", true, _4},
+			{"e", true, _4},
+			{"s", true, _4},
+			{"c", true, _4},
+			{"v", true, _4},
+			{"initiator", true, _4},
+		},
+		Else: fail,
+	}
+	_5 := MakeMiddleBracketStringNode()
 	_1.Selector = _2
 	_1.Name = _3
 	_1.Else = fail
-	_2.Else = fail
-	_2.Next = _4
 	_3.Next = end
 	_3.Else = fail
-	_4.Next = end
-	_4.Else = end
+	_4.Next = _5
+	_4.Else = _5
+	_5.Next = end
+	_5.Else = end
 	return _1
 }
 

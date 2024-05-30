@@ -381,3 +381,108 @@ func MakeReadUntilEndNode() *MachineNodeWrapper {
 		Logic: ReadUntilEndLogic,
 	}
 }
+
+type MatchSpecificNode struct {
+	Target string
+	Fold   bool
+	Else   AutomataNode
+	Next   AutomataNode
+}
+
+func (n *MatchSpecificNode) Do(r TextReader, currentRead *Text) {
+	back := r.Snapshot()
+	newRead := ""
+	runesToRead := len([]rune(n.Target))
+	for i := 0; i < runesToRead; i++ {
+		if r.Current() == "" {
+			break
+		} else {
+			newRead += r.CurrentThenNext()
+		}
+	}
+	if n.Fold {
+		if strings.EqualFold(newRead, n.Target) {
+			currentRead.Text += newRead
+			n.Next.Do(r, currentRead)
+			return
+		} else {
+			back()
+			n.Else.Do(r, currentRead)
+			return
+		}
+	} else {
+		if newRead == n.Target {
+			currentRead.Text += newRead
+			n.Next.Do(r, currentRead)
+			return
+		} else {
+			back()
+			n.Else.Do(r, currentRead)
+			return
+		}
+	}
+}
+
+func MakeMatchSpecificLogic(target string, fold bool) func(end, fail AutomataNode) AutomataNode {
+	return func(end, fail AutomataNode) AutomataNode {
+		_1 := &MatchSpecificNode{
+			Else:   fail,
+			Next:   end,
+			Target: target,
+			Fold:   fold,
+		}
+		return _1
+	}
+}
+
+type MatchSpecificsNode struct {
+	Targets []struct {
+		Target string
+		Fold   bool
+		Next   AutomataNode
+	}
+	Else AutomataNode
+}
+
+func (n *MatchSpecificsNode) Do(r TextReader, currentRead *Text) {
+	nodes := []*MatchSpecificNode{}
+	for _, t := range n.Targets {
+		node := &MatchSpecificNode{
+			Target: t.Target,
+			Fold:   t.Fold,
+			Next:   t.Next,
+			Else:   n.Else,
+		}
+		if len(nodes) != 0 {
+			nodes[len(nodes)-1].Else = node
+		}
+		nodes = append(nodes, node)
+	}
+	if len(nodes) == 0 {
+		n.Else.Do(r, currentRead)
+	} else {
+		nodes[0].Do(r, currentRead)
+	}
+}
+
+func MakeMatchSpecificsLogic(targets []string, fold bool) func(end, fail AutomataNode) AutomataNode {
+	return func(end, fail AutomataNode) AutomataNode {
+		targetsCond := []struct {
+			Target string
+			Fold   bool
+			Next   AutomataNode
+		}{}
+		for _, target := range targets {
+			targetsCond = append(targetsCond, struct {
+				Target string
+				Fold   bool
+				Next   AutomataNode
+			}{target, fold, end})
+		}
+		_1 := &MatchSpecificsNode{
+			Targets: targetsCond,
+			Else:    fail,
+		}
+		return _1
+	}
+}

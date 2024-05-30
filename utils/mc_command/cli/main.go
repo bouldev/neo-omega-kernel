@@ -21,6 +21,6 @@ func main() {
 	// node.Next = end
 	// node.Do(reader, &fsm.Text{})
 	// fmt.Println(end, "\n", reader)
-	command := `execute@a[name="2401PT", ... ??!! , score={...}]~ ^-123.456~789detect-234.1~^bamboo 0 execute@a[name="2401PT", ... ??!! , score={...}]~ ^-123.456~789detect-234.1~^stone -1tp @s ~~~`
+	command := `execute@a  [name="2401PT", ... ??!! , score={...}]~ ^-123.456~789detect-234.1~^bamboo 0 execute@a~ ^-123.456~789detect-234.1~^stone -1tp @s ~~~`
 	fmt.Println(mc_command.UpdateLegacyExecuteCommand(command))
 }

@@ -33,3 +33,11 @@ func ReadPosition(r TextReader) (ok bool, token string) {
 func ReadUntilEnd(r TextReader) (ok bool, token string) {
 	return fsm.DoLogic(r, fsm.ReadUntilEndLogic)
 }
+
+func ReadSpecific(r TextReader, target string, fold bool) (ok bool, token string) {
+	return fsm.DoLogic(r, fsm.MakeMatchSpecificLogic(target, fold))
+}
+
+func ReadAnySpecifics(r TextReader, targets []string, fold bool) (ok bool, token string) {
+	return fsm.DoLogic(r, fsm.MakeMatchSpecificsLogic(targets, fold))
+}

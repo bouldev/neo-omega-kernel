@@ -24,13 +24,13 @@ func (c *LegacyMCExecuteCommand) String() string {
 func ParseLegacyMCCommand(command string) *LegacyMCExecuteCommand {
 	c := &LegacyMCExecuteCommand{}
 	command = strings.TrimSpace(command)
-	if !strings.HasPrefix(strings.ToLower(command), "execute") {
-		return nil
-	}
-	command = command[7:]
 	reader := CleanStringAndNewSimpleTextReader(command)
 	var ok bool
 	var t string
+	ok, _ = token.ReadSpecific(reader, "execute", true)
+	if !ok {
+		return nil
+	}
 	_, _ = token.ReadWhiteSpace(reader)
 	ok, t = token.ReadMCSelector(reader)
 	if !ok {
@@ -44,12 +44,14 @@ func ParseLegacyMCCommand(command string) *LegacyMCExecuteCommand {
 	}
 	c.Pos = t
 	_, _ = token.ReadWhiteSpace(reader)
-	_, subCommand := token.ReadUntilEnd(reader)
-	if !strings.HasPrefix(strings.ToLower(subCommand), "detect") {
+	back := reader.Snapshot()
+	ok, _ = token.ReadSpecific(reader, "detect", true)
+	if !ok {
+		back()
+		_, subCommand := token.ReadUntilEnd(reader)
 		c.SubCommand = subCommand
 		return c
 	}
-	reader = CleanStringAndNewSimpleTextReader(subCommand[6:])
 	token.ReadWhiteSpace(reader)
 	ok, t = token.ReadPosition(reader)
 	if !ok {
