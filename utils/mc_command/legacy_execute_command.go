@@ -3,85 +3,13 @@ package mc_command
 import (
 	"fmt"
 	"neo-omega-kernel/neomega/blocks"
-	"neo-omega-kernel/utils/mc_command/token"
 	"strconv"
 	"strings"
 )
 
-type LegacyMCExecuteCommand struct {
-	Selector              string
-	Pos                   string
-	SubCommand            string
-	DetectPosIfAny        string
-	DetectBlockNameIfAny  string
-	DetectBlockValueIfAny string
-}
-
-func (c *LegacyMCExecuteCommand) String() string {
-	return fmt.Sprintf("execute: <%v> <%v> [<%v><%v,%v>] %v", c.Selector, c.Pos, c.DetectPosIfAny, c.DetectBlockNameIfAny, c.DetectBlockValueIfAny, c.SubCommand)
-}
-
-func ParseLegacyMCCommand(command string) *LegacyMCExecuteCommand {
-	c := &LegacyMCExecuteCommand{}
-	command = strings.TrimSpace(command)
-	reader := CleanStringAndNewSimpleTextReader(command)
-	var ok bool
-	var t string
-	ok, _ = token.ReadSpecific(reader, "execute", true)
-	if !ok {
-		return nil
-	}
-	_, _ = token.ReadWhiteSpace(reader)
-	ok, t = token.ReadMCSelector(reader)
-	if !ok {
-		return nil
-	}
-	c.Selector = t
-	_, _ = token.ReadWhiteSpace(reader)
-	ok, t = token.ReadPosition(reader)
-	if !ok {
-		return nil
-	}
-	c.Pos = t
-	_, _ = token.ReadWhiteSpace(reader)
-	back := reader.Snapshot()
-	ok, _ = token.ReadSpecific(reader, "detect", true)
-	if !ok {
-		back()
-		_, subCommand := token.ReadUntilEnd(reader)
-		c.SubCommand = subCommand
-		return c
-	}
-	token.ReadWhiteSpace(reader)
-	ok, t = token.ReadPosition(reader)
-	if !ok {
-		return nil
-	}
-	c.DetectPosIfAny = t
-	token.ReadWhiteSpace(reader)
-	ok, t = token.ReadNonWhiteSpace(reader)
-	if !ok {
-		return nil
-	}
-	c.DetectBlockNameIfAny = t
-	token.ReadWhiteSpace(reader)
-	ok, t = token.ReadSignedInteger(reader)
-	if !ok {
-		return nil
-	}
-	c.DetectBlockValueIfAny = t
-	token.ReadWhiteSpace(reader)
-	ok, t = token.ReadUntilEnd(reader)
-	if !ok {
-		return nil
-	}
-	c.SubCommand = t
-	return c
-}
-
 func UpdateBlockDescribe(blockName, blockValueString string) (string, error) {
 	blockValueString = strings.TrimSpace(blockValueString)
-	blockValue, err := strconv.ParseInt(blockValueString, 10, 64)
+	blockValue, err := strconv.Atoi(blockValueString)
 	if err != nil {
 		return fmt.Sprintf("[ERROR BLOCK: %v %v]", blockName, blockValueString), fmt.Errorf("%v %v is not a legal legacy block description", blockName, blockValueString)
 	}
@@ -104,7 +32,7 @@ func UpdateBlockDescribe(blockName, blockValueString string) (string, error) {
 }
 
 func UpdateLegacyExecuteCommand(command string) string {
-	c := ParseLegacyMCCommand(command)
+	c := ParseLegacyMCExecuteCommand(command)
 	if c == nil {
 		return command
 	}
@@ -117,6 +45,135 @@ func UpdateLegacyExecuteCommand(command string) string {
 		}
 		newCommand += fmt.Sprintf(" if block %v %v", c.DetectPosIfAny, updateBlock)
 	}
-	newCommand += fmt.Sprintf(" run %v", UpdateLegacyExecuteCommand(c.SubCommand))
+	newCommand += fmt.Sprintf(" run %v", UpdateLegacyCommand(c.SubCommand))
 	return newCommand
+}
+
+func UpdateLegacySetBlockCommand(command string) string {
+	c := ParseLegacySetBlockCommand(command)
+	if c == nil {
+		return command
+	}
+	newCommand := fmt.Sprintf("setblock %v ", c.Pos)
+	if c.BlockValueIfAny == "" {
+		c.BlockValueIfAny = "0"
+	}
+	blockStr, err := UpdateBlockDescribe(c.BlockName, c.BlockValueIfAny)
+	if err != nil {
+		fmt.Println(err)
+		return command
+	}
+	if !strings.HasPrefix(c.OtherOptions, " ") {
+		c.OtherOptions = " " + c.OtherOptions
+	}
+	return newCommand + blockStr + c.OtherOptions
+}
+
+func UpdateLegacyFillCommand(command string) string {
+	c := ParseLegacyFillCommand(command)
+	if c == nil {
+		return command
+	}
+	newCommand := fmt.Sprintf("fill %v %v ", c.StartPos, c.EndPos)
+	if c.BlockValueIfAny == "" {
+		c.BlockValueIfAny = "0"
+	}
+	blockStr, err := UpdateBlockDescribe(c.BlockName, c.BlockValueIfAny)
+	if err != nil {
+		fmt.Println(err)
+		return command
+	}
+	if c.ReplaceBlockNameIfAny == "" {
+		if !strings.HasPrefix(c.OtherOptions, " ") {
+			c.OtherOptions = " " + c.OtherOptions
+		}
+		return newCommand + blockStr + c.OtherOptions
+	} else {
+		if c.ReplaceBlockValueIfAny == "" {
+			c.ReplaceBlockValueIfAny = "-1"
+		}
+		replaceBlockStr, err := UpdateBlockDescribe(c.ReplaceBlockNameIfAny, c.ReplaceBlockValueIfAny)
+		if err != nil {
+			fmt.Println(err)
+			return command
+		}
+		return newCommand + blockStr + " replace " + replaceBlockStr
+	}
+}
+
+func UpdateLegacyCloneCommand(command string) string {
+	c := ParseLegacyCloneCommand(command)
+	// fmt.Println(c)
+	if c == nil {
+		return command
+	}
+	newCommand := fmt.Sprintf("clone %v %v %v", c.StartPos, c.EndPos, c.TargetPos)
+	if !c.IsFiltered {
+		if !strings.HasPrefix(c.OtherOptions, " ") {
+			c.OtherOptions = " " + c.OtherOptions
+		}
+		return newCommand + c.OtherOptions
+	}
+
+	if c.BlockValueIfFiltered == "" {
+		c.BlockValueIfFiltered = "-1"
+	}
+	blockStr, err := UpdateBlockDescribe(c.BlockNameIfFiltered, c.BlockValueIfFiltered)
+	if err != nil {
+		fmt.Println(err)
+		return command
+	}
+	return newCommand + " filtered " + c.ModeIfFiltered + " " + blockStr
+}
+
+func UpdateLegacyTestForBlockCommand(command string) string {
+	c := ParseLegacyTestForBlockCommand(command)
+	// fmt.Println(c)
+	if c == nil {
+		return command
+	}
+	newCommand := fmt.Sprintf("testforblock %v ", c.Pos)
+	if c.BlockValueIfAny == "" {
+		c.BlockValueIfAny = "-1"
+	}
+	blockStr, err := UpdateBlockDescribe(c.BlockName, c.BlockValueIfAny)
+	if err != nil {
+		fmt.Println(err)
+		return command
+	}
+	return newCommand + " " + blockStr
+}
+
+func UpdateLegacyCommand(command string) string {
+	lCommand := strings.ToLower(command)
+	lCommand = strings.TrimPrefix(lCommand, "/")
+	if strings.HasPrefix(lCommand, "execute") {
+		return UpdateLegacyExecuteCommand(command)
+	} else if strings.HasPrefix(lCommand, "setblock") {
+		return UpdateLegacySetBlockCommand(command)
+	} else if strings.HasPrefix(lCommand, "fill") {
+		return UpdateLegacyFillCommand(command)
+	} else if strings.HasPrefix(lCommand, "clone") {
+		return UpdateLegacyCloneCommand(command)
+	} else if strings.HasPrefix(lCommand, "testforblock") {
+		return UpdateLegacyTestForBlockCommand(command)
+	}
+	return command
+}
+
+func IsUpdatableLegacyCommand(command string) string {
+	lCommand := strings.ToLower(command)
+	lCommand = strings.TrimPrefix(lCommand, "/")
+	if strings.HasPrefix(lCommand, "execute") {
+		return "execute"
+	} else if strings.HasPrefix(lCommand, "setblock") {
+		return "setblock"
+	} else if strings.HasPrefix(lCommand, "fill") {
+		return "fill"
+	} else if strings.HasPrefix(lCommand, "clone") {
+		return "clone"
+	} else if strings.HasPrefix(lCommand, "testforblock") {
+		return "testforblock"
+	}
+	return ""
 }
