@@ -1,6 +1,10 @@
 package blocks
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 func RuntimeIDToBlock(runtimeID uint32) (block *NEMCBlock, found bool) {
 	if int(runtimeID) >= len(nemcBlocks) {
@@ -61,6 +65,24 @@ func BlockNameAndStateStrToRuntimeID(name string, stateStr string) (runtimeID ui
 }
 
 func BlockStrToRuntimeID(blockNameWithOrWithoutState string) (runtimeID uint32, found bool) {
+	blockNameWithOrWithoutState = strings.TrimSpace(blockNameWithOrWithoutState)
+	ss := strings.Split(blockNameWithOrWithoutState, " ")
+	if len(ss) > 1 {
+		cleanedSS := []string{}
+		for _, s := range ss {
+			if s == "" {
+				continue
+			}
+			cleanedSS = append(cleanedSS, s)
+		}
+		if len(cleanedSS) == 2 {
+			val, err := strconv.Atoi(cleanedSS[1])
+			if err == nil {
+				rtid, found := DefaultAnyToNemcConvertor.TryBestSearchByLegacyValue(BlockNameForSearch(cleanedSS[0]), int16(val))
+				return rtid, found
+			}
+		}
+	}
 	blockName, blockProps := ConvertStringToBlockNameAndPropsForSearch(blockNameWithOrWithoutState)
 	rtid, _, found := DefaultAnyToNemcConvertor.TryBestSearchByState(blockName, blockProps)
 	return rtid, found
@@ -76,10 +98,27 @@ func SchemBlockStrToRuntimeID(blockNameWithOrWithoutState string) (runtimeID uin
 	}
 }
 
-// func SchematicToRuntimeID(blockIdx uint8, data uint8) (runtimeID uint32, found bool) {
-// 	if int(blockIdx) >= len(SchematicBlockStrings) {
-// 		return AIR_RUNTIMEID, false
-// 	}
-// 	blockName := SchematicBlockStrings[blockIdx]
-// 	return LegacyBlockToRuntimeID(blockName, uint16(data))
-// }
+func SchematicToRuntimeID(block uint8, value uint8) uint32 {
+	value = value & 0xF
+	return quickSchematicMapping[block][value]
+}
+
+func ConvertStringToBlockNameAndPropsForSearch(blockString string) (blockNameForSearch BaseWithNameSpace, propsForSearch *PropsForSearch) {
+	blockString = strings.ReplaceAll(blockString, "{", "[")
+	inFrags := strings.Split(blockString, "[")
+	inBlockName, inBlockState := inFrags[0], ""
+	if len(inFrags) > 1 {
+		inBlockState = inFrags[1]
+	}
+	if len(inBlockState) > 0 {
+		if inBlockState[len(inBlockState)-1] == ']' || inBlockState[len(inBlockState)-1] == '}' {
+			inBlockState = inBlockState[:len(inBlockState)-1]
+		}
+	}
+	inBlockStateForSearch, err := PropsForSearchFromStr(inBlockState)
+	if err != nil {
+		// legacy capability
+		fmt.Println(err)
+	}
+	return BlockNameForSearch(inBlockName), inBlockStateForSearch
+}

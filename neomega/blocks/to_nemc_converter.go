@@ -1,12 +1,14 @@
 package blocks
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
+	"strconv"
 	"strings"
 	"sync"
 )
-
-const UNKNOWN_RUNTIME = uint32(0xFFFFFFFF)
 
 type ToNEMCBaseNames struct {
 	legacyValuesMapping []uint32
@@ -197,37 +199,60 @@ func (c *ToNEMCConverter) TryBestSearchByState(name BaseWithNameSpace, states *P
 	return baseGroup.fuzzySearchByState(states)
 }
 
-var DefaultAnyToNemcConvertor = &ToNEMCConverter{
-	BaseNames: map[string]*ToNEMCBaseNames{},
-	mu:        sync.RWMutex{},
-}
-
-var SchemToNemcConvertor = &ToNEMCConverter{
-	BaseNames: map[string]*ToNEMCBaseNames{},
-	mu:        sync.RWMutex{},
-}
-
-var schematicToNemcConvertor = &ToNEMCConverter{
-	BaseNames: map[string]*ToNEMCBaseNames{},
-	mu:        sync.RWMutex{},
-}
-
-func ConvertStringToBlockNameAndPropsForSearch(blockString string) (blockNameForSearch BaseWithNameSpace, propsForSearch *PropsForSearch) {
-	blockString = strings.ReplaceAll(blockString, "{", "[")
-	inFrags := strings.Split(blockString, "[")
-	inBlockName, inBlockState := inFrags[0], ""
-	if len(inFrags) > 1 {
-		inBlockState = inFrags[1]
-	}
-	if len(inBlockState) > 0 {
-		if inBlockState[len(inBlockState)-1] == ']' || inBlockState[len(inBlockState)-1] == '}' {
-			inBlockState = inBlockState[:len(inBlockState)-1]
+func (c *ToNEMCConverter) LoadConvertRecords(records string, overwrite bool, strict bool) {
+	reader := bufio.NewReader(bytes.NewBufferString(records))
+	for {
+		blockName, err := reader.ReadString('\n')
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
 		}
+		blockName = strings.TrimSuffix(blockName, "\n")
+		if blockName == "" {
+			break
+		}
+		blockNameToAdd := BlockNameForSearch(blockName)
+		snbtState, err := reader.ReadString('\n')
+		if err != nil {
+			panic(err)
+		}
+		snbtState = strings.TrimSuffix(snbtState, "\n")
+		rtidStr, err := reader.ReadString('\n')
+		if err != nil {
+			panic(err)
+		}
+		rtidStr = strings.TrimSuffix(rtidStr, "\n")
+		rtid, err := strconv.Atoi(rtidStr)
+		if err != nil {
+			panic(err)
+		}
+		legacyBlockValue, err := strconv.Atoi(snbtState)
+		if err == nil {
+			if exist, err := c.AddAnchorByLegacyValue(blockNameToAdd, int16(legacyBlockValue), uint32(rtid)); err != nil || exist == true {
+				if strict {
+					panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, legacyBlockValue, rtid))
+				}
+			}
+		} else {
+			props, err := PropsForSearchFromStr(snbtState)
+			if err != nil {
+				// continue
+				panic(err)
+			}
+			if exist, err := c.AddAnchorByState(blockNameToAdd, props, uint32(rtid), overwrite); err != nil || exist == true {
+				if strict {
+					panic(fmt.Errorf("fail to add translation: %v %v %v", blockName, props.InPreciseSNBT(), rtid))
+				}
+			}
+		}
+
 	}
-	inBlockStateForSearch, err := PropsForSearchFromStr(inBlockState)
-	if err != nil {
-		// legacy capability
-		fmt.Println(err)
+}
+
+func NewToNEMCConverter() *ToNEMCConverter {
+	return &ToNEMCConverter{
+		BaseNames: map[string]*ToNEMCBaseNames{},
+		mu:        sync.RWMutex{},
 	}
-	return BlockNameForSearch(inBlockName), inBlockStateForSearch
 }

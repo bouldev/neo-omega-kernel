@@ -161,7 +161,7 @@ func initPreGeneratePropValInt32() {
 	}
 }
 
-func propValFromInt32(val int32) PropVal {
+func PropValFromInt32(val int32) PropVal {
 	if val < 128 {
 		return pregenereratePropValInt32[val]
 	}
@@ -212,7 +212,7 @@ func (v PropValString) Equal(val2 PropVal) bool {
 	return false
 }
 
-func propValFromString(val string) PropVal {
+func PropValFromString(val string) PropVal {
 	val = strings.TrimPrefix(strings.TrimPrefix(val, "\""), "\"")
 	return PropValString{val, fmt.Sprintf("\"%v\"", val)}
 }
@@ -300,9 +300,9 @@ func PropsFromNbt(nbt map[string]any) Props {
 			}
 			mapProps[k] = propValFromBool(val == 1)
 		case int32:
-			mapProps[k] = propValFromInt32(val)
+			mapProps[k] = PropValFromInt32(val)
 		case string:
-			mapProps[k] = propValFromString(strings.ReplaceAll(val, "\"", ""))
+			mapProps[k] = PropValFromString(strings.ReplaceAll(val, "\"", ""))
 		default:
 			panic(fmt.Errorf("as a prop value from nbt, value can only be uint8/int32/string, get %v", v))
 		}

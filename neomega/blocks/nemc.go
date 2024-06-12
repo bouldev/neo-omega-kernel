@@ -5,39 +5,20 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
-
-	"github.com/andybalholm/brotli"
 )
 
-var NEMC_BLOCK_VERSION = int32(0)
-var NEMC_AIR_RUNTIMEID = uint32(0)
-var AIR_RUNTIMEID = uint32(0)
-var AIR_BLOCK = &NEMCBlock{
-	Name:  "air",
-	Value: 0,
-	Props: make(Props, 0),
-}
-
 type NEMCBlock struct {
-	Name  string
-	Props Props
-	Value int16
+	Name           string
+	Props          Props
+	Value          uint16
+	StateSNBT      string
+	PropsForSearch *PropsForSearch
 }
 
-var nemcBlocks = []NEMCBlock{}
-
-//go:embed "nemc.br"
-var nemcBlockInfoBytes []byte
-
-func initNemcBlocks() {
-	dataBytes, err := io.ReadAll(brotli.NewReader(bytes.NewBuffer(nemcBlockInfoBytes)))
-	if err != nil {
-		panic(err)
-	}
-	reader := bufio.NewReader(bytes.NewBufferString(string(dataBytes)))
+func LoadNemcBlocksToGlobal(dataBytes string) {
+	reader := bufio.NewReader(bytes.NewBufferString(dataBytes))
 	{
 		version, err := reader.ReadString('\n')
 		if err != nil {
@@ -87,6 +68,8 @@ func initNemcBlocks() {
 		}
 		stateSNBT, err := reader.ReadString('\n')
 		stateSNBT = strings.TrimSpace(stateSNBT)
+		// TODO: check
+		stateSNBT = strings.ReplaceAll(stateSNBT, "minecraft:", "")
 		if err != nil {
 			panic(err)
 		}
@@ -95,10 +78,16 @@ func initNemcBlocks() {
 		if err != nil {
 			panic(err)
 		}
+		propsForSearch, err := PropsForSearchFromStr(stateSNBT)
+		if err != nil {
+			panic(err)
+		}
 		nemcBlocks[runtimeID] = NEMCBlock{
-			Name:  blockName,
-			Props: PropsFromSNBT(stateSNBT),
-			Value: int16(blockVal),
+			Name:           blockName,
+			Props:          PropsFromSNBT(stateSNBT),
+			Value:          uint16(blockVal),
+			StateSNBT:      stateSNBT,
+			PropsForSearch: propsForSearch,
 		}
 		if nemcBlocks[runtimeID].Props.SNBTString() != stateSNBT {
 			panic(fmt.Errorf("snbt error: %v!=%v", stateSNBT, nemcBlocks[runtimeID].Props.SNBTString()))
@@ -107,43 +96,23 @@ func initNemcBlocks() {
 			NEMC_AIR_RUNTIMEID = uint32(runtimeID)
 			AIR_RUNTIMEID = NEMC_AIR_RUNTIMEID
 		}
-
-		if exist, err := DefaultAnyToNemcConvertor.AddAnchorByLegacyValue(BlockNameForSearch(blockName), int16(blockVal), uint32(runtimeID)); err != nil {
-			panic(err)
-		} else if exist {
-			panic("should not happen")
-		}
-		if exist, err := SchemToNemcConvertor.AddAnchorByLegacyValue(BlockNameForSearch(blockName), int16(blockVal), uint32(runtimeID)); err != nil {
-			panic(err)
-		} else if exist {
-			panic("should not happen")
-		}
-		if exist, err := schematicToNemcConvertor.AddAnchorByLegacyValue(BlockNameForSearch(blockName), int16(blockVal), uint32(runtimeID)); err != nil {
-			panic(err)
-		} else if exist {
-			panic("should not happen")
-		}
-		if propsForSearch, err := PropsForSearchFromStr(stateSNBT); err != nil {
-			panic(err)
-		} else {
-			if exist, err := DefaultAnyToNemcConvertor.AddAnchorByState(BlockNameForSearch(blockName), propsForSearch, uint32(runtimeID), false); err != nil {
-				panic(err)
-			} else if exist {
-				panic("should not happen")
-			}
-			if exist, err := SchemToNemcConvertor.AddAnchorByState(BlockNameForSearch(blockName), propsForSearch, uint32(runtimeID), false); err != nil {
-				panic(err)
-			} else if exist {
-				panic("should not happen")
-			}
-			if exist, err := schematicToNemcConvertor.AddAnchorByState(BlockNameForSearch(blockName), propsForSearch, uint32(runtimeID), false); err != nil {
-				panic(err)
-			} else if exist {
-				panic("should not happen")
-			}
-		}
 	}
 	if NEMC_AIR_RUNTIMEID == 0 || AIR_RUNTIMEID == 0 {
 		panic("cannot found air runtime id")
+	}
+}
+
+func WriteNemcInfoToConvertor(convertor *ToNEMCConverter) {
+	for runtimeID, nemcBlock := range nemcBlocks {
+		if exist, err := convertor.AddAnchorByLegacyValue(BlockNameForSearch(nemcBlock.Name), int16(nemcBlock.Value), uint32(runtimeID)); err != nil {
+			panic(err)
+		} else if exist {
+			panic("should not happen")
+		}
+		if exist, err := convertor.AddAnchorByState(BlockNameForSearch(nemcBlock.Name), nemcBlock.PropsForSearch, uint32(runtimeID), false); err != nil {
+			panic(err)
+		} else if exist {
+			panic("should not happen")
+		}
 	}
 }

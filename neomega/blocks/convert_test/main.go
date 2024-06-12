@@ -58,4 +58,24 @@ func main() {
 	fmt.Println(blocks.RuntimeIDToBlockNameWithStateStr(rtid))
 	rtid = blocks.SchematicToRuntimeID(35, 3)
 	fmt.Println(blocks.RuntimeIDToBlockNameWithStateStr(rtid))
+	rtid, ok := blocks.BlockStrToRuntimeID(`wool ["color":"orange"]`)
+	if !ok {
+		panic("not ok")
+	}
+	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
+	rtid, ok = blocks.BlockStrToRuntimeID(`stone   2`)
+	if !ok {
+		panic("not ok")
+	}
+	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
+	rtid, ok = blocks.BlockStrToRuntimeID(`grass`)
+	if !ok {
+		panic("not ok")
+	}
+	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
+	rtid, ok = blocks.SchemBlockStrToRuntimeID(`grass`)
+	if !ok {
+		panic("not ok")
+	}
+	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
 }
