@@ -239,7 +239,8 @@ func (ps Props) BedrockString(bracket bool) string {
 	}
 	props := make([]string, 0, len(ps))
 	for _, p := range ps {
-		props = append(props, "\""+p.Name+"\""+":"+p.Value.BedrockString())
+		//TODO : Is this correct?
+		props = append(props, "\""+p.Name+"\""+"="+p.Value.BedrockString())
 	}
 	stateStr := strings.Join(props, ", ")
 	if !bracket {
