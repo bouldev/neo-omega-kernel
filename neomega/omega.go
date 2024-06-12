@@ -7,6 +7,7 @@ import (
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/chunks/define"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -99,6 +100,20 @@ type PlaceCommandBlockOption struct {
 	ExecuteOnFirstTick bool
 }
 
+func (opt *PlaceCommandBlockOption) String() string {
+	describe := ""
+	describe += fmt.Sprintf("[%v,%v,%v]%v%v", opt.X, opt.Y, opt.Z, opt.BlockName, opt.BlockState)
+	if opt.Name != "" {
+		describe += fmt.Sprintf("\n  名字: %v", opt.Name)
+	}
+	if opt.Command != "" {
+		describe += fmt.Sprintf("\n  指令: %v", opt.Command)
+	}
+	options := fmt.Sprintf("\n  红石=%v,有条件=%v,显示输出=%v,执行第一个已选项=%v,延迟=%v", opt.NeedRedStone, opt.Conditional, opt.ShouldTrackOutput, opt.ExecuteOnFirstTick, opt.TickDelay)
+	describe += strings.ReplaceAll(strings.ReplaceAll(options, "true", "是"), "false", "否")
+	return describe
+}
+
 func (opt *PlaceCommandBlockOption) GenCommandBlockUpdateFromOption() *packet.CommandBlockUpdate {
 	var mode uint32
 	if opt.BlockName == "command_block" {
@@ -127,6 +142,14 @@ func (opt *PlaceCommandBlockOption) GenCommandBlockUpdateFromOption() *packet.Co
 }
 
 func NewPlaceCommandBlockOptionFromNBT(pos define.CubePos, blockNameAndState string, nbt map[string]interface{}) (o *PlaceCommandBlockOption, err error) {
+	rtid, found := blocks.BlockStrToRuntimeID(blockNameAndState)
+	if !found {
+		return nil, fmt.Errorf("cannot recognize this block %v", blockNameAndState)
+	}
+	return NewPlaceCommandBlockOptionFromNBTAndRtid(pos, rtid, nbt)
+}
+
+func NewPlaceCommandBlockOptionFromNBTAndRtid(pos define.CubePos, rtid uint32, nbt map[string]interface{}) (o *PlaceCommandBlockOption, err error) {
 	_, exist := nbt["__tag"]
 	if exist {
 		return nil, fmt.Errorf("flatten nemc nbt, cannot handle")
@@ -141,10 +164,6 @@ func NewPlaceCommandBlockOptionFromNBT(pos define.CubePos, blockNameAndState str
 			err = fmt.Errorf("cannot gen place command block option %v", r)
 		}
 	}()
-	rtid, found := blocks.BlockStrToRuntimeID(blockNameAndState)
-	if !found {
-		return nil, fmt.Errorf("cannot recognize this block %v", blockNameAndState)
-	}
 	block, _ := blocks.RuntimeIDToBlock(rtid)
 	if block.Name == "command_block" {
 		mode = packet.CommandBlockImpulse
@@ -153,7 +172,7 @@ func NewPlaceCommandBlockOptionFromNBT(pos define.CubePos, blockNameAndState str
 	} else if block.Name == "chain_command_block" {
 		mode = packet.CommandBlockChain
 	} else {
-		return nil, fmt.Errorf("this block %v is not command block", blockNameAndState)
+		return nil, fmt.Errorf("this block %v%v is not command block", block.Name, block.Props.BedrockString(true))
 	}
 	mode = mode // just make compiler happy
 	cmd, _ := nbt["Command"].(string)
