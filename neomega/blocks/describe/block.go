@@ -23,20 +23,24 @@ func (b *Block) String() string {
 }
 
 func (b *Block) BedrockString() string {
-	return b.Name().BaseName() + " " + b.states.BedrockString(true)
+	return b.nameForSearch.BaseName() + " " + b.states.BedrockString(true)
 }
 
 func (b *Block) Rtid() uint32 {
 	return b.rtid
 }
 
-func (b *Block) BaseName() string {
+func (b *Block) ShortName() string {
 	return b.nameForSearch.BaseName()
 }
 
-func (b *Block) Name() BaseWithNameSpace {
-	return b.nameForSearch
+func (b *Block) LongName() string {
+	return b.nameForSearch.LongName()
 }
+
+// func (b *Block) Name() BaseWithNameSpace {
+// 	return b.nameForSearch
+// }
 
 func (b *Block) NameForSearch() BaseWithNameSpace {
 	return b.nameForSearch

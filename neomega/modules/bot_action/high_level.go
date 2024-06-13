@@ -330,15 +330,15 @@ func (o *BotActionHighLevel) highLevelMoveItemToContainer(pos define.CubePos, mo
 	if !found {
 		panic(fmt.Errorf("block of %v not found", containerRuntimeID))
 	}
-	_, found = getContainerIDMappingByBlockBaseName(block.BaseName())
+	_, found = getContainerIDMappingByBlockBaseName(block.ShortName())
 	if !found {
-		return fmt.Errorf("block %v is not a supported container", block.BaseName())
+		return fmt.Errorf("block %v is not a supported container", block.ShortName())
 	}
 	for _, targetSlot := range moveOperations {
 		o.cmdHelper.ReplaceContainerBlockItemCmd(pos, int32(targetSlot), "air").Send()
 	}
 	deferAction := func() {}
-	if strings.Contains(block.BaseName(), "shulker_box") {
+	if strings.Contains(block.ShortName(), "shulker_box") {
 		blockerPos := pos
 		face := byte(255)
 		if len(structure.Nbts[pos]) > 0 {
@@ -369,7 +369,7 @@ func (o *BotActionHighLevel) highLevelMoveItemToContainer(pos define.CubePos, mo
 				return err
 			}
 		}
-	} else if strings.Contains(block.BaseName(), "chest") {
+	} else if strings.Contains(block.ShortName(), "chest") {
 		o.cmdHelper.BackupStructureWithGivenNameCmd(pos.Add(define.CubePos{0, 1, 0}), define.CubePos{1, 1, 1}, "container_blocker").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
 		deferAction, err = o.highLevelRemoveSpecificBlockSideEffect(pos.Add(define.CubePos{0, 1, 0}), true, "_temp_container_blocker")
 		if err != nil {
@@ -378,7 +378,7 @@ func (o *BotActionHighLevel) highLevelMoveItemToContainer(pos define.CubePos, mo
 	}
 	defer deferAction()
 	o.microAction.SleepTick(1)
-	return o.microAction.MoveItemFromInventoryToEmptyContainerSlots(pos, containerRuntimeID, block.BaseName(), moveOperations)
+	return o.microAction.MoveItemFromInventoryToEmptyContainerSlots(pos, containerRuntimeID, block.ShortName(), moveOperations)
 }
 
 func (o *BotActionHighLevel) HighLevelRenameItemWithAnvil(pos define.CubePos, slot uint8, newName string, autoGenAnvil bool) (err error) {

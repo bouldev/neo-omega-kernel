@@ -21,7 +21,7 @@ func RuntimeIDToState(runtimeID uint32) (baseName string, properties map[string]
 	if !found {
 		return "air", nil, false
 	}
-	return block.Name().BaseName(), block.States().ToNBT(), true
+	return block.ShortName(), block.States().ToNBT(), true
 }
 
 // coral_block ["coral_color":"yellow", "dead_bit":false] true
@@ -38,7 +38,7 @@ func RuntimeIDToBlockNameAndStateStr(runtimeID uint32) (blockName, blockState st
 	if !found {
 		return "air", "[]", false
 	}
-	return block.Name().BaseName(), block.States().BedrockString(true), true
+	return block.ShortName(), block.States().BedrockString(true), true
 }
 
 func BlockNameAndStateToRuntimeID(name string, properties map[string]any) (runtimeID uint32, found bool) {

@@ -81,7 +81,7 @@ func BlockSetFromStringRecords(dataBytes string, unknownRtid uint32) *BlockSet {
 		panic("cannot found air runtime id")
 	}
 	blocks.blocks = bs
-	if blocks.blocks[blocks.airRuntimeID].Name().BaseName() != "air" {
+	if blocks.blocks[blocks.airRuntimeID].ShortName() != "air" {
 		panic("should not happen")
 	}
 	if blocks.version == 0 {
@@ -97,7 +97,7 @@ func BlockSetFromStringRecords(dataBytes string, unknownRtid uint32) *BlockSet {
 func (blocks *BlockSet) DumpStringRecords() string {
 	datas := fmt.Sprintf("VERSION:%v\nCOUNTS:%v\n", blocks.version, len(blocks.blocks))
 	for _, block := range blocks.blocks {
-		datas += fmt.Sprintf("%v %v %v\n", block.Name().BaseName(), block.LegacyValue(), block.States().SNBTString())
+		datas += fmt.Sprintf("%v %v %v\n", block.ShortName(), block.LegacyValue(), block.States().SNBTString())
 	}
 	return datas
 }

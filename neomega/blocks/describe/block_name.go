@@ -8,6 +8,10 @@ func (b BaseWithNameSpace) BaseName() string {
 	return b[1]
 }
 
+func (b BaseWithNameSpace) LongName() string {
+	return b[0] + ":" + b[1]
+}
+
 func (b BaseWithNameSpace) NameSpace() string {
 	return b[0]
 }
