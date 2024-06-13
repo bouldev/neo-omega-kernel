@@ -1,49 +1,139 @@
 package main
 
 import (
-	"fmt"
-	"neo-omega-kernel/neomega/blocks"
+	"bytes"
+	"neo-omega-kernel/neomega/blocks/block_set"
+	"neo-omega-kernel/neomega/blocks/convertor"
 	"neo-omega-kernel/neomega/blocks/gen_map_neo/step0_nemc_blocks_liliya"
-	"neo-omega-kernel/neomega/blocks/gen_map_neo/step1_pack_nemc_block_info"
 	"neo-omega-kernel/neomega/blocks/gen_map_neo/step2_add_standard_mc_converts"
 	"neo-omega-kernel/neomega/blocks/gen_map_neo/step3_add_schem_mapping"
 	"os"
+
+	"github.com/andybalholm/brotli"
 )
 
 func main() {
-	parsedBlocks := step0_nemc_blocks_liliya.GetParsedBlock("./data/block_palette_2.12.json")
-	rawString, compressed := step1_pack_nemc_block_info.PackInfo(parsedBlocks)
-	if err := os.WriteFile("nemc.br", compressed, 0755); err != nil {
-		panic(err)
+	readBlocks := step0_nemc_blocks_liliya.GetParsedBlock("./data/block_palette_2.12.json")
+	blocksRecordString := readBlocks.DumpStringRecords()
+	// CHECK
+	{
+		// fmt.Println(blocksRecordString)
+		reLoadedBlocks := block_set.BlockSetFromStringRecords(blocksRecordString, 0xffffffff)
+		reDumpedBlocksRecordString := reLoadedBlocks.DumpStringRecords()
+		if reDumpedBlocksRecordString != blocksRecordString {
+			panic("mismatch")
+		}
+		// b0 := reLoadedBlocks.BlockByRtid(0)
+		// fmt.Println(b0)
+		// b3736 := reLoadedBlocks.BlockByRtid(3736)
+		// // cobblestone_wall {wall_block_type:"mossy_stone_brick",wall_connection_type_east:"tall",wall_connection_type_north:"none",wall_connection_type_south:"tall",wall_connection_type_west:"short",wall_post_bit:1b} (Value: 3352) (RuntimeID: 3736)
+		// fmt.Println(b3736)
+		// b13142 := reLoadedBlocks.BlockByRtid(13142)
+		// fmt.Println(b13142)
 	}
-	blocks.LoadNemcBlocksToGlobal(rawString)
-	snbtInOut := step2_add_standard_mc_converts.ReadSnbtFile("./data/snbt_convert.txt")
-	records := step2_add_standard_mc_converts.GenMCToNemcTranslateRecords(snbtInOut)
-	rawRecords, compressed := step2_add_standard_mc_converts.PackConvertRecord(records)
-	if err := os.WriteFile("bedrock_java_to_translate.br", compressed, 0755); err != nil {
-		panic(err)
+	// SAVE
+	{
+		outBuf := bytes.NewBuffer([]byte{})
+		brotliWriter := brotli.NewWriter(outBuf)
+		brotliWriter.Write([]byte(blocksRecordString))
+		if err := brotliWriter.Close(); err != nil {
+			panic(err)
+		}
+		if err := os.WriteFile("nemc.br", outBuf.Bytes(), 0755); err != nil {
+			panic(err)
+		}
 	}
-	convertor := blocks.NewToNEMCConverter()
-	blocks.WriteNemcInfoToConvertor(convertor)
-	convertor.LoadConvertRecords(rawRecords, false, true)
-	testBlock := `grass`
-	blockName, blockProps := blocks.ConvertStringToBlockNameAndPropsForSearch(testBlock)
-	rtid, _, ok := convertor.TryBestSearchByState(blockName, blockProps)
-	if !ok {
-		panic("test fail")
+	// Generate Standard MC converts
+	standardMCConvertsRecordsString := ""
+	{
+		convertorForMC := readBlocks.CreateEmptyConvertor()
+		snbtInOut := step2_add_standard_mc_converts.ReadSnbtFile("./data/snbt_convert.txt")
+		convertRecords := step2_add_standard_mc_converts.GenMCToNemcTranslateRecords(
+			snbtInOut,
+			convertorForMC,
+			&readBlocks,
+		)
+
+		for _, r := range convertRecords {
+			standardMCConvertsRecordsString += r.String()
+		}
+		//CHECK
+		{
+			reLoadRecords, err := convertor.ReadRecordsFromString(standardMCConvertsRecordsString)
+			if err != nil {
+				panic(err)
+			}
+			reDumpRecords := ""
+			for _, r := range reLoadRecords {
+				reDumpRecords += r.String()
+			}
+			if reDumpRecords != standardMCConvertsRecordsString {
+				panic("mismatch")
+			}
+		}
+		// SAVE
+		{
+			outBuf := bytes.NewBuffer([]byte{})
+			brotliWriter := brotli.NewWriter(outBuf)
+			brotliWriter.Write([]byte(standardMCConvertsRecordsString))
+			if err := brotliWriter.Close(); err != nil {
+				panic(err)
+			}
+			if err := os.WriteFile("bedrock_java_to_translate.br", outBuf.Bytes(), 0755); err != nil {
+				panic(err)
+			}
+		}
 	}
-	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
-	rawSchemData, err := os.ReadFile("./data/block_1_18_java_to_bedrock.json")
-	if err != nil {
-		panic(err)
+	// Generate Schem Converts
+	{
+		convertForSchem := readBlocks.CreateEmptyConvertor()
+		// Load Standard MC Records
+		{
+			standardMCConvertsRecord, err := convertor.ReadRecordsFromString(standardMCConvertsRecordsString)
+			if err != nil {
+				panic(err)
+			}
+			for _, r := range standardMCConvertsRecord {
+				convertForSchem.LoadConvertRecord(r, false, true)
+			}
+		}
+		rawSchemData, err := os.ReadFile("./data/block_1_18_java_to_bedrock.json")
+		if err != nil {
+			panic(err)
+		}
+		convertRecords := step3_add_schem_mapping.GenSchemConvertRecord(
+			rawSchemData,
+			convertForSchem,
+		)
+		ConvertsRecordsString := ""
+		for _, r := range convertRecords {
+			ConvertsRecordsString += r.String()
+		}
+		//CHECK
+		{
+			reLoadRecords, err := convertor.ReadRecordsFromString(ConvertsRecordsString)
+			if err != nil {
+				panic(err)
+			}
+			reDumpRecords := ""
+			for _, r := range reLoadRecords {
+				reDumpRecords += r.String()
+			}
+			if reDumpRecords != ConvertsRecordsString {
+				panic("mismatch")
+			}
+		}
+		// SAVE
+		{
+			outBuf := bytes.NewBuffer([]byte{})
+			brotliWriter := brotli.NewWriter(outBuf)
+			brotliWriter.Write([]byte(ConvertsRecordsString))
+			if err := brotliWriter.Close(); err != nil {
+				panic(err)
+			}
+			if err := os.WriteFile("schem_to_translate.br", outBuf.Bytes(), 0755); err != nil {
+				panic(err)
+			}
+		}
 	}
-	rawRecords, compressed = step3_add_schem_mapping.GenSchemConvertRecord(rawSchemData, convertor)
-	if err := os.WriteFile("schem_to_translate.br", compressed, 0755); err != nil {
-		panic(err)
-	}
-	rtid, _, ok = convertor.TryBestSearchByState(blockName, blockProps)
-	if !ok {
-		panic("test fail")
-	}
-	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
 }

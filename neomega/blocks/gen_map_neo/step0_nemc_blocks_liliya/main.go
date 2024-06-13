@@ -4,7 +4,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/neomega/blocks"
+	"neo-omega-kernel/neomega/blocks/block_set"
+	"neo-omega-kernel/neomega/blocks/describe"
 	"os"
 	"sort"
 	"strings"
@@ -16,16 +17,16 @@ type RawState struct {
 	Value any    `json:"value"`
 }
 
-func (s RawState) ToValue() blocks.PropVal {
+func (s RawState) ToValue() describe.PropVal {
 	if s.Type == "string" {
-		return blocks.PropValFromString(s.Value.(string))
+		return describe.PropValFromString(s.Value.(string))
 	} else if s.Type == "int" {
-		return blocks.PropValFromInt32(int32(s.Value.(float64)))
+		return describe.PropValFromInt32(int32(s.Value.(float64)))
 	} else if s.Type == "byte" {
 		if s.Value.(float64) == 0 {
-			return blocks.PropVal0
+			return describe.PropVal0
 		} else if s.Value.(float64) == 1 {
-			return blocks.PropVal1
+			return describe.PropVal1
 		} else {
 			panic(s.Value)
 		}
@@ -42,10 +43,10 @@ type RawBlockPalette struct {
 	NetworkID     uint32     `json:"network_id"` // maybe some hash of whole block?
 }
 
-func (p RawBlockPalette) DumpStates() (StateOrder []string, State map[string]blocks.PropVal, States blocks.Props) {
+func (p RawBlockPalette) DumpStates() (StateOrder []string, State map[string]describe.PropVal, States describe.Props) {
 	StateOrder = []string{}
-	State = map[string]blocks.PropVal{}
-	States = blocks.Props{}
+	State = map[string]describe.PropVal{}
+	States = describe.Props{}
 	for _, rawState := range p.States {
 		p := rawState.ToValue()
 		State[rawState.Name] = p
@@ -53,7 +54,7 @@ func (p RawBlockPalette) DumpStates() (StateOrder []string, State map[string]blo
 
 		States = append(States, struct {
 			Name  string
-			Value blocks.PropVal
+			Value describe.PropVal
 		}{
 			Name:  rawState.Name,
 			Value: p,
@@ -71,7 +72,7 @@ type RawData struct {
 
 type ParsedBlock struct {
 	NameWithoutMC string
-	States        blocks.Props
+	States        describe.Props
 	// State         map[string]blocks.PropVal
 	// StateOrder    []string
 	LegacyData    uint16
@@ -98,7 +99,7 @@ func ConvertRawData(rawData *RawData) []ParsedBlock {
 	return parsedBlocks
 }
 
-func GetParsedBlock(filePath string) []ParsedBlock {
+func GetParsedBlock(filePath string) block_set.BlockSet {
 	rawBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		panic(err)
@@ -107,5 +108,33 @@ func GetParsedBlock(filePath string) []ParsedBlock {
 	if err = json.Unmarshal(rawBytes, &rawData); err != nil {
 		panic(err)
 	}
-	return ConvertRawData(&rawData)
+	parsedBlocks := ConvertRawData(&rawData)
+	version := int32(0)
+	airRtid := int32(0)
+	for rtid, block := range parsedBlocks {
+		if version == 0 {
+			version = (block.Version)
+		} else if version != (block.Version) {
+			panic(fmt.Errorf("version mismatch %v != %v", version, block.Version))
+		}
+		if block.NameWithoutMC == "air" {
+			airRtid = int32(rtid)
+		}
+	}
+	if airRtid == 0 {
+		panic("air not found")
+	}
+	if version == 0 {
+		panic("version not found")
+	}
+	blocks := block_set.NewBlockSet(0xFFFFFFFF, uint32(airRtid), uint32(version))
+	for rtid, block := range parsedBlocks {
+		blocks.AddBlock(describe.NewBlockFromSnbt(
+			block.NameWithoutMC,
+			block.States.SNBTString(),
+			block.LegacyData,
+			uint32(rtid),
+		))
+	}
+	return *blocks
 }

@@ -1,13 +1,11 @@
 package step3_add_schem_mapping
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/neomega/blocks"
+	"neo-omega-kernel/neomega/blocks/convertor"
+	"neo-omega-kernel/neomega/blocks/describe"
 	"strings"
-
-	"github.com/andybalholm/brotli"
 )
 
 type JavaToBedrockMappingIn struct {
@@ -15,13 +13,7 @@ type JavaToBedrockMappingIn struct {
 	Properties map[string]any `json:"bedrock_states"`
 }
 
-var ConvertRecord = []struct {
-	Name      string
-	SNBTState string
-	RTID      uint32
-}{}
-
-func GenSchemConvertRecord(rawData []byte, convertor *blocks.ToNEMCConverter) (raw string, compressed []byte) {
+func GenSchemConvertRecord(rawData []byte, c *convertor.ToNEMCConvertor) (records []*convertor.ConvertRecord) {
 	var redundant = 0
 	var overwrite = 0
 	var translated = 0
@@ -31,20 +23,21 @@ func GenSchemConvertRecord(rawData []byte, convertor *blocks.ToNEMCConverter) (r
 	if err != nil {
 		panic(err)
 	}
+	records = make([]*convertor.ConvertRecord, 0)
 	for blockIn, bedrockBlockDescribe := range javaBlocks {
-		outBlockNameForSearch := blocks.BlockNameForSearch(bedrockBlockDescribe.Name)
+		outBlockNameForSearch := describe.BlockNameForSearch(bedrockBlockDescribe.Name)
 		// TODO CHECK IF THIS EXIST IN 1.19
 		if strings.Contains(outBlockNameForSearch.BaseName(), "mangrove_roots") {
 			continue
 		}
-		outBlockStateForSearch, err := blocks.PropsForSearchFromNbt(bedrockBlockDescribe.Properties)
+		outBlockStateForSearch, err := describe.PropsForSearchFromNbt(bedrockBlockDescribe.Properties)
 		if err != nil {
 			panic(err)
 		}
 
-		rtid, found := convertor.PreciseMatchByState(outBlockNameForSearch, outBlockStateForSearch)
+		rtid, found := c.PreciseMatchByState(outBlockNameForSearch, outBlockStateForSearch)
 		if !found {
-			convertor.PreciseMatchByState(outBlockNameForSearch, outBlockStateForSearch)
+			c.PreciseMatchByState(outBlockNameForSearch, outBlockStateForSearch)
 			panic("not found!")
 		}
 
@@ -55,10 +48,10 @@ func GenSchemConvertRecord(rawData []byte, convertor *blocks.ToNEMCConverter) (r
 			inBlockState = inSS[1]
 		}
 		hasWaterLoggedInfo := strings.Contains(inBlockState, "waterlogged")
-		var inBlockStateFroSearchWaterLogged *blocks.PropsForSearch
+		var inBlockStateForSearchWaterLogged *describe.PropsForSearch
 		inBlockState = strings.TrimSuffix(inBlockState, "]")
 		if hasWaterLoggedInfo {
-			inBlockStateFroSearchWaterLogged, err = blocks.PropsForSearchFromStr(inBlockState)
+			inBlockStateForSearchWaterLogged, err = describe.PropsForSearchFromStr(inBlockState)
 			if err != nil {
 				panic(err)
 			}
@@ -71,85 +64,59 @@ func GenSchemConvertRecord(rawData []byte, convertor *blocks.ToNEMCConverter) (r
 
 		}
 
-		inBlockNameForSearch := blocks.BlockNameForSearch(inBlockName)
-		inBlockStateForSearch, err := blocks.PropsForSearchFromStr(inBlockState)
+		inBlockNameForSearch := describe.BlockNameForSearch(inBlockName)
+		inBlockStateForSearch, err := describe.PropsForSearchFromStr(inBlockState)
 		if err != nil {
 			panic(err)
 		}
 		if strings.HasPrefix(inBlockState, "block_data=") {
 			panic("not implement")
 		} else {
-			if exist, err := convertor.AddAnchorByState(inBlockNameForSearch, inBlockStateForSearch, rtid, false); err != nil {
+			if exist, err := c.AddAnchorByState(inBlockNameForSearch, inBlockStateForSearch, rtid, false); err != nil {
 				overwrite++
-				ConvertRecord = append(ConvertRecord, struct {
-					Name      string
-					SNBTState string
-					RTID      uint32
-				}{
-					inBlockNameForSearch.BaseName(),
-					inBlockStateForSearch.InPreciseSNBT(),
-					rtid,
+				records = append(records, &convertor.ConvertRecord{
+					Name:             inBlockNameForSearch.BaseName(),
+					SNBTStateOrValue: inBlockStateForSearch.InPreciseSNBT(),
+					RTID:             rtid,
 				})
-				if _, err := convertor.AddAnchorByState(inBlockNameForSearch, inBlockStateForSearch, rtid, true); err != nil {
+				if _, err := c.AddAnchorByState(inBlockNameForSearch, inBlockStateForSearch, rtid, true); err != nil {
 					panic(err)
 				}
 			} else if exist {
 				redundant++
 			} else {
 				translated++
-				ConvertRecord = append(ConvertRecord, struct {
-					Name      string
-					SNBTState string
-					RTID      uint32
-				}{
-					inBlockNameForSearch.BaseName(),
-					inBlockStateForSearch.InPreciseSNBT(),
-					rtid,
+				records = append(records, &convertor.ConvertRecord{
+					Name:             inBlockNameForSearch.BaseName(),
+					SNBTStateOrValue: inBlockStateForSearch.InPreciseSNBT(),
+					RTID:             rtid,
 				})
 			}
 			// fmt.Println(inBlockNameForSearch, inBlockStateForSearch.InPreciseSNBT(), hasWaterLoggedTrueInfo)
-			if inBlockStateFroSearchWaterLogged != nil {
-				if exist, err := convertor.AddAnchorByState(inBlockNameForSearch, inBlockStateFroSearchWaterLogged, rtid, false); err != nil {
+			if inBlockStateForSearchWaterLogged != nil {
+				if exist, err := c.AddAnchorByState(inBlockNameForSearch, inBlockStateForSearchWaterLogged, rtid, false); err != nil {
 					overwrite++
-					ConvertRecord = append(ConvertRecord, struct {
-						Name      string
-						SNBTState string
-						RTID      uint32
-					}{
-						inBlockNameForSearch.BaseName(),
-						inBlockStateFroSearchWaterLogged.InPreciseSNBT(),
-						rtid,
+					records = append(records, &convertor.ConvertRecord{
+						Name:             inBlockNameForSearch.BaseName(),
+						SNBTStateOrValue: inBlockStateForSearchWaterLogged.InPreciseSNBT(),
+						RTID:             rtid,
 					})
-					if _, err := convertor.AddAnchorByState(inBlockNameForSearch, inBlockStateFroSearchWaterLogged, rtid, true); err != nil {
+					if _, err := c.AddAnchorByState(inBlockNameForSearch, inBlockStateForSearchWaterLogged, rtid, true); err != nil {
 						panic(err)
 					}
 				} else if exist {
 					redundant++
 				} else {
 					translated++
-					ConvertRecord = append(ConvertRecord, struct {
-						Name      string
-						SNBTState string
-						RTID      uint32
-					}{
-						inBlockNameForSearch.BaseName(),
-						inBlockStateFroSearchWaterLogged.InPreciseSNBT(),
-						rtid,
+					records = append(records, &convertor.ConvertRecord{
+						Name:             inBlockNameForSearch.BaseName(),
+						SNBTStateOrValue: inBlockStateForSearchWaterLogged.InPreciseSNBT(),
+						RTID:             rtid,
 					})
 				}
 			}
 		}
 	}
 	fmt.Printf("ok %v overwrite %v redundant %v\n", translated, overwrite, redundant)
-	textRecord := ""
-	for _, record := range ConvertRecord {
-		textRecord += fmt.Sprintf("%v\n%v\n%v\n", record.Name, record.SNBTState, record.RTID)
-	}
-	outFp := bytes.NewBuffer([]byte{})
-	brotliWriter := brotli.NewWriter(outFp)
-	brotliWriter.Write([]byte(textRecord))
-	if err := brotliWriter.Close(); err != nil {
-		panic(err)
-	}
-	return textRecord, outFp.Bytes()
+	return records
 }

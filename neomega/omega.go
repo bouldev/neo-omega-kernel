@@ -165,14 +165,14 @@ func NewPlaceCommandBlockOptionFromNBTAndRtid(pos define.CubePos, rtid uint32, n
 		}
 	}()
 	block, _ := blocks.RuntimeIDToBlock(rtid)
-	if block.Name == "command_block" {
+	if block.BaseName() == "command_block" {
 		mode = packet.CommandBlockImpulse
-	} else if block.Name == "repeating_command_block" {
+	} else if block.BaseName() == "repeating_command_block" {
 		mode = packet.CommandBlockRepeating
-	} else if block.Name == "chain_command_block" {
+	} else if block.BaseName() == "chain_command_block" {
 		mode = packet.CommandBlockChain
 	} else {
-		return nil, fmt.Errorf("this block %v%v is not command block", block.Name, block.Props.BedrockString(true))
+		return nil, fmt.Errorf("this block %v%v is not command block", block.BaseName(), block.States().BedrockString(true))
 	}
 	mode = mode // just make compiler happy
 	cmd, _ := nbt["Command"].(string)
@@ -184,7 +184,7 @@ func NewPlaceCommandBlockOptionFromNBTAndRtid(pos define.CubePos, rtid uint32, n
 	// lo, _ := nbt["LastOutput"].(string)
 	conditionalmode, ok := nbt["conditionalMode"].(uint8)
 	if !ok {
-		conditionalmode = block.Props.ToNBT()["conditional_bit"].(uint8)
+		conditionalmode = block.States().ToNBT()["conditional_bit"].(uint8)
 	}
 	//conditionalmode := nbt["conditionalMode"].(uint8)
 	var executeOnFirstTickBit bool
@@ -214,8 +214,8 @@ func NewPlaceCommandBlockOptionFromNBTAndRtid(pos define.CubePos, rtid uint32, n
 	}
 	o = &PlaceCommandBlockOption{
 		X: pos.X(), Y: pos.Y(), Z: pos.Z(),
-		BlockName:          block.Name,
-		BlockState:         block.Props.BedrockString(true),
+		BlockName:          block.BaseName(),
+		BlockState:         block.States().BedrockString(true),
 		NeedRedStone:       needRedStoneBit,
 		Conditional:        conditionalBit,
 		Command:            cmd,
