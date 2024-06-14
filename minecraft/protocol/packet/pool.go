@@ -246,7 +246,7 @@ func init() {
 		IDClientCheatAbility:                func() Packet { return &ClientCheatAbility{} },
 		IDCameraPresets:                     func() Packet { return &CameraPresets{} },
 		IDUnlockedRecipes:                   func() Packet { return &UnlockedRecipes{} },
-		IDPyRpc:                             func() Packet { return &PyRpc{} }, // TODO: Need to check if this is correct
+		IDPyRpc:                             func() Packet { return &PyRpc{} },
 		// ---
 		IDCameraInstruction:             func() Packet { return &CameraInstruction{} },
 		IDCompressedBiomeDefinitionList: func() Packet { return &CompressedBiomeDefinitionList{} },

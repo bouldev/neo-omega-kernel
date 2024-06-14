@@ -150,6 +150,15 @@ func (r *Reader) SubChunkPos(x *SubChunkPos) {
 	r.Varint32(&x[2])
 }
 
+// Netease
+func (r *Reader) USubChunkPos(x *SubChunkPos) {
+	r.Varint32(&x[0])
+	var y uint32
+	r.Varuint32(&y)
+	x[1] = int32(y)
+	r.Varint32(&x[2])
+}
+
 // SoundPos reads an mgl32.Vec3 that serves as a position for a sound.
 func (r *Reader) SoundPos(x *mgl32.Vec3) {
 	var b BlockPos

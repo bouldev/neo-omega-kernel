@@ -123,6 +123,14 @@ func (w *Writer) SubChunkPos(x *SubChunkPos) {
 	w.Varint32(&x[2])
 }
 
+// Netease
+func (w *Writer) USubChunkPos(x *SubChunkPos) {
+	w.Varint32(&x[0])
+	y := uint32(x[1])
+	w.Varuint32(&y)
+	w.Varint32(&x[2])
+}
+
 // SoundPos writes an mgl32.Vec3 that serves as a position for a sound.
 func (w *Writer) SoundPos(x *mgl32.Vec3) {
 	b := BlockPos{int32((*x)[0] * 8), int32((*x)[1] * 8), int32((*x)[2] * 8)}

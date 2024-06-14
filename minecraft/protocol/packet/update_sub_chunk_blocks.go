@@ -18,7 +18,7 @@ func (*UpdateSubChunkBlocks) ID() uint32 {
 }
 
 func (pk *UpdateSubChunkBlocks) Marshal(io protocol.IO) {
-	io.SubChunkPos(&pk.Position)
+	io.USubChunkPos(&pk.Position) // For Netease
 	protocol.Slice(io, &pk.Blocks)
 	protocol.Slice(io, &pk.Extra)
 }
