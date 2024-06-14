@@ -22,6 +22,12 @@ type CraftingData struct {
 	// means that the client will have no recipes active by itself: Any CraftingData packets previously sent
 	// will also be discarded, and only the recipes in this CraftingData packet will be used.
 	ClearRecipes bool
+	// Netease
+	Unknown1 []byte
+	// Netease
+	Unknown2 []byte
+	// Netease
+	Unknown3 []byte
 }
 
 // ID ...
@@ -35,4 +41,8 @@ func (pk *CraftingData) Marshal(io protocol.IO) {
 	protocol.Slice(io, &pk.PotionContainerChangeRecipes)
 	protocol.FuncSlice(io, &pk.MaterialReducers, io.MaterialReducer)
 	io.Bool(&pk.ClearRecipes)
+	// Netease
+	io.ByteSlice(&pk.Unknown1)
+	io.ByteSlice(&pk.Unknown2)
+	io.ByteSlice(&pk.Unknown3)
 }

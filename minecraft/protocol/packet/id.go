@@ -200,8 +200,8 @@ const (
 	IDClientCheatAbility
 	IDCameraPresets
 	IDUnlockedRecipes
-	IDPyRpc             // TODO: Need to check if this is correct
-	IDCameraInstruction = iota + 101
+	IDPyRpc
+	IDCameraInstruction = iota + 100 // Netease: 301 -> 300
 	IDCompressedBiomeDefinitionList
 	IDTrimData
 	IDOpenSign

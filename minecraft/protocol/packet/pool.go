@@ -331,7 +331,7 @@ func init() {
 		IDEditorNetwork:                   func() Packet { return &EditorNetwork{} },
 		IDRequestNetworkSettings:          func() Packet { return &RequestNetworkSettings{} },
 		IDGameTestResults:                 func() Packet { return &GameTestResults{} },
-		IDPyRpc:                           func() Packet { return &PyRpc{} }, // TODO: Need to check if this is correct
+		IDPyRpc:                           func() Packet { return &PyRpc{} },
 		IDOpenSign:                        func() Packet { return &OpenSign{} },
 	}
 	for id, pk := range clientOriginating {

@@ -706,11 +706,14 @@ func (r *Reader) panic(err error) {
 
 // Netease's Python MsgPack
 func (r *Reader) MsgPack(x *any) {
-	data, err := io.ReadAll(r.r)
-	if err != nil {
-		r.panic(err)
-	}
-	var msgPackHandler codec.MsgpackHandle
+	var (
+		str            []byte // string
+		num            uint32 // consume unknown uint32
+		msgPackHandler codec.MsgpackHandle
+	)
+	r.ByteSlice(&str)
+	r.Uint32(&num)
+
 	msgPackHandler.RawToString = true
-	codec.NewDecoderBytes(data, &codec.MsgpackHandle{}).Decode(x)
+	codec.NewDecoderBytes(str, &msgPackHandler).Decode(x)
 }

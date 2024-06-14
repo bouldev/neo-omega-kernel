@@ -51,6 +51,18 @@ type AddActor struct {
 	// way the entity shows up when first spawned in terms of it shown as riding an entity. Setting these
 	// links is important for new viewers to see the entity is riding another entity.
 	EntityLinks []protocol.EntityLink
+	// Netease
+	Unknown1 string
+	// Netease
+	Unknown2 string
+	// Netease
+	Unknown3 string
+	// Netease
+	Unknown4 bool
+	// Netease
+	Unknown5 bool
+	// Netease
+	Unknown6 bool
 }
 
 // ID ...
@@ -72,4 +84,11 @@ func (pk *AddActor) Marshal(io protocol.IO) {
 	io.EntityMetadata(&pk.EntityMetadata)
 	protocol.Single(io, &pk.EntityProperties)
 	protocol.Slice(io, &pk.EntityLinks)
+	// Netease
+	io.String(&pk.Unknown1)
+	io.String(&pk.Unknown2)
+	io.String(&pk.Unknown3)
+	io.Bool(&pk.Unknown4)
+	io.Bool(&pk.Unknown5)
+	io.Bool(&pk.Unknown6)
 }
