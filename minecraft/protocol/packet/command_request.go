@@ -19,7 +19,7 @@ type CommandRequest struct {
 	Internal bool
 	// Version is the version of the command that is being executed. This field currently has no purpose or functionality.
 	Version int32
-	// TODO: Unknown NetEase specified field?
+	// Netease
 	UnLimited bool
 }
 
@@ -33,6 +33,6 @@ func (pk *CommandRequest) Marshal(io protocol.IO) {
 	protocol.CommandOriginData(io, &pk.CommandOrigin)
 	io.Bool(&pk.Internal)
 	io.Varint32(&pk.Version)
-	// TODO: Unknown NetEase specified field?
+	// Netease
 	io.Bool(&pk.UnLimited)
 }

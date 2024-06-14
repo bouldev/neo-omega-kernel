@@ -218,6 +218,7 @@ func (c *CmdSenderBasic) packCmdWithUUID(cmd string, ud uuid.UUID, ws bool) *pac
 		CommandLine:   cmd,
 		CommandOrigin: origin,
 		Internal:      false,
+		Version:       1,
 		UnLimited:     false,
 	}
 	return commandRequest
