@@ -63,6 +63,14 @@ type AddPlayer struct {
 	// BuildPlatform is the build platform/device OS of the player that is about to be added, as it sent in
 	// the Login packet when joining.
 	BuildPlatform int32
+	// Netease
+	Unknown1 string
+	// Netease
+	Unknown2 string
+	// Netease
+	Unknown3 bool
+	// Netease
+	Unknown4 bool
 }
 
 // ID ...
@@ -88,4 +96,11 @@ func (pk *AddPlayer) Marshal(io protocol.IO) {
 	protocol.Slice(io, &pk.EntityLinks)
 	io.String(&pk.DeviceID)
 	io.Int32(&pk.BuildPlatform)
+	// Netease
+	// if something {
+	// 	io.String(&pk.Unknown1)
+	// 	io.String(&pk.Unknown2)
+	// 	io.Bool(&pk.Unknown3)
+	// 	io.Bool(&pk.Unknown4)
+	// }
 }

@@ -22,6 +22,8 @@ type ContainerOpen struct {
 	// ContainerEntityUniqueID is the unique ID of the entity container that was opened. It is only used if
 	// the ContainerType is one that points to an entity, for example a horse.
 	ContainerEntityUniqueID int64
+	// Netease
+	Unknown1 bool
 }
 
 // ID ...
@@ -34,4 +36,6 @@ func (pk *ContainerOpen) Marshal(io protocol.IO) {
 	io.Uint8(&pk.ContainerType)
 	io.UBlockPos(&pk.ContainerPosition)
 	io.Varint64(&pk.ContainerEntityUniqueID)
+	// Netease
+	io.Bool(&pk.Unknown1)
 }

@@ -135,7 +135,7 @@ func (opt *PlaceCommandBlockOption) GenCommandBlockUpdateFromOption() *packet.Co
 		Command:            opt.Command,
 		LastOutput:         "",
 		Name:               opt.Name,
-		TickDelay:          int32(opt.TickDelay),
+		TickDelay:          uint32(opt.TickDelay),
 		ExecuteOnFirstTick: opt.ExecuteOnFirstTick,
 		ShouldTrackOutput:  opt.ShouldTrackOutput,
 	}

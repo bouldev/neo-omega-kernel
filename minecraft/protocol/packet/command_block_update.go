@@ -50,7 +50,8 @@ type CommandBlockUpdate struct {
 	ShouldTrackOutput bool
 	// TickDelay is the delay in ticks between executions of a command block, if it is a repeating command
 	// block.
-	TickDelay int32
+	// Netease
+	TickDelay uint32
 	// ExecuteOnFirstTick specifies if the command block should execute on the first tick, AKA as soon as the
 	// command block is enabled.
 	ExecuteOnFirstTick bool
@@ -75,6 +76,6 @@ func (pk *CommandBlockUpdate) Marshal(io protocol.IO) {
 	io.String(&pk.LastOutput)
 	io.String(&pk.Name)
 	io.Bool(&pk.ShouldTrackOutput)
-	io.Int32(&pk.TickDelay)
+	io.Uint32(&pk.TickDelay) // For Netease
 	io.Bool(&pk.ExecuteOnFirstTick)
 }

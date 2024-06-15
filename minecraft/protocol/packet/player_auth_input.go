@@ -102,7 +102,8 @@ type PlayerAuthInput struct {
 	PlayMode uint32
 	// InteractionModel is a constant representing the interaction model the player is using. It is one of the
 	// constants that may be found above.
-	InteractionModel int32
+	// Netease
+	InteractionModel uint32
 	// GazeDirection is the direction in which the player is gazing, when the PlayMode is PlayModeReality: In
 	// other words, when the player is playing in virtual reality.
 	GazeDirection mgl32.Vec3
@@ -121,6 +122,14 @@ type PlayerAuthInput struct {
 	// AnalogueMoveVector is a Vec2 that specifies the direction in which the player moved, as a combination of X/Z
 	// values which are created using an analogue input.
 	AnalogueMoveVector mgl32.Vec2
+	// Netease
+	Unknown1 bool
+	// Netease
+	Unknown2 bool
+	// Netease
+	Unknown3 mgl32.Vec2
+	// Netease
+	Unknown4 bool
 }
 
 // ID ...
@@ -137,7 +146,8 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	io.Varuint64(&pk.InputData)
 	io.Varuint32(&pk.InputMode)
 	io.Varuint32(&pk.PlayMode)
-	io.Varint32(&pk.InteractionModel)
+	io.Varuint32(&pk.InteractionModel) // For Netease
+	io.Bool(&pk.Unknown1)              // For Netease
 	if pk.PlayMode == PlayModeReality {
 		io.Vec3(&pk.GazeDirection)
 	}
@@ -157,4 +167,9 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	}
 
 	io.Vec2(&pk.AnalogueMoveVector)
+
+	// Netease
+	io.Bool(&pk.Unknown2)
+	io.Vec2(&pk.Unknown3)
+	io.Bool(&pk.Unknown4)
 }
