@@ -21,6 +21,16 @@ type PlayerList struct {
 	// Entries is a list of all player list entries that should be added/removed from the player list,
 	// depending on the ActionType set.
 	Entries []protocol.PlayerListEntry
+	// Netease
+	Unknown1 []bool
+	// Netease
+	Unknown2 []protocol.NeteaseUnknownPlayerListEntry
+	// Netease
+	Unknown3 []protocol.NeteaseUnknownPlayerListEntry
+	// NetEase
+	Unknown4 []string
+	// NetEase
+	Unknown5 []uint32
 }
 
 // ID ...
@@ -39,8 +49,25 @@ func (pk *PlayerList) Marshal(io protocol.IO) {
 		io.UnknownEnumOption(pk.ActionType, "player list action type")
 	}
 	if pk.ActionType == PlayerListActionAdd {
-		for i := 0; i < len(pk.Entries); i++ {
+		len := len(pk.Entries)
+		for i := 0; i < len; i++ {
 			io.Bool(&pk.Entries[i].Skin.Trusted)
+		}
+		// Netease
+		pk.Unknown1 = make([]bool, len)
+		for i := 0; i < len; i++ {
+			io.Bool(&pk.Unknown1[i])
+		}
+		protocol.SliceOfLen(io, uint32(len), &pk.Unknown2)
+		protocol.SliceOfLen(io, uint32(len), &pk.Unknown3)
+		// if something, then
+		// pk.Unknown4 = make([]string, len)
+		// for i := 0; i < len; i++ {
+		// 	io.String(&pk.Unknown4[i])
+		// }
+		pk.Unknown5 = make([]uint32, len)
+		for i := 0; i < len; i++ {
+			io.Uint32(&pk.Unknown5[i])
 		}
 	}
 }

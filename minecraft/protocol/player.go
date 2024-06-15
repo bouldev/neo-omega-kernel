@@ -65,12 +65,15 @@ type NeteaseUnknownPlayerListEntry struct {
 
 // Marshal encodes/decodes a NeteaseUnknownPlayerListEntry.
 func (x *NeteaseUnknownPlayerListEntry) Marshal(r IO) {
-	r.Bool(&x.Unknown1)
-	r.String(&x.Unknown2)
-	r.String(&x.Unknown3)
-	r.String(&x.Unknown4)
-	r.String(&x.Unknown5)
-	r.String(&x.Unknown6)
+	var b bool
+	if r.Bool(&b); b {
+		r.Bool(&x.Unknown1)
+		r.String(&x.Unknown2)
+		r.String(&x.Unknown3)
+		r.String(&x.Unknown4)
+		r.String(&x.Unknown5)
+		r.String(&x.Unknown6)
+	}
 }
 
 // PlayerListEntry is an entry found in the PlayerList packet. It represents a single player using the UUID
@@ -102,16 +105,6 @@ type PlayerListEntry struct {
 	Teacher bool
 	// Host specifies if the player that is added to the player list is the host of the game.
 	Host bool
-	// Netease
-	Unknown1 bool
-	// Netease
-	Unknown2 NeteaseUnknownPlayerListEntry
-	// Netease
-	Unknown3 NeteaseUnknownPlayerListEntry
-	// NetEase
-	Unknown4 string
-	// NetEase
-	Unknown5 uint32
 }
 
 // Marshal encodes/decodes a PlayerListEntry.
@@ -125,18 +118,6 @@ func (x *PlayerListEntry) Marshal(r IO) {
 	Single(r, &x.Skin)
 	r.Bool(&x.Teacher)
 	r.Bool(&x.Host)
-	// Netease
-	var b bool
-	r.Bool(&x.Unknown1)
-	if r.Bool(&b); b {
-		Single(r, &x.Unknown2)
-	}
-	if r.Bool(&b); b {
-		Single(r, &x.Unknown3)
-	}
-	// if something, then
-	// r.String(&x.Unknown4)
-	r.Uint32(&x.Unknown5)
 }
 
 // PlayerListRemoveEntry encodes/decodes a PlayerListEntry for removal from the list.
