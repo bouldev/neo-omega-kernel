@@ -368,9 +368,10 @@ func (r *Reader) ItemInstance(i *ItemInstance) {
 	x := &i.Stack
 	x.NBTData = make(map[string]any)
 	r.Varint32(&x.NetworkID)
-	if x.NetworkID == 0 {
+	if x.NetworkID == 0 || x.NetworkID == -1 {
 		// The item was air, so there is no more data we should read for the item instance. After all, air
 		// items aren't really anything.
+		// Netease: NetworkID -1 for not changed
 		x.MetadataValue, x.Count, x.CanBePlacedOn, x.CanBreak = 0, 0, nil, nil
 		return
 	}
