@@ -244,9 +244,8 @@ type StartGame struct {
 
 	// Netease
 	Unknown1 int64
-	// Netease
+	// Netease: they may be a UUID
 	Unknown2 int64
-	// Netease
 	Unknown3 int64
 	// Netease
 	Unknown4 bool
@@ -308,7 +307,7 @@ type StartGame struct {
 	Unknown32 bool
 	// Netease
 	Unknown33 bool
-	// Netease
+	// Netease: UUID string
 	Unknown34 string
 	// Netease
 	Unknown35 bool

@@ -161,7 +161,7 @@ func (x *SkinAnimation) Marshal(r IO) {
 	r.ByteSlice(&x.ImageData)
 	r.Uint32(&x.AnimationType)
 	r.Float32(&x.FrameCount)
-	r.Uint32(&x.ExpressionType)
+	r.Uint32(&x.ExpressionType) // sometimes will be removed?
 }
 
 // PersonaPiece represents a piece of a persona skin. All pieces are sent separately.
