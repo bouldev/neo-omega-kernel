@@ -12,15 +12,15 @@ import (
 
 type CommandHelper struct {
 	neomega.CmdSender
-	uq               neomega.MicroUQHolder
-	botExecutePrefix string
+	uq neomega.MicroUQHolder
+	// botExecutePrefix string
 }
 
 func NewCommandHelper(sender neomega.CmdSender, uq neomega.MicroUQHolder) neomega.CommandHelper {
 	return &CommandHelper{
-		CmdSender:        sender,
-		uq:               uq,
-		botExecutePrefix: fmt.Sprintf("execute @a[name=\"%v\"] ~~~ ", uq.GetBotName()),
+		CmdSender: sender,
+		uq:        uq,
+		// botExecutePrefix: fmt.Sprintf("execute as @a[name=\"%v\"] run", uq.GetBotName()),
 	}
 }
 
@@ -30,6 +30,7 @@ type woCmd struct {
 }
 
 func (c *woCmd) Send() {
+	// fmt.Println(c.cmd)
 	c.CmdSender.SendWOCmd(c.cmd)
 }
 
@@ -100,7 +101,11 @@ func (c *CommandHelper) constructPlayerCommand(cmd string) neomega.CmdCanGetResp
 func (c *CommandHelper) ConstructDimensionLimitedGeneralCommand(cmd string) neomega.GeneralCommand {
 	dimension, _ := c.uq.GetBotDimension()
 	if dimension != 0 {
-		cmd = c.botExecutePrefix + cmd
+		if dimension == 1 {
+			cmd = "execute in nether run " + cmd
+		} else {
+			cmd = "execute in the_end run " + cmd
+		}
 	}
 	return &generalCmd{cmd, c.CmdSender}
 }

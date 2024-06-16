@@ -162,12 +162,12 @@ func (structure *StructureContent) Decode() *neomega.DecodedStructure {
 	}
 	var foreground, background []uint32
 	{
-		BlockIndices0, BlockIndices1 := (structure.Structure.BlockIndices[0]).([]interface{}), (structure.Structure.BlockIndices[1]).([]interface{})
+		BlockIndices0, BlockIndices1 := (structure.Structure.BlockIndices[0]).([]int32), (structure.Structure.BlockIndices[1]).([]int32)
 		foreground = make([]uint32, len(BlockIndices0))
 		background = make([]uint32, len(BlockIndices1))
 		_v := int32(0)
 		for i, v := range BlockIndices0 {
-			_v = v.(int32)
+			_v = v
 			if _v != -1 {
 				foreground[i] = paletteLookUp[_v]
 			} else {
@@ -175,7 +175,7 @@ func (structure *StructureContent) Decode() *neomega.DecodedStructure {
 			}
 		}
 		for i, v := range BlockIndices1 {
-			_v = v.(int32)
+			_v = v
 			if _v != -1 {
 				background[i] = paletteLookUp[_v]
 			} else {
