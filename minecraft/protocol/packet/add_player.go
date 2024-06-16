@@ -98,9 +98,9 @@ func (pk *AddPlayer) Marshal(io protocol.IO) {
 	io.Int32(&pk.BuildPlatform)
 	// Netease
 	// if something {
-	// 	io.String(&pk.Unknown1)
-	// 	io.String(&pk.Unknown2)
-	// 	io.Bool(&pk.Unknown3)
-	// 	io.Bool(&pk.Unknown4)
+	io.String(&pk.Unknown1)
+	io.String(&pk.Unknown2)
+	io.Bool(&pk.Unknown3)
+	io.Bool(&pk.Unknown4)
 	// }
 }
