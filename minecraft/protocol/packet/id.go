@@ -201,7 +201,10 @@ const (
 	IDCameraPresets
 	IDUnlockedRecipes
 	IDPyRpc
-	IDNemcWhatever      = 208
+	IDNemcWhatever208   = 208
+	IDNemcWhatever210   = 210
+	IDNemcWhatever230   = 230
+	IDNemcWhatever302   = 302
 	IDCameraInstruction = iota + 100 // Netease: 301 -> 300
 	IDCompressedBiomeDefinitionList
 	IDTrimData

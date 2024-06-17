@@ -256,7 +256,10 @@ func init() {
 		IDCameraPresets:                     func() Packet { return &CameraPresets{} },
 		IDUnlockedRecipes:                   func() Packet { return &UnlockedRecipes{} },
 		IDPyRpc:                             func() Packet { return &PyRpc{} },
-		IDNemcWhatever:                      func() Packet { return &NemcWhatever{} },
+		IDNemcWhatever208:                   func() Packet { return &NemcWhatever{} },
+		IDNemcWhatever210:                   func() Packet { return &NemcWhatever{} },
+		IDNemcWhatever230:                   func() Packet { return &NemcWhatever{} },
+		IDNemcWhatever302:                   func() Packet { return &NemcWhatever{} },
 		// ---
 		IDCameraInstruction:             func() Packet { return &CameraInstruction{} },
 		IDCompressedBiomeDefinitionList: func() Packet { return &CompressedBiomeDefinitionList{} },
@@ -342,7 +345,10 @@ func init() {
 		IDRequestNetworkSettings:          func() Packet { return &RequestNetworkSettings{} },
 		IDGameTestResults:                 func() Packet { return &GameTestResults{} },
 		IDPyRpc:                           func() Packet { return &PyRpc{} },
-		IDNemcWhatever:                    func() Packet { return &NemcWhatever{} },
+		IDNemcWhatever208:                 func() Packet { return &NemcWhatever{} },
+		IDNemcWhatever210:                 func() Packet { return &NemcWhatever{} },
+		IDNemcWhatever230:                 func() Packet { return &NemcWhatever{} },
+		IDNemcWhatever302:                 func() Packet { return &NemcWhatever{} },
 		IDOpenSign:                        func() Packet { return &OpenSign{} },
 	}
 	for id, pk := range clientOriginating {
