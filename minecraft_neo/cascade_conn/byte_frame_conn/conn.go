@@ -3,8 +3,10 @@ package byte_frame_conn
 import (
 	"fmt"
 	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/minecraft_neo/cascade_conn/can_close"
+	"neo-omega-kernel/minecraft_neo/can_close"
 	"neo-omega-kernel/minecraft_neo/cascade_conn/defines"
+
+	// "neo-omega-kernel/minecraft_neo/defines"
 	"net"
 	"sync"
 	"time"

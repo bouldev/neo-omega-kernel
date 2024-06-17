@@ -1,4 +1,4 @@
-package core_logic
+package game_data
 
 import (
 	"neo-omega-kernel/minecraft/protocol"

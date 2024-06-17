@@ -201,8 +201,10 @@ const (
 	IDCameraPresets
 	IDUnlockedRecipes
 	IDPyRpc
+	IDNemcWhatever203   = 203
 	IDNemcWhatever208   = 208
 	IDNemcWhatever210   = 210
+	IDNemcWhatever228   = 228
 	IDNemcWhatever230   = 230
 	IDNemcWhatever302   = 302
 	IDCameraInstruction = iota + 100 // Netease: 301 -> 300

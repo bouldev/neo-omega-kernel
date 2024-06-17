@@ -1,4 +1,4 @@
-package core_logic
+package login_and_spawn_core
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"neo-omega-kernel/minecraft/protocol/login"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/minecraft/resource"
+	"neo-omega-kernel/minecraft_neo/game_data"
 	"strings"
 
 	"github.com/google/uuid"
@@ -19,48 +20,95 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
-func (c *Core) react(pk packet.Packet) error {
+func (core *Core) Receive(pk packet.Packet) {
+	loggedInBefore, readyToLoginBefore := core.loggedIn, core.readyToLogin
+	core.receive(pk)
+	if !readyToLoginBefore && core.readyToLogin {
+		// This is the signal that the connection is ready to login, so we put a value in the channel so that
+		// it may be detected.
+		select {
+		case core.readyToLoginSignal <- struct{}{}:
+		default:
+			fmt.Println("resend ready signal")
+		}
+	}
+	if !loggedInBefore && core.loggedIn {
+		// This is the signal that the connection was considered logged in, so we put a value in the channel so
+		// that it may be detected.
+		select {
+		case core.loggedInSignal <- struct{}{}:
+		default:
+			fmt.Println("resend logged signal")
+		}
+	}
+}
+
+func (core *Core) receive(pk packet.Packet) {
+	if pk.ID() == packet.IDDisconnect {
+		core.disconnectMessage.Store(&pk.(*packet.Disconnect).Message)
+		_ = core.Close()
+		return
+	}
+	if core.loggedIn && !core.waitingForSpawn.Load() {
+		return
+	}
+	for _, id := range core.expectedIDs.Load().([]uint32) {
+		if id == pk.ID() {
+			// If the packet was expected, so we handle it right now.
+			err := core.handlePacket(pk)
+			if err != nil {
+				panic(err)
+			}
+
+		}
+	}
+}
+
+// handlePacket handles an incoming packet. It returns an error if any of the data found in the packet was not
+// valid or if handling failed for any other reason.
+func (core *Core) handlePacket(pk packet.Packet) error {
+	fmt.Println(pk.ID())
 	defer func() {
-		_ = c.underlayConn.Flush()
+		_ = core.packetConn.Flush()
 	}()
 	switch pk := pk.(type) {
 	// Internal packets destined for the server.
 	case *packet.RequestNetworkSettings:
-		return c.handleRequestNetworkSettings(pk)
+		return core.handleRequestNetworkSettings(pk)
 	case *packet.Login:
-		return c.handleLogin(pk)
+		return core.handleLogin(pk)
 	case *packet.ClientToServerHandshake:
-		return c.handleClientToServerHandshake()
+		return core.handleClientToServerHandshake()
 	case *packet.ClientCacheStatus:
-		return c.handleClientCacheStatus(pk)
+		return core.handleClientCacheStatus(pk)
 	case *packet.ResourcePackClientResponse:
-		return c.handleResourcePackClientResponse(pk)
+		return core.handleResourcePackClientResponse(pk)
 	case *packet.ResourcePackChunkRequest:
-		return c.handleResourcePackChunkRequest(pk)
+		return core.handleResourcePackChunkRequest(pk)
 	case *packet.RequestChunkRadius:
-		return c.handleRequestChunkRadius(pk)
+		return core.handleRequestChunkRadius(pk)
 	case *packet.SetLocalPlayerAsInitialised:
-		return c.handleSetLocalPlayerAsInitialised(pk)
+		return core.handleSetLocalPlayerAsInitialised(pk)
 
 	// Internal packets destined for the client.
 	case *packet.NetworkSettings:
-		return c.handleNetworkSettings(pk)
+		return core.handleNetworkSettings(pk)
 	case *packet.ServerToClientHandshake:
-		return c.handleServerToClientHandshake(pk)
+		return core.handleServerToClientHandshake(pk)
 	case *packet.PlayStatus:
-		return c.handlePlayStatus(pk)
+		return core.handlePlayStatus(pk)
 	case *packet.ResourcePacksInfo:
-		return c.handleResourcePacksInfo(pk)
+		return core.handleResourcePacksInfo(pk)
 	case *packet.ResourcePackDataInfo:
-		return c.handleResourcePackDataInfo(pk)
+		return core.handleResourcePackDataInfo(pk)
 	case *packet.ResourcePackChunkData:
-		return c.handleResourcePackChunkData(pk)
+		return core.handleResourcePackChunkData(pk)
 	case *packet.ResourcePackStack:
-		return c.handleResourcePackStack(pk)
+		return core.handleResourcePackStack(pk)
 	case *packet.StartGame:
-		return c.handleStartGame(pk)
+		return core.handleStartGame(pk)
 	case *packet.ChunkRadiusUpdated:
-		return c.handleChunkRadiusUpdated(pk)
+		return core.handleChunkRadiusUpdated(pk)
 	}
 	return nil
 }
@@ -68,15 +116,27 @@ func (c *Core) react(pk packet.Packet) error {
 // handleRequestNetworkSettings handles an incoming RequestNetworkSettings packet. It returns an error if the protocol
 // version is not supported, otherwise sending back a NetworkSettings packet.
 func (core *Core) handleRequestNetworkSettings(pk *packet.RequestNetworkSettings) error {
+	found := false
+	if !found {
+		status := packet.PlayStatusLoginFailedClient
+		if pk.ClientProtocol > protocol.CurrentProtocol {
+			// The server is outdated in this case, so we have to change the status we send.
+			status = packet.PlayStatusLoginFailedServer
+		}
+		_ = core.packetConn.WritePacket(&packet.PlayStatus{Status: status})
+		return fmt.Errorf("%v connected with an incompatible protocol: expected protocol = %v, client protocol = %v", core.IdentityData.DisplayName, protocol.CurrentProtocol, pk.ClientProtocol)
+	}
+
 	core.expect(packet.IDLogin)
-	if err := core.WritePacket(&packet.NetworkSettings{
+	if err := core.packetConn.WritePacket(&packet.NetworkSettings{
 		CompressionThreshold: 512,
 		CompressionAlgorithm: core.compression.EncodeCompression(),
 	}); err != nil {
 		return fmt.Errorf("error sending network settings: %v", err)
 	}
-	_ = core.underlayConn.Flush()
-	core.underlayConn.EnableCompression(core.compression)
+	_ = core.packetConn.Flush()
+	// core.EnableCompression(core.compression)
+	core.packetConn.EnableCompression(core.compression)
 	return nil
 }
 
@@ -86,7 +146,8 @@ func (core *Core) handleNetworkSettings(pk *packet.NetworkSettings) error {
 	if !ok {
 		return fmt.Errorf("unknown compression algorithm: %v", pk.CompressionAlgorithm)
 	}
-	core.underlayConn.EnableCompression(alg)
+	// core.enc.EnableCompression(alg)
+	core.packetConn.EnableCompression(alg)
 	core.readyToLogin = true
 	return nil
 }
@@ -107,7 +168,7 @@ func (core *Core) handleLogin(pk *packet.Login) error {
 
 	// Make sure the player is logged in with XBOX Live when necessary.
 	// if !authResult.XBOXLiveAuthenticated && core.authEnabled {
-	// 	_ = core.WritePacket(&packet.Disconnect{Message: text.Colourf("<red>You must be logged in with XBOX Live to join.</red>")})
+	// 	_ = core.packetConn.WritePacket(&packet.Disconnect{Message: text.Colourf("<red>You must be logged in with XBOX Live to join.</red>")})
 	// 	return fmt.Errorf("connection %v was not authenticated to XBOX Live", core.RemoteAddr())
 	// }
 	if err := core.enableEncryption(authResult.PublicKey); err != nil {
@@ -120,7 +181,7 @@ func (core *Core) handleLogin(pk *packet.Login) error {
 func (core *Core) handleClientToServerHandshake() error {
 	// The next expected packet is a resource pack client response.
 	core.expect(packet.IDResourcePackClientResponse, packet.IDClientCacheStatus)
-	if err := core.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusLoginSuccess}); err != nil {
+	if err := core.packetConn.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusLoginSuccess}); err != nil {
 		return fmt.Errorf("error sending play status login success: %v", err)
 	}
 	pk := &packet.ResourcePacksInfo{TexturePackRequired: core.texturePacksRequired}
@@ -145,7 +206,7 @@ func (core *Core) handleClientToServerHandshake() error {
 		pk.TexturePacks = append(pk.TexturePacks, texturePack)
 	}
 	// Finally we send the packet after the play status.
-	if err := core.WritePacket(pk); err != nil {
+	if err := core.packetConn.WritePacket(pk); err != nil {
 		return fmt.Errorf("error sending resource packs info: %v", err)
 	}
 	return nil
@@ -190,17 +251,18 @@ func (core *Core) handleServerToClientHandshake(pk *packet.ServerToClientHandsha
 	keyBytes := sha256.Sum256(append(salt, sharedSecret...))
 
 	// Finally we enable encryption for the enc and dec using the secret pubKey bytes we produced.
-	core.underlayConn.EnableEncryption(keyBytes)
+	core.packetConn.EnableEncryption(keyBytes)
+	// core.dec.EnableEncryption(keyBytes)
 
 	// We write a ClientToServerHandshake packet (which has no payload) as a response.
-	_ = core.WritePacket(&packet.ClientToServerHandshake{})
+	_ = core.packetConn.WritePacket(&packet.ClientToServerHandshake{})
 	return nil
 }
 
 // handleClientCacheStatus handles a ClientCacheStatus packet sent by the client. It specifies if the client
 // has support for the client blob cache.
 func (core *Core) handleClientCacheStatus(pk *packet.ClientCacheStatus) error {
-	core.cacheEnabled = pk.Enabled
+	core.EnableClientCache = pk.Enabled
 	return nil
 }
 
@@ -217,17 +279,9 @@ func (core *Core) handleResourcePacksInfo(pk *packet.ResourcePacksInfo) error {
 	}
 	packsToDownload := make([]string, 0, totalPacks)
 
-	for index, pack := range pk.TexturePacks {
+	for _, pack := range pk.TexturePacks {
 		if _, ok := core.packQueue.downloadingPacks[pack.UUID]; ok {
 			core.ErrorLog.Printf("duplicate texture pack entry %v in resource pack info\n", pack.UUID)
-			core.packQueue.packAmount--
-			continue
-		}
-		if core.downloadResourcePack != nil && !core.downloadResourcePack(uuid.MustParse(pack.UUID), pack.Version, index, totalPacks) {
-			core.ignoredResourcePacks = append(core.ignoredResourcePacks, exemptedResourcePack{
-				uuid:    pack.UUID,
-				version: pack.Version,
-			})
 			core.packQueue.packAmount--
 			continue
 		}
@@ -240,17 +294,9 @@ func (core *Core) handleResourcePacksInfo(pk *packet.ResourcePacksInfo) error {
 			contentKey: pack.ContentKey,
 		}
 	}
-	for index, pack := range pk.BehaviourPacks {
+	for _, pack := range pk.BehaviourPacks {
 		if _, ok := core.packQueue.downloadingPacks[pack.UUID]; ok {
 			core.ErrorLog.Printf("duplicate behaviour pack entry %v in resource pack info\n", pack.UUID)
-			core.packQueue.packAmount--
-			continue
-		}
-		if core.downloadResourcePack != nil && !core.downloadResourcePack(uuid.MustParse(pack.UUID), pack.Version, index, totalPacks) {
-			core.ignoredResourcePacks = append(core.ignoredResourcePacks, exemptedResourcePack{
-				uuid:    pack.UUID,
-				version: pack.Version,
-			})
 			core.packQueue.packAmount--
 			continue
 		}
@@ -266,7 +312,7 @@ func (core *Core) handleResourcePacksInfo(pk *packet.ResourcePacksInfo) error {
 
 	if len(packsToDownload) != 0 {
 		core.expect(packet.IDResourcePackDataInfo, packet.IDResourcePackChunkData)
-		_ = core.WritePacket(&packet.ResourcePackClientResponse{
+		_ = core.packetConn.WritePacket(&packet.ResourcePackClientResponse{
 			Response:        packet.PackResponseSendPacks,
 			PacksToDownload: packsToDownload,
 		})
@@ -274,7 +320,7 @@ func (core *Core) handleResourcePacksInfo(pk *packet.ResourcePacksInfo) error {
 	}
 	core.expect(packet.IDResourcePackStack)
 
-	_ = core.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseAllPacksDownloaded})
+	_ = core.packetConn.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseAllPacksDownloaded})
 	return nil
 }
 
@@ -302,7 +348,7 @@ func (core *Core) handleResourcePackStack(pk *packet.ResourcePackStack) error {
 		}
 	}
 	core.expect(packet.IDStartGame)
-	_ = core.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseCompleted})
+	_ = core.packetConn.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseCompleted})
 	return nil
 }
 
@@ -316,8 +362,8 @@ func (core *Core) hasPack(uuid string, version string, hasBehaviours bool) bool 
 			return true
 		}
 	}
-	core.underlayConn.Lock()
-	defer core.underlayConn.UnLock()
+	core.packMu.Lock()
+	defer core.packMu.Unlock()
 
 	for _, ignored := range core.ignoredResourcePacks {
 		if ignored.uuid == uuid && ignored.version == version {
@@ -342,8 +388,7 @@ func (core *Core) handleResourcePackClientResponse(pk *packet.ResourcePackClient
 	case packet.PackResponseRefused:
 		// Even though this response is never sent, we handle it appropriately in case it is changed to work
 		// correctly again.
-		core.CloseWithError(fmt.Errorf("packet response refused"))
-		return nil
+		return core.Close()
 	case packet.PackResponseSendPacks:
 		packs := pk.PacksToDownload
 		core.packQueue = &resourcePackQueue{packs: core.resourcePacks}
@@ -373,7 +418,7 @@ func (core *Core) handleResourcePackClientResponse(pk *packet.ResourcePackClient
 				Version: exempted.version,
 			})
 		}
-		if err := core.WritePacket(pk); err != nil {
+		if err := core.packetConn.WritePacket(pk); err != nil {
 			return fmt.Errorf("error writing resource pack stack packet: %v", err)
 		}
 	case packet.PackResponseCompleted:
@@ -387,7 +432,7 @@ func (core *Core) handleResourcePackClientResponse(pk *packet.ResourcePackClient
 // startGame sends a StartGame packet using the game data of the connection.
 func (core *Core) startGame() {
 	data := core.gameData
-	_ = core.WritePacket(&packet.StartGame{
+	_ = core.packetConn.WritePacket(&packet.StartGame{
 		Difficulty:                   data.Difficulty,
 		EntityUniqueID:               data.EntityUniqueID,
 		EntityRuntimeID:              data.EntityRuntimeID,
@@ -427,7 +472,7 @@ func (core *Core) startGame() {
 		GameVersion:                  protocol.CurrentVersion,
 		UseBlockNetworkIDHashes:      data.UseBlockNetworkIDHashes,
 	})
-	_ = core.underlayConn.Flush()
+	_ = core.packetConn.Flush()
 	core.expect(packet.IDRequestChunkRadius, packet.IDSetLocalPlayerAsInitialised)
 }
 
@@ -438,7 +483,7 @@ func (core *Core) nextResourcePackDownload() error {
 	if !ok {
 		return fmt.Errorf("no resource packs to download")
 	}
-	if err := core.WritePacket(pk); err != nil {
+	if err := core.packetConn.WritePacket(pk); err != nil {
 		return fmt.Errorf("error sending resource pack data info packet: %v", err)
 	}
 	// Set the next expected packet to ResourcePackChunkRequest packets.
@@ -480,20 +525,20 @@ func (core *Core) handleResourcePackDataInfo(pk *packet.ResourcePackDataInfo) er
 	idCopy := pk.UUID
 	go func() {
 		for i := uint32(0); i < chunkCount; i++ {
-			_ = core.WritePacket(&packet.ResourcePackChunkRequest{
+			_ = core.packetConn.WritePacket(&packet.ResourcePackChunkRequest{
 				UUID:       idCopy,
 				ChunkIndex: i,
 			})
 			select {
-			case <-core.WaitClosed():
+			case <-core.close:
 				return
 			case frag := <-pack.newFrag:
 				// Write the fragment to the full buffer of the downloading resource pack.
 				_, _ = pack.buf.Write(frag)
 			}
 		}
-		core.underlayConn.Lock()
-		defer core.underlayConn.UnLock()
+		core.packMu.Lock()
+		defer core.packMu.Unlock()
 
 		if pack.buf.Len() != int(pack.size) {
 			core.ErrorLog.Printf("incorrect resource pack size: expected %v, but got %v\n", pack.size, pack.buf.Len())
@@ -510,7 +555,7 @@ func (core *Core) handleResourcePackDataInfo(pk *packet.ResourcePackDataInfo) er
 		core.resourcePacks = append(core.resourcePacks, newPack.WithContentKey(pack.contentKey))
 		if core.packQueue.packAmount == 0 {
 			core.expect(packet.IDResourcePackStack)
-			_ = core.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseAllPacksDownloaded})
+			_ = core.packetConn.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseAllPacksDownloaded})
 		}
 	}()
 	return nil
@@ -574,7 +619,7 @@ func (core *Core) handleResourcePackChunkRequest(pk *packet.ResourcePackChunkReq
 			}
 		}()
 	}
-	if err := core.WritePacket(response); err != nil {
+	if err := core.packetConn.WritePacket(response); err != nil {
 		return fmt.Errorf("error writing resource pack chunk data packet: %v", err)
 	}
 
@@ -584,7 +629,7 @@ func (core *Core) handleResourcePackChunkRequest(pk *packet.ResourcePackChunkReq
 // handleStartGame handles an incoming StartGame packet. It is the signal that the player has been added to a
 // world, and it obtains most of its dedicated properties.
 func (core *Core) handleStartGame(pk *packet.StartGame) error {
-	core.gameData = GameData{
+	core.gameData = game_data.GameData{
 		Difficulty:                   pk.Difficulty,
 		WorldName:                    pk.WorldName,
 		WorldSeed:                    pk.WorldSeed,
@@ -619,11 +664,11 @@ func (core *Core) handleStartGame(pk *packet.StartGame) error {
 	}
 	for _, item := range pk.Items {
 		if item.Name == "minecraft:shield" {
-			core.shieldID.Store(int32(item.RuntimeID))
+			core.packetConn.SetShieldID(int32(item.RuntimeID))
 		}
 	}
 
-	_ = core.WritePacket(&packet.RequestChunkRadius{ChunkRadius: 16})
+	_ = core.packetConn.WritePacket(&packet.RequestChunkRadius{ChunkRadius: 16})
 	core.expect(packet.IDChunkRadiusUpdated, packet.IDPlayStatus)
 	return nil
 }
@@ -639,7 +684,7 @@ func (core *Core) handleRequestChunkRadius(pk *packet.RequestChunkRadius) error 
 	if r := core.gameData.ChunkRadius; r != 0 {
 		radius = r
 	}
-	_ = core.WritePacket(&packet.ChunkRadiusUpdated{ChunkRadius: radius})
+	_ = core.packetConn.WritePacket(&packet.ChunkRadiusUpdated{ChunkRadius: radius})
 	core.gameData.ChunkRadius = pk.ChunkRadius
 
 	// The client crashes when not sending all biomes, due to achievements assuming all biomes are present.
@@ -647,16 +692,16 @@ func (core *Core) handleRequestChunkRadius(pk *packet.RequestChunkRadius) error 
 	if core.biomes == nil {
 		const s = `CgAKDWJhbWJvb19qdW5nbGUFCGRvd25mYWxsZmZmPwULdGVtcGVyYXR1cmUzM3M/AAoTYmFtYm9vX2p1bmdsZV9oaWxscwUIZG93bmZhbGxmZmY/BQt0ZW1wZXJhdHVyZTMzcz8ACgViZWFjaAUIZG93bmZhbGzNzMw+BQt0ZW1wZXJhdHVyZc3MTD8ACgxiaXJjaF9mb3Jlc3QFCGRvd25mYWxsmpkZPwULdGVtcGVyYXR1cmWamRk/AAoSYmlyY2hfZm9yZXN0X2hpbGxzBQhkb3duZmFsbJqZGT8FC3RlbXBlcmF0dXJlmpkZPwAKGmJpcmNoX2ZvcmVzdF9oaWxsc19tdXRhdGVkBQhkb3duZmFsbM3MTD8FC3RlbXBlcmF0dXJlMzMzPwAKFGJpcmNoX2ZvcmVzdF9tdXRhdGVkBQhkb3duZmFsbM3MTD8FC3RlbXBlcmF0dXJlMzMzPwAKCmNvbGRfYmVhY2gFCGRvd25mYWxsmpmZPgULdGVtcGVyYXR1cmXNzEw9AAoKY29sZF9vY2VhbgUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZQAAAD8ACgpjb2xkX3RhaWdhBQhkb3duZmFsbM3MzD4FC3RlbXBlcmF0dXJlAAAAvwAKEGNvbGRfdGFpZ2FfaGlsbHMFCGRvd25mYWxszczMPgULdGVtcGVyYXR1cmUAAAC/AAoSY29sZF90YWlnYV9tdXRhdGVkBQhkb3duZmFsbM3MzD4FC3RlbXBlcmF0dXJlAAAAvwAKD2RlZXBfY29sZF9vY2VhbgUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZQAAAD8AChFkZWVwX2Zyb3plbl9vY2VhbgUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZQAAAAAAChNkZWVwX2x1a2V3YXJtX29jZWFuBQhkb3duZmFsbAAAAD8FC3RlbXBlcmF0dXJlAAAAPwAKCmRlZXBfb2NlYW4FCGRvd25mYWxsAAAAPwULdGVtcGVyYXR1cmUAAAA/AAoPZGVlcF93YXJtX29jZWFuBQhkb3duZmFsbAAAAD8FC3RlbXBlcmF0dXJlAAAAPwAKBmRlc2VydAUIZG93bmZhbGwAAAAABQt0ZW1wZXJhdHVyZQAAAEAACgxkZXNlcnRfaGlsbHMFCGRvd25mYWxsAAAAAAULdGVtcGVyYXR1cmUAAABAAAoOZGVzZXJ0X211dGF0ZWQFCGRvd25mYWxsAAAAAAULdGVtcGVyYXR1cmUAAABAAAoNZXh0cmVtZV9oaWxscwUIZG93bmZhbGyamZk+BQt0ZW1wZXJhdHVyZc3MTD4AChJleHRyZW1lX2hpbGxzX2VkZ2UFCGRvd25mYWxsmpmZPgULdGVtcGVyYXR1cmXNzEw+AAoVZXh0cmVtZV9oaWxsc19tdXRhdGVkBQhkb3duZmFsbJqZmT4FC3RlbXBlcmF0dXJlzcxMPgAKGGV4dHJlbWVfaGlsbHNfcGx1c190cmVlcwUIZG93bmZhbGyamZk+BQt0ZW1wZXJhdHVyZc3MTD4ACiBleHRyZW1lX2hpbGxzX3BsdXNfdHJlZXNfbXV0YXRlZAUIZG93bmZhbGyamZk+BQt0ZW1wZXJhdHVyZc3MTD4ACg1mbG93ZXJfZm9yZXN0BQhkb3duZmFsbM3MTD8FC3RlbXBlcmF0dXJlMzMzPwAKBmZvcmVzdAUIZG93bmZhbGzNzEw/BQt0ZW1wZXJhdHVyZTMzMz8ACgxmb3Jlc3RfaGlsbHMFCGRvd25mYWxszcxMPwULdGVtcGVyYXR1cmUzMzM/AAoMZnJvemVuX29jZWFuBQhkb3duZmFsbAAAAD8FC3RlbXBlcmF0dXJlAAAAAAAKDGZyb3plbl9yaXZlcgUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZQAAAAAACgRoZWxsBQhkb3duZmFsbAAAAAAFC3RlbXBlcmF0dXJlAAAAQAAKDWljZV9tb3VudGFpbnMFCGRvd25mYWxsAAAAPwULdGVtcGVyYXR1cmUAAAAAAAoKaWNlX3BsYWlucwUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZQAAAAAAChFpY2VfcGxhaW5zX3NwaWtlcwUIZG93bmZhbGwAAIA/BQt0ZW1wZXJhdHVyZQAAAAAACgZqdW5nbGUFCGRvd25mYWxsZmZmPwULdGVtcGVyYXR1cmUzM3M/AAoLanVuZ2xlX2VkZ2UFCGRvd25mYWxszcxMPwULdGVtcGVyYXR1cmUzM3M/AAoTanVuZ2xlX2VkZ2VfbXV0YXRlZAUIZG93bmZhbGzNzEw/BQt0ZW1wZXJhdHVyZTMzcz8ACgxqdW5nbGVfaGlsbHMFCGRvd25mYWxsZmZmPwULdGVtcGVyYXR1cmUzM3M/AAoOanVuZ2xlX211dGF0ZWQFCGRvd25mYWxsZmZmPwULdGVtcGVyYXR1cmUzM3M/AAoTbGVnYWN5X2Zyb3plbl9vY2VhbgUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZQAAAAAACg5sdWtld2FybV9vY2VhbgUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZQAAAD8ACgptZWdhX3RhaWdhBQhkb3duZmFsbM3MTD8FC3RlbXBlcmF0dXJlmpmZPgAKEG1lZ2FfdGFpZ2FfaGlsbHMFCGRvd25mYWxszcxMPwULdGVtcGVyYXR1cmWamZk+AAoEbWVzYQUIZG93bmZhbGwAAAAABQt0ZW1wZXJhdHVyZQAAAEAACgptZXNhX2JyeWNlBQhkb3duZmFsbAAAAAAFC3RlbXBlcmF0dXJlAAAAQAAKDG1lc2FfcGxhdGVhdQUIZG93bmZhbGwAAAAABQt0ZW1wZXJhdHVyZQAAAEAAChRtZXNhX3BsYXRlYXVfbXV0YXRlZAUIZG93bmZhbGwAAAAABQt0ZW1wZXJhdHVyZQAAAEAAChJtZXNhX3BsYXRlYXVfc3RvbmUFCGRvd25mYWxsAAAAAAULdGVtcGVyYXR1cmUAAABAAAoabWVzYV9wbGF0ZWF1X3N0b25lX211dGF0ZWQFCGRvd25mYWxsAAAAAAULdGVtcGVyYXR1cmUAAABAAAoPbXVzaHJvb21faXNsYW5kBQhkb3duZmFsbAAAgD8FC3RlbXBlcmF0dXJlZmZmPwAKFW11c2hyb29tX2lzbGFuZF9zaG9yZQUIZG93bmZhbGwAAIA/BQt0ZW1wZXJhdHVyZWZmZj8ACgVvY2VhbgUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZQAAAD8ACgZwbGFpbnMFCGRvd25mYWxszczMPgULdGVtcGVyYXR1cmXNzEw/AAobcmVkd29vZF90YWlnYV9oaWxsc19tdXRhdGVkBQhkb3duZmFsbM3MTD8FC3RlbXBlcmF0dXJlmpmZPgAKFXJlZHdvb2RfdGFpZ2FfbXV0YXRlZAUIZG93bmZhbGzNzEw/BQt0ZW1wZXJhdHVyZQAAgD4ACgVyaXZlcgUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZQAAAD8ACg1yb29mZWRfZm9yZXN0BQhkb3duZmFsbM3MTD8FC3RlbXBlcmF0dXJlMzMzPwAKFXJvb2ZlZF9mb3Jlc3RfbXV0YXRlZAUIZG93bmZhbGzNzEw/BQt0ZW1wZXJhdHVyZTMzMz8ACgdzYXZhbm5hBQhkb3duZmFsbAAAAAAFC3RlbXBlcmF0dXJlmpmZPwAKD3NhdmFubmFfbXV0YXRlZAUIZG93bmZhbGwAAAA/BQt0ZW1wZXJhdHVyZc3MjD8ACg9zYXZhbm5hX3BsYXRlYXUFCGRvd25mYWxsAAAAAAULdGVtcGVyYXR1cmUAAIA/AAoXc2F2YW5uYV9wbGF0ZWF1X211dGF0ZWQFCGRvd25mYWxsAAAAPwULdGVtcGVyYXR1cmUAAIA/AAoLc3RvbmVfYmVhY2gFCGRvd25mYWxsmpmZPgULdGVtcGVyYXR1cmXNzEw+AAoQc3VuZmxvd2VyX3BsYWlucwUIZG93bmZhbGzNzMw+BQt0ZW1wZXJhdHVyZc3MTD8ACglzd2FtcGxhbmQFCGRvd25mYWxsAAAAPwULdGVtcGVyYXR1cmXNzEw/AAoRc3dhbXBsYW5kX211dGF0ZWQFCGRvd25mYWxsAAAAPwULdGVtcGVyYXR1cmXNzEw/AAoFdGFpZ2EFCGRvd25mYWxszcxMPwULdGVtcGVyYXR1cmUAAIA+AAoLdGFpZ2FfaGlsbHMFCGRvd25mYWxszcxMPwULdGVtcGVyYXR1cmUAAIA+AAoNdGFpZ2FfbXV0YXRlZAUIZG93bmZhbGzNzEw/BQt0ZW1wZXJhdHVyZQAAgD4ACgd0aGVfZW5kBQhkb3duZmFsbAAAAD8FC3RlbXBlcmF0dXJlAAAAPwAKCndhcm1fb2NlYW4FCGRvd25mYWxsAAAAPwULdGVtcGVyYXR1cmUAAAA/AAA=`
 		b, _ := base64.StdEncoding.DecodeString(s)
-		_ = core.WritePacket(&packet.BiomeDefinitionList{
+		_ = core.packetConn.WritePacket(&packet.BiomeDefinitionList{
 			SerialisedBiomeDefinitions: b,
 		})
 	} else {
 		b, _ := nbt.MarshalEncoding(core.biomes, nbt.NetworkLittleEndian)
-		_ = core.WritePacket(&packet.BiomeDefinitionList{SerialisedBiomeDefinitions: b})
+		_ = core.packetConn.WritePacket(&packet.BiomeDefinitionList{SerialisedBiomeDefinitions: b})
 	}
 
-	_ = core.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusPlayerSpawn})
-	_ = core.WritePacket(&packet.CreativeContent{})
+	_ = core.packetConn.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusPlayerSpawn})
+	_ = core.packetConn.WritePacket(&packet.CreativeContent{})
 	return nil
 }
 
@@ -693,17 +738,17 @@ func (core *Core) handleSetLocalPlayerAsInitialised(pk *packet.SetLocalPlayerAsI
 func (core *Core) handlePlayStatus(pk *packet.PlayStatus) error {
 	switch pk.Status {
 	case packet.PlayStatusLoginSuccess:
-		if err := core.WritePacket(&packet.ClientCacheStatus{Enabled: core.cacheEnabled}); err != nil {
+		if err := core.packetConn.WritePacket(&packet.ClientCacheStatus{Enabled: core.EnableClientCache}); err != nil {
 			return fmt.Errorf("error sending client cache status: %v", err)
 		}
 		// The next packet we expect is the ResourcePacksInfo packet.
 		core.expect(packet.IDResourcePacksInfo)
-		return core.underlayConn.Flush()
+		return core.packetConn.Flush()
 	case packet.PlayStatusLoginFailedClient:
-		core.Close()
+		_ = core.Close()
 		return fmt.Errorf("client outdated")
 	case packet.PlayStatusLoginFailedServer:
-		core.Close()
+		_ = core.Close()
 		return fmt.Errorf("server outdated")
 	case packet.PlayStatusPlayerSpawn:
 		// We've spawned and can send the last packet in the spawn sequence.
@@ -711,22 +756,22 @@ func (core *Core) handlePlayStatus(pk *packet.PlayStatus) error {
 		core.tryFinaliseClientConn()
 		return nil
 	case packet.PlayStatusLoginFailedInvalidTenant:
-		core.Close()
+		_ = core.Close()
 		return fmt.Errorf("invalid edu edition game owner")
 	case packet.PlayStatusLoginFailedVanillaEdu:
-		core.Close()
+		_ = core.Close()
 		return fmt.Errorf("cannot join an edu edition game on vanilla")
 	case packet.PlayStatusLoginFailedEduVanilla:
-		core.Close()
+		_ = core.Close()
 		return fmt.Errorf("cannot join a vanilla game on edu edition")
 	case packet.PlayStatusLoginFailedServerFull:
-		core.Close()
+		_ = core.Close()
 		return fmt.Errorf("server full")
 	case packet.PlayStatusLoginFailedEditorVanilla:
-		core.Close()
+		_ = core.Close()
 		return fmt.Errorf("cannot join a vanilla game on editor")
 	case packet.PlayStatusLoginFailedVanillaEditor:
-		core.Close()
+		_ = core.Close()
 		return fmt.Errorf("cannot join an editor game on vanilla")
 	default:
 		return fmt.Errorf("unknown play status in PlayStatus packet %v", pk.Status)
@@ -743,7 +788,7 @@ func (core *Core) tryFinaliseClientConn() {
 
 		close(core.spawn)
 		core.loggedIn = true
-		_ = core.WritePacket(&packet.SetLocalPlayerAsInitialised{EntityRuntimeID: core.gameData.EntityRuntimeID})
+		_ = core.packetConn.WritePacket(&packet.SetLocalPlayerAsInitialised{EntityRuntimeID: core.gameData.EntityRuntimeID})
 	}
 }
 
@@ -755,25 +800,40 @@ func (core *Core) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
 	})
 	// We produce an encoded JWT using the header and payload above, then we send the JWT in a ServerToClient-
 	// Handshake packet so that the client can initialise encryption.
-	serverJWT, err := jwt.Signed(signer).Claims(saltClaims{Salt: base64.RawStdEncoding.EncodeToString(core.Salt)}).CompactSerialize()
+	serverJWT, err := jwt.Signed(signer).Claims(saltClaims{Salt: base64.RawStdEncoding.EncodeToString(core.salt)}).CompactSerialize()
 	if err != nil {
 		return fmt.Errorf("compact serialise server JWT: %w", err)
 	}
-	if err := core.WritePacket(&packet.ServerToClientHandshake{JWT: []byte(serverJWT)}); err != nil {
+	if err := core.packetConn.WritePacket(&packet.ServerToClientHandshake{JWT: []byte(serverJWT)}); err != nil {
 		return fmt.Errorf("error sending ServerToClientHandshake packet: %v", err)
 	}
 	// Flush immediately as we'll enable encryption after this.
-	_ = core.underlayConn.Flush()
+	_ = core.packetConn.Flush()
 
 	// We first compute the shared secret.
 	x, _ := clientPublicKey.Curve.ScalarMult(clientPublicKey.X, clientPublicKey.Y, core.PrivateKey.D.Bytes())
 
 	sharedSecret := append(bytes.Repeat([]byte{0}, 48-len(x.Bytes())), x.Bytes()...)
 
-	keyBytes := sha256.Sum256(append(core.Salt, sharedSecret...))
+	keyBytes := sha256.Sum256(append(core.salt, sharedSecret...))
 
 	// Finally we enable encryption for the encoder and decoder using the secret key bytes we produced.
-	core.underlayConn.EnableEncryption(keyBytes)
+	core.packetConn.EnableEncryption(keyBytes)
+	// core.dec.EnableEncryption(keyBytes)
 
 	return nil
+}
+
+// expect sets the packet IDs that are next expected to arrive.
+func (core *Core) expect(packetIDs ...uint32) {
+	core.expectedIDs.Store(packetIDs)
+}
+
+// closeErr returns an adequate connection closed error for the op passed. If the connection was closed
+// through a Disconnect packet, the message is contained.
+func (core *Core) closeErr(op string) error {
+	if msg := *core.disconnectMessage.Load(); msg != "" {
+		return fmt.Errorf("connection closed: %v", msg)
+	}
+	return fmt.Errorf("connection closed")
 }

@@ -24,3 +24,11 @@ func parseData(data []byte) (*packetData, error) {
 	}
 	return &packetData{h: header, full: data, payload: buf}, nil
 }
+
+type unknownPacketError struct {
+	id uint32
+}
+
+func (err unknownPacketError) Error() string {
+	return fmt.Sprintf("unexpected packet with ID %v", err.id)
+}

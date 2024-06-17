@@ -2,15 +2,13 @@ package defines
 
 import (
 	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/minecraft_neo/cascade_conn/can_close"
+	"neo-omega-kernel/minecraft_neo/can_close"
 )
 
 type AdvancedConnControl interface {
 	EnableEncryption([32]byte)
 	EnableCompression(packet.Compression)
 	Flush() error
-	Lock()
-	UnLock()
 }
 
 type ByteFrameConnBase interface {
@@ -22,22 +20,25 @@ type ByteFrameConnBase interface {
 type ByteFrameConn interface {
 	ByteFrameConnBase
 	AdvancedConnControl
+	Lock()
+	UnLock()
 }
 
-type RawPacketAndByte struct {
-	Raw []byte
-	Pk  packet.Packet
-}
+// type RawPacketAndByte struct {
+// 	Raw []byte
+// 	Pk  packet.Packet
+// }
 
-type BotReactLogic interface {
-	HandlePacket(*RawPacketAndByte)
-	ShieldID() int32
-}
+// type BotReactLogic interface {
+// 	HandlePacket(*RawPacketAndByte)
+// 	ShieldID() int32
+// }
 
 type PacketConnBase interface {
 	can_close.CanClose
-	ReadRoutine(botLogic BotReactLogic)
-	WritePacket(pk packet.Packet, shieldID int32) error
+	ListenRoutine(func(pk packet.Packet))
+	WritePacket(packet.Packet) error
+	SetShieldID(newShieldID int32)
 }
 
 type PacketConn interface {

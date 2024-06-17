@@ -1,4 +1,4 @@
-package network
+package base_net
 
 import (
 	"context"
@@ -39,17 +39,17 @@ type NetworkListener interface {
 	PongData(data []byte)
 }
 
-// // networks holds a map of id => Network to be used for looking up the network by an ID. It is registered to when calling
-// // RegisterNetwork.
-// var networks = map[string]Network{}
+// networks holds a map of id => Network to be used for looking up the network by an ID. It is registered to when calling
+// RegisterNetwork.
+var networks = map[string]Network{}
 
-// // RegisterNetwork registers a network so that it can be used for Gophertunnel.
-// func RegisterNetwork(id string, n Network) {
-// 	networks[id] = n
-// }
+// RegisterNetwork registers a network so that it can be used for Gophertunnel.
+func RegisterNetwork(id string, n Network) {
+	networks[id] = n
+}
 
-// // networkByID returns the network with the ID passed. If no network is found, the second return value will be false.
-// func networkByID(id string) (Network, bool) {
-// 	n, ok := networks[id]
-// 	return n, ok
-// }
+// networkByID returns the network with the ID passed. If no network is found, the second return value will be false.
+func networkByID(id string) (Network, bool) {
+	n, ok := networks[id]
+	return n, ok
+}

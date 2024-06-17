@@ -9,10 +9,12 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
+	"neo-omega-kernel/minecraft/protocol/packet"
+	"neo-omega-kernel/minecraft_neo/cascade_conn/base_net"
 	"neo-omega-kernel/minecraft_neo/cascade_conn/byte_frame_conn"
-	"neo-omega-kernel/minecraft_neo/cascade_conn/network"
 	"neo-omega-kernel/minecraft_neo/cascade_conn/packet_conn"
-	"neo-omega-kernel/minecraft_neo/core_logic"
+	"neo-omega-kernel/minecraft_neo/login_and_spawn_core"
+	"neo-omega-kernel/minecraft_neo/login_and_spawn_core/options"
 	"neo-omega-kernel/neomega/fbauth"
 )
 
@@ -49,18 +51,38 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	rakNet := network.RakNet{}
-	rakNetConn, err := rakNet.DialContext(ctx, address)
+	fmt.Println("Auth Pass")
+	rakNetConn, err := base_net.RakNet.DialContext(ctx, address)
 	if err != nil {
-		return
+		panic(err)
 	}
 
-	frameConn := byte_frame_conn.NewConnectionFromNet(rakNetConn)
-	packetConn := packet_conn.NewClientFromConn(frameConn)
-	option := core_logic.NewDefaultOptions(address, chainData, privateKey)
-	core := core_logic.NewCore(packetConn, option)
-	go core.StartReactRoutine()
-	core.StartLoginSequence()
-	err = <-core.WaitClosed()
-	fmt.Println(err)
+	opt := options.NewDefaultOptions(address, chainData, privateKey)
+	byteFrameConn := byte_frame_conn.NewConnectionFromNet(rakNetConn)
+	packetConn := packet_conn.NewPacketConn(byteFrameConn, false)
+	loginAndSpawnCore := login_and_spawn_core.NewLoginAndSpawnCore(packetConn, opt)
+	go packetConn.ListenRoutine(func(pk packet.Packet) {
+		fmt.Println("read:", pk.ID())
+		loginAndSpawnCore.Receive(pk)
+	})
+	err = loginAndSpawnCore.Login(ctx)
+	if err != nil {
+		panic(err)
+	}
+	panic(<-packetConn.WaitClosed())
+	// for {
+	// 	pk, err := conn.ReadPacket()
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+
+	// }
+	// frameConn := byte_frame_conn.NewConnectionFromNet(rakNetConn)
+	// packetConn := packet_conn.NewClientFromConn(frameConn)
+	// option := core_logic.NewDefaultOptions(address, chainData, privateKey)
+	// core := core_logic.NewCore(packetConn, option)
+	// go core.StartReactRoutine()
+	// core.StartLoginSequence()
+	// err = <-core.WaitClosed()
+	// fmt.Println(err)
 }
