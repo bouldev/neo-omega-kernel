@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/minecraft"
 	"os"
 	"path/filepath"
 )
@@ -20,7 +19,7 @@ type AccessWrapper struct {
 	writeBackToken bool
 }
 
-func NewAccessWrapper(Client *Client, ServerCode, ServerPassword, Token, username, password string, writeBackToken bool) minecraft.Authenticator {
+func NewAccessWrapper(Client *Client, ServerCode, ServerPassword, Token, username, password string, writeBackToken bool) *AccessWrapper {
 	return &AccessWrapper{
 		Client:         Client,
 		ServerCode:     ServerCode,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/minecraft"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/bundle"
 	"neo-omega-kernel/neomega/rental_server_impact/challenges"
@@ -13,7 +12,7 @@ import (
 )
 
 type AuthenticatorWithToken interface {
-	minecraft.Authenticator
+	Authenticator
 	GetToken() string
 }
 
@@ -33,7 +32,7 @@ func ImpactServer(ctx context.Context, node nodes.Node, options *Options) (omega
 	}
 	node.SetTags("access-point")
 	// make auth client and wrap authenticator & challenge solver
-	var authenticator minecraft.Authenticator
+	var authenticator Authenticator
 	var challengeSolver challenges.CanSolveChallenge
 	authenticator, challengeSolver, err = makeAuthenticatorAndChallengeSolver(options.ImpactOption, options.WriteBackToken)
 	if err != nil {

@@ -1,12 +1,17 @@
 package access_helper
 
 import (
+	"context"
 	"neo-omega-kernel/minecraft/protocol/login"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/minecraft_neo/cascade_conn/defines"
 	"neo-omega-kernel/minecraft_neo/login_and_spawn_core"
 	"sync"
 )
+
+type Authenticator interface {
+	GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error)
+}
 
 type InfinityQueue struct {
 	mu             sync.Mutex

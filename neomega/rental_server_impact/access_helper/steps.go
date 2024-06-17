@@ -10,7 +10,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/minecraft"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/minecraft_neo/cascade_conn/base_net"
 	"neo-omega-kernel/minecraft_neo/cascade_conn/byte_frame_conn"
@@ -36,7 +35,7 @@ import (
 
 //		return
 //	}
-func loginMCServer(ctx context.Context, authenticator minecraft.Authenticator) (conn minecraft_conn.Conn, err error) {
+func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minecraft_conn.Conn, err error) {
 	fmt.Println(i18n.T(i18n.S_generating_client_key_pair))
 	privateKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	publicKey, _ := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
@@ -142,7 +141,7 @@ func loginMCServer(ctx context.Context, authenticator minecraft.Authenticator) (
 	}, nil
 }
 
-func loginMCServerWithRetry(ctx context.Context, authenticator minecraft.Authenticator, retryTimesRemains int) (conn minecraft_conn.Conn, err error) {
+func loginMCServerWithRetry(ctx context.Context, authenticator Authenticator, retryTimesRemains int) (conn minecraft_conn.Conn, err error) {
 	retryTimes := 0
 	for {
 		conn, err = loginMCServer(ctx, authenticator)
@@ -167,7 +166,7 @@ func loginMCServerWithRetry(ctx context.Context, authenticator minecraft.Authent
 	return conn, nil
 }
 
-func makeAuthenticatorAndChallengeSolver(options *ImpactOption, writeBackFBToken bool) (authenticator minecraft.Authenticator, challengeSolver challenges.CanSolveChallenge, err error) {
+func makeAuthenticatorAndChallengeSolver(options *ImpactOption, writeBackFBToken bool) (authenticator Authenticator, challengeSolver challenges.CanSolveChallenge, err error) {
 	clientOptions := fbauth.MakeDefaultClientOptions()
 	clientOptions.AuthServer = options.AuthServer
 	fmt.Printf(i18n.T(i18n.S_connecting_to_auth_server)+": %v\n", options.AuthServer)

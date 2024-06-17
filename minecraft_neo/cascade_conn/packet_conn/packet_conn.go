@@ -7,6 +7,8 @@ import (
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/minecraft_neo/can_close"
 	"neo-omega-kernel/minecraft_neo/cascade_conn/defines"
+	"os"
+	"path/filepath"
 )
 
 type PacketConn struct {
@@ -65,7 +67,7 @@ func (conn *PacketConn) decode(data []byte) (pk packet.Packet, raw []byte) {
 	}
 	pkFunc, ok := conn.pool[pkData.h.PacketID]
 	if !ok {
-		// os.WriteFile(fmt.Sprintf("ID%v.bin", pkData.h.PacketID), cpD, 0755)
+
 		fmt.Printf("packet decode err: unknown packet %v\n", pkData.h.PacketID)
 		if conn.disconnectOnInvalidPackets {
 			if conn.disconnectOnInvalidPackets {
@@ -79,6 +81,12 @@ func (conn *PacketConn) decode(data []byte) (pk packet.Packet, raw []byte) {
 	pk.Marshal(r)
 	if pkData.payload.Len() != 0 {
 		err = fmt.Errorf("%T: %v unread bytes left: 0x%x", pk, pkData.payload.Len(), pkData.payload.Bytes())
+		os.WriteFile(fmt.Sprintf("ID%v.bin", pkData.h.PacketID), data, 0755)
+		p, err2 := filepath.Abs(fmt.Sprintf("ID%v.bin", pkData.h.PacketID))
+		if err2 != nil {
+			p = fmt.Sprintf("ID%v.bin", pkData.h.PacketID)
+		}
+		fmt.Printf("sample data save in: %v\n", p)
 		fmt.Println("packet decode err: " + err.Error())
 		if conn.disconnectOnInvalidPackets {
 			conn.CloseWithError(err)
