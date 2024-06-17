@@ -429,7 +429,13 @@ func PlayerDeviceID(uuidStr *C.char) *C.char {
 //export PlayerEntityRuntimeID
 func PlayerEntityRuntimeID(uuidStr *C.char) uint64 {
 	p, _ := GPlayers.Get(C.GoString(uuidStr))
-	EntityRuntimeID, _ := p.GetEntityRuntimeID()
+	if p == nil {
+		return 0
+	}
+	EntityRuntimeID, found := p.GetEntityRuntimeID()
+	if !found {
+		return 0
+	}
 	return EntityRuntimeID
 }
 
