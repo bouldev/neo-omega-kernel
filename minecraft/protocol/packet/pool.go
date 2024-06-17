@@ -43,7 +43,16 @@ func NewServerPool() Pool {
 	return p
 }
 
-var NewPool = NewServerPool
+func NewPool() Pool {
+	p := Pool{}
+	for id, pk := range packetsFromClient {
+		p[id] = pk
+	}
+	for id, pk := range packetsFromServer {
+		p[id] = pk
+	}
+	return p
+}
 
 func init() {
 	// TODO: Remove packets from this list that are not sent by the server.
@@ -247,6 +256,7 @@ func init() {
 		IDCameraPresets:                     func() Packet { return &CameraPresets{} },
 		IDUnlockedRecipes:                   func() Packet { return &UnlockedRecipes{} },
 		IDPyRpc:                             func() Packet { return &PyRpc{} },
+		IDNemcWhatever:                      func() Packet { return &NemcWhatever{} },
 		// ---
 		IDCameraInstruction:             func() Packet { return &CameraInstruction{} },
 		IDCompressedBiomeDefinitionList: func() Packet { return &CompressedBiomeDefinitionList{} },
@@ -332,6 +342,7 @@ func init() {
 		IDRequestNetworkSettings:          func() Packet { return &RequestNetworkSettings{} },
 		IDGameTestResults:                 func() Packet { return &GameTestResults{} },
 		IDPyRpc:                           func() Packet { return &PyRpc{} },
+		IDNemcWhatever:                    func() Packet { return &NemcWhatever{} },
 		IDOpenSign:                        func() Packet { return &OpenSign{} },
 	}
 	for id, pk := range clientOriginating {
