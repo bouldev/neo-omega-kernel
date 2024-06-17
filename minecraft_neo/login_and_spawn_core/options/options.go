@@ -9,8 +9,8 @@ import (
 // Dialer allows specifying specific settings for connection to a Minecraft server.
 // The zero value of Dialer is used for the package level Dial function.
 type Options struct {
-	ChainData  string
-	Address    string
+	// ChainData  string
+	// Address    string
 	PrivateKey *ecdsa.PrivateKey
 	Request    []byte
 	Salt       []byte
