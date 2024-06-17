@@ -19,6 +19,8 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
 
+require github.com/golang/snappy v0.0.4 // indirect
+
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
 	github.com/df-mc/atomic v1.10.0 // indirect
