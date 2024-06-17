@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"neo-omega-kernel/minecraft"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/encoding/binary_read_write"
 	"neo-omega-kernel/neomega/encoding/little_endian"
+	"neo-omega-kernel/neomega/minecraft_conn"
 	"neo-omega-kernel/nodes"
 	"sync"
 	"time"
@@ -31,7 +31,7 @@ type MicroUQHolder struct {
 	mu sync.Mutex
 }
 
-func NewAccessPointMicroUQHolder(node nodes.APINode, conn *minecraft.Conn, reactCore neomega.ReactCore) *MicroUQHolder {
+func NewAccessPointMicroUQHolder(node nodes.APINode, conn minecraft_conn.Conn, reactCore neomega.ReactCore) *MicroUQHolder {
 	uq := &MicroUQHolder{
 		NewBotInfoHolder(conn),
 		NewPlayers(),

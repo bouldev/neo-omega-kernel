@@ -82,6 +82,18 @@ const (
 	S_device_performance_insufficient_msg_dropped                                               = "device performance insufficient, msg dropped"
 	S_starting_post_challenge_actions                                                           = "staring post-challenge actions: %v\n"
 	S_omega_launcher_config_file_and_programme_logic_mismatch_or_programme_logic_error_in_stage = "neOmega config file and programme logic mismatch / error exist in programme logic. stage: %v"
+	S_executing_login_sequence                                                                  = "executing login sequence..."
+	S_updating_tag_in_omega_net                                                                 = "updating tag in omega network"
+	S_generating_client_key_pair                                                                = "generating client key pair"
+	S_retrieving_client_information_from_auth_server                                            = "retrieving client information from auth server"
+	S_establishing_raknet_connection                                                            = "establishing raknet connection"
+	S_establishing_byte_frame_connection                                                        = "establishing byte frame connection"
+	S_generating_packet_connection                                                              = "generating packet connection"
+	S_generating_key_login_request                                                              = "generating key login request"
+	S_exchanging_login_data                                                                     = "exchanging login data"
+	S_login_accomplished                                                                        = "login accomplished"
+	S_sending_additional_information                                                            = "sending additional information"
+	S_packing_core                                                                              = "packing core"
 
 	S_unknown_code                        = "unknown code: %v"
 	C_Auth_BackendError                   = 5
@@ -98,6 +110,18 @@ const (
 )
 
 var I18nDict_zh_cn map[string]string = map[string]string{
+	S_executing_login_sequence:                                 "开始执行登陆序列",
+	S_updating_tag_in_omega_net:                                "正在检查并更新本地neOmega网络中的属性信息",
+	S_generating_client_key_pair:                               "正在生成客户端密钥对",
+	S_retrieving_client_information_from_auth_server:           "正在从验证服务器取得机器人数据",
+	S_establishing_raknet_connection:                           "正在建立 raknet 连接",
+	S_establishing_byte_frame_connection:                       "正在封装数据帧连接层",
+	S_generating_packet_connection:                             "正在封装数据包连接层",
+	S_generating_key_login_request:                             "正在生成关键登陆数据",
+	S_exchanging_login_data:                                    "正在和 Minecraft 服务器交换登陆信息",
+	S_login_accomplished:                                       "登陆序列完成",
+	S_sending_additional_information:                           "正在发送附加信息",
+	S_packing_core:                                             "正在打包关键数据",
 	S_connecting_to_auth_server:                                "正在连接到验证服务器",
 	S_done_connecting_to_auth_server:                           "成功与验证服务器建立连接",
 	S_connecting_to_mc_server:                                  "正在连接到网易租赁服(服号: %v 密码: %v)...",

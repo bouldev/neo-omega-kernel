@@ -6,6 +6,7 @@ import (
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/minecraft"
 	"neo-omega-kernel/neomega"
+	"neo-omega-kernel/neomega/bundle"
 	"neo-omega-kernel/neomega/rental_server_impact/challenges"
 	"neo-omega-kernel/nodes"
 	"time"
@@ -22,9 +23,11 @@ func ImpactServer(ctx context.Context, node nodes.Node, options *Options) (omega
 			err = i18n.FuzzyTransErr(err)
 		}
 	}()
+	fmt.Println(i18n.T(i18n.S_executing_login_sequence))
 	if options.MaximumWaitTime > 0 {
 		ctx, _ = context.WithTimeout(ctx, options.MaximumWaitTime)
 	}
+	fmt.Println(i18n.T(i18n.S_updating_tag_in_omega_net))
 	if node.CheckNetTag("access-point") {
 		return nil, fmt.Errorf(i18n.T(i18n.S_net_position_conflict_only_one_access_point_can_exist))
 	}
@@ -38,7 +41,7 @@ func ImpactServer(ctx context.Context, node nodes.Node, options *Options) (omega
 	}
 
 	// connect to minecraft solver
-	var conn *minecraft.Conn
+	var unReadyOmega neomega.UnReadyMicroOmega
 	{
 		mcServerConnectCtx := ctx
 		if options.ServerConnectionTimeout != 0 {
@@ -49,19 +52,14 @@ func ImpactServer(ctx context.Context, node nodes.Node, options *Options) (omega
 			password = "Yes"
 		}
 		fmt.Printf(i18n.T(i18n.S_connecting_to_mc_server)+"\n", options.ImpactOption.ServerCode, password)
-		conn, err = connectMCServerWithRetry(mcServerConnectCtx, authenticator, options.ServerConnectRetryTimes)
+		conn, err := loginMCServerWithRetry(mcServerConnectCtx, authenticator, options.ServerConnectRetryTimes)
 		if err != nil {
 			return nil, err
 		}
+		unReadyOmega = bundle.NewAccessPointMicroOmega(node, conn)
 	}
-
-	// create omega core
-	var unReadyOmega neomega.UnReadyMicroOmega
-	unReadyOmega, err = makeNodeOmegaCoreFromConn(node, conn)
+	// unReadyOmega, err = makeNodeOmegaCoreFromConn(node, conn)
 	omegaCore = unReadyOmega
-	if err != nil {
-		return nil, err
-	}
 
 	// POST PROCESSES
 	{

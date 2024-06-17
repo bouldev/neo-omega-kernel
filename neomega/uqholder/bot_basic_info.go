@@ -2,12 +2,12 @@ package uqholder
 
 import (
 	"bytes"
-	"neo-omega-kernel/minecraft"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/encoding/binary_read_write"
 	binary_read_write2 "neo-omega-kernel/neomega/encoding/binary_read_write"
 	"neo-omega-kernel/neomega/encoding/little_endian"
+	"neo-omega-kernel/neomega/minecraft_conn"
 )
 
 func init() {
@@ -90,7 +90,7 @@ func (b *BotBasicInfoHolder) GetBotUUIDStr() string {
 	return b.BotIdentity
 }
 
-func NewBotInfoHolder(conn *minecraft.Conn) neomega.BotBasicInfoHolder {
+func NewBotInfoHolder(conn minecraft_conn.Conn) neomega.BotBasicInfoHolder {
 	h := &BotBasicInfoHolder{}
 	gd := conn.GameData()
 	h.BotRuntimeID = gd.EntityRuntimeID

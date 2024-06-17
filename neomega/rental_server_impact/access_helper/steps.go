@@ -2,33 +2,84 @@ package access_helper
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"fmt"
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/minecraft"
 	"neo-omega-kernel/minecraft/protocol/packet"
+	"neo-omega-kernel/minecraft_neo/cascade_conn/base_net"
+	"neo-omega-kernel/minecraft_neo/cascade_conn/byte_frame_conn"
+	"neo-omega-kernel/minecraft_neo/cascade_conn/packet_conn"
+	"neo-omega-kernel/minecraft_neo/login_and_spawn_core"
+	"neo-omega-kernel/minecraft_neo/login_and_spawn_core/options"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/bundle"
 	"neo-omega-kernel/neomega/fbauth"
+	"neo-omega-kernel/neomega/minecraft_conn"
 	"neo-omega-kernel/neomega/rental_server_impact/challenges"
-	"neo-omega-kernel/nodes"
 	"time"
 )
 
 // Copied from phoenixbuilder/core/core
-func initializeMinecraftConnection(ctx context.Context, authenticator minecraft.Authenticator) (conn *minecraft.Conn, err error) {
-	dialer := minecraft.Dialer{
-		Authenticator: authenticator,
-	}
-	conn, err = dialer.DialContext(ctx, "raknet")
+// func initializeMinecraftConnection(ctx context.Context, authenticator minecraft.Authenticator) (conn *minecraft.Conn, err error) {
+// 	dialer := minecraft.Dialer{
+// 		Authenticator: authenticator,
+// 	}
+// 	conn, err = dialer.DialContext(ctx, "raknet")
+// 	if err != nil {
+// 		return
+// 	}
+
+//		return
+//	}
+func loginMCServer(ctx context.Context, authenticator minecraft.Authenticator) (conn minecraft_conn.Conn, err error) {
+	fmt.Println(i18n.T(i18n.S_generating_client_key_pair))
+	privateKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	publicKey, _ := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+
+	fmt.Println(i18n.T(i18n.S_retrieving_client_information_from_auth_server))
+	address, chainData, err := authenticator.GetAccess(ctx, publicKey)
 	if err != nil {
-		return
+		return nil, err
 	}
-	conn.WritePacket(&packet.ClientCacheStatus{
+
+	fmt.Println(i18n.T(i18n.S_establishing_raknet_connection))
+	rakNetConn, err := base_net.RakNet.DialContext(ctx, address)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(i18n.T(i18n.S_establishing_byte_frame_connection))
+	byteFrameConn := byte_frame_conn.NewConnectionFromNet(rakNetConn)
+
+	fmt.Println(i18n.T(i18n.S_generating_packet_connection))
+	packetConn := packet_conn.NewPacketConn(byteFrameConn, false)
+
+	fmt.Println(i18n.T(i18n.S_generating_key_login_request))
+	opt := options.NewDefaultOptions(address, chainData, privateKey)
+
+	fmt.Println(i18n.T(i18n.S_exchanging_login_data))
+	readQueue := NewInfinityQueue()
+	loginAndSpawnCore := login_and_spawn_core.NewLoginAndSpawnCore(packetConn, opt)
+	go packetConn.ListenRoutine(func(pk packet.Packet, raw []byte) {
+		// fmt.Println("read:", pk.ID())
+		loginAndSpawnCore.Receive(pk)
+		readQueue.PutPacket(pk, raw)
+	})
+	err = loginAndSpawnCore.Login(ctx)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(i18n.T(i18n.S_login_accomplished))
+
+	fmt.Println(i18n.T(i18n.S_sending_additional_information))
+	packetConn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
 	})
-	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
 	// conn.WritePacket(&packet.PyRpc{
 	// 	Value: py_rpc.FromGo([]any{
 	// 		"e",
@@ -36,7 +87,7 @@ func initializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 	// 		nil,
 	// 	}),
 	// })
-	conn.WritePacket(&packet.PyRpc{
+	packetConn.WritePacket(&packet.PyRpc{
 		Value: []any{
 			"SyncUsingMod",
 			[]any{},
@@ -45,7 +96,7 @@ func initializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 	})
 
 	// Only this packet is necessary
-	conn.WritePacket(&packet.PyRpc{
+	packetConn.WritePacket(&packet.PyRpc{
 		Value: []any{
 			"ClientLoadAddonsFinishedFromGac",
 			[]any{},
@@ -54,69 +105,47 @@ func initializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 	})
 
 	// Generally, following packets are sent after "SetStartType"
-	conn.WritePacket(&packet.PyRpc{
+	packetConn.WritePacket(&packet.PyRpc{
 		Value: []any{
 			"arenaGamePlayerFinishLoad",
 			[]any{},
 			nil,
 		},
 	})
-	conn.WritePacket(&packet.PyRpc{
+	packetConn.WritePacket(&packet.PyRpc{
 		Value: []any{
 			"ModEventC2S",
 			[]any{
 				"Minecraft",
 				"vipEventSystem",
 				"PlayerUiInit",
-				runtimeid,
+				fmt.Sprintf("%d", loginAndSpawnCore.GameData().EntityUniqueID),
 			},
 			nil,
 		},
 	})
-	conn.WritePacket(&packet.PyRpc{
+	packetConn.WritePacket(&packet.PyRpc{
 		Value: []any{
 			"ClientInitUIFinishedEventFromGac",
 			[]any{},
 			nil,
 		},
 	})
-	return
+	packetConn.Flush()
+	fmt.Println(i18n.T(i18n.S_packing_core))
+	return &shallowWrap{
+		ByteFrameConnBase: byteFrameConn,
+		PacketConnBase:    packetConn,
+		Core:              loginAndSpawnCore,
+		InfinityQueue:     readQueue,
+		identityData:      loginAndSpawnCore.IdentityData,
+	}, nil
 }
 
-func makeAuthenticatorAndChallengeSolver(options *ImpactOption, writeBackFBToken bool) (authenticator minecraft.Authenticator, challengeSolver challenges.CanSolveChallenge, err error) {
-	clientOptions := fbauth.MakeDefaultClientOptions()
-	clientOptions.AuthServer = options.AuthServer
-	fmt.Printf(i18n.T(i18n.S_connecting_to_auth_server)+": %v\n", options.AuthServer)
-	fbClient, err := fbauth.CreateClient(clientOptions)
-	if err != nil {
-		return nil, nil, err
-	}
-	challengeSolver = fbClient
-	fmt.Println(i18n.T(i18n.S_done_connecting_to_auth_server))
-	hashedPassword := ""
-	if options.UserToken == "" {
-		psw_sum := sha256.Sum256([]byte(options.UserPassword))
-		hashedPassword = hex.EncodeToString(psw_sum[:])
-	}
-	authenticator = fbauth.NewAccessWrapper(fbClient, options.ServerCode, options.ServerPassword, options.UserToken, options.UserName, hashedPassword, writeBackFBToken)
-	return authenticator, challengeSolver, nil
-}
-
-func connectMCServer(ctx context.Context, authenticator minecraft.Authenticator) (conn *minecraft.Conn, err error) {
-	conn, err = initializeMinecraftConnection(ctx, authenticator)
-	if err != nil {
-		if ctx.Err() != nil {
-			return nil, ErrRentalServerConnectionTimeOut
-		}
-		return nil, fmt.Errorf("%v: %v", ErrFailToConnectRentalServer, err)
-	}
-	return conn, nil
-}
-
-func connectMCServerWithRetry(ctx context.Context, authenticator minecraft.Authenticator, retryTimesRemains int) (conn *minecraft.Conn, err error) {
+func loginMCServerWithRetry(ctx context.Context, authenticator minecraft.Authenticator, retryTimesRemains int) (conn minecraft_conn.Conn, err error) {
 	retryTimes := 0
 	for {
-		conn, err = connectMCServer(ctx, authenticator)
+		conn, err = loginMCServer(ctx, authenticator)
 		if err == nil {
 			break
 		} else {
@@ -138,10 +167,23 @@ func connectMCServerWithRetry(ctx context.Context, authenticator minecraft.Authe
 	return conn, nil
 }
 
-func makeNodeOmegaCoreFromConn(node nodes.Node, conn *minecraft.Conn) (neomega.UnReadyMicroOmega, error) {
-	omegaCore := bundle.NewAccessPointMicroOmega(node, conn)
-	return omegaCore, nil
-
+func makeAuthenticatorAndChallengeSolver(options *ImpactOption, writeBackFBToken bool) (authenticator minecraft.Authenticator, challengeSolver challenges.CanSolveChallenge, err error) {
+	clientOptions := fbauth.MakeDefaultClientOptions()
+	clientOptions.AuthServer = options.AuthServer
+	fmt.Printf(i18n.T(i18n.S_connecting_to_auth_server)+": %v\n", options.AuthServer)
+	fbClient, err := fbauth.CreateClient(clientOptions)
+	if err != nil {
+		return nil, nil, err
+	}
+	challengeSolver = fbClient
+	fmt.Println(i18n.T(i18n.S_done_connecting_to_auth_server))
+	hashedPassword := ""
+	if options.UserToken == "" {
+		psw_sum := sha256.Sum256([]byte(options.UserPassword))
+		hashedPassword = hex.EncodeToString(psw_sum[:])
+	}
+	authenticator = fbauth.NewAccessWrapper(fbClient, options.ServerCode, options.ServerPassword, options.UserToken, options.UserName, hashedPassword, writeBackFBToken)
+	return authenticator, challengeSolver, nil
 }
 
 func copeWithRentalServerChallenge(ctx context.Context, omegaCore neomega.MicroOmega, canSolveChallenge challenges.CanSolveChallenge) (err error) {

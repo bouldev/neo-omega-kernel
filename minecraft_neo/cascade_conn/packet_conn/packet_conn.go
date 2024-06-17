@@ -36,6 +36,10 @@ func (conn *PacketConn) SetShieldID(newShieldID int32) {
 	conn.shieldID = newShieldID
 }
 
+func (conn *PacketConn) GetShieldID() int32 {
+	return conn.shieldID
+}
+
 func (conn *PacketConn) WritePacket(pk packet.Packet) error {
 	if conn.Closed() {
 		return fmt.Errorf("write packet on closed connection")

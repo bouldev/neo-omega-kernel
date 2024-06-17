@@ -39,6 +39,7 @@ type PacketConnBase interface {
 	ListenRoutine(func(pk packet.Packet, raw []byte))
 	WritePacket(packet.Packet) error
 	SetShieldID(int32)
+	GetShieldID() int32
 }
 
 type PacketConn interface {

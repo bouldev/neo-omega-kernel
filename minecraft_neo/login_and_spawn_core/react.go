@@ -65,7 +65,7 @@ func (core *Core) receive(pk packet.Packet) {
 // handlePacket handles an incoming packet. It returns an error if any of the data found in the packet was not
 // valid or if handling failed for any other reason.
 func (core *Core) handlePacket(pk packet.Packet) error {
-	fmt.Println(pk.ID())
+	// fmt.Println(pk.ID())
 	defer func() {
 		_ = core.packetConn.Flush()
 	}()

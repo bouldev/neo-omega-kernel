@@ -2,10 +2,10 @@ package uqholder
 
 import (
 	"fmt"
-	"neo-omega-kernel/minecraft"
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
+	"neo-omega-kernel/neomega/minecraft_conn"
 	"runtime/debug"
 	"time"
 
@@ -58,7 +58,7 @@ type ExtendInfoHolder struct {
 	Position           mgl32.Vec3
 }
 
-func NewExtendInfoHolder(conn *minecraft.Conn) *ExtendInfoHolder {
+func NewExtendInfoHolder(conn minecraft_conn.Conn) *ExtendInfoHolder {
 	return &ExtendInfoHolder{
 		GameRules:          make(map[string]*neomega.GameRule),
 		botRuntimeIDDup:    conn.GameData().EntityRuntimeID,
