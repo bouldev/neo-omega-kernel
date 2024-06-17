@@ -24,10 +24,10 @@ type ByteFrameConn interface {
 	UnLock()
 }
 
-// type RawPacketAndByte struct {
-// 	Raw []byte
-// 	Pk  packet.Packet
-// }
+type RawPacketAndByte struct {
+	Raw []byte
+	Pk  packet.Packet
+}
 
 // type BotReactLogic interface {
 // 	HandlePacket(*RawPacketAndByte)
@@ -36,9 +36,9 @@ type ByteFrameConn interface {
 
 type PacketConnBase interface {
 	can_close.CanClose
-	ListenRoutine(func(pk packet.Packet))
+	ListenRoutine(func(pk packet.Packet, raw []byte))
 	WritePacket(packet.Packet) error
-	SetShieldID(newShieldID int32)
+	SetShieldID(int32)
 }
 
 type PacketConn interface {

@@ -61,7 +61,7 @@ func main() {
 	byteFrameConn := byte_frame_conn.NewConnectionFromNet(rakNetConn)
 	packetConn := packet_conn.NewPacketConn(byteFrameConn, false)
 	loginAndSpawnCore := login_and_spawn_core.NewLoginAndSpawnCore(packetConn, opt)
-	go packetConn.ListenRoutine(func(pk packet.Packet) {
+	go packetConn.ListenRoutine(func(pk packet.Packet, raw []byte) {
 		fmt.Println("read:", pk.ID())
 		loginAndSpawnCore.Receive(pk)
 	})

@@ -52,13 +52,12 @@ func (conn *PacketConn) WritePacket(pk packet.Packet) error {
 	return nil
 }
 
-func (conn *PacketConn) decode(data []byte) (pk packet.Packet) {
-	// cpD := bytes.Clone(data)
+func (conn *PacketConn) decode(data []byte) (pk packet.Packet, raw []byte) {
 	pkData, err := parseData(data)
 	if err != nil {
 		fmt.Println("packet decode err: " + err.Error())
 		conn.CloseWithError(err)
-		return nil
+		return nil, data
 	}
 	pkFunc, ok := conn.pool[pkData.h.PacketID]
 	if !ok {
@@ -69,7 +68,7 @@ func (conn *PacketConn) decode(data []byte) (pk packet.Packet) {
 				conn.CloseWithError(err)
 			}
 		}
-		return nil
+		return nil, data
 	}
 	pk = pkFunc()
 	r := protocol.NewReader(pkData.payload, conn.shieldID, false)
@@ -81,20 +80,20 @@ func (conn *PacketConn) decode(data []byte) (pk packet.Packet) {
 			conn.CloseWithError(err)
 		}
 	}
-	return pk
+	return pk, data
 }
 
-func (conn *PacketConn) ListenRoutine(read func(pk packet.Packet)) {
+func (conn *PacketConn) ListenRoutine(read func(pk packet.Packet, raw []byte)) {
 	defer func() {
 		conn.CloseWithError(fmt.Errorf("packet listen routine finished"))
 	}()
 	conn.FrameConn.ReadRoutine(func(data []byte) {
-		pk := conn.decode(data)
+		pk, raw := conn.decode(data)
 		if pk == nil {
 			return
 		}
 		// fmt.Println("decoded:", pk.ID())
-		read(pk)
+		read(pk, raw)
 	})
 }
 
