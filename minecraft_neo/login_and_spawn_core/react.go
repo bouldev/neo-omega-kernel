@@ -45,8 +45,7 @@ func (core *Core) Receive(pk packet.Packet) {
 
 func (core *Core) receive(pk packet.Packet) {
 	if pk.ID() == packet.IDDisconnect {
-		core.disconnectMessage.Store(&pk.(*packet.Disconnect).Message)
-		_ = core.Close()
+		core.CloseWithError(fmt.Errorf(pk.(*packet.Disconnect).Message))
 		return
 	}
 	if core.loggedIn && !core.waitingForSpawn.Load() {
@@ -388,7 +387,8 @@ func (core *Core) handleResourcePackClientResponse(pk *packet.ResourcePackClient
 	case packet.PackResponseRefused:
 		// Even though this response is never sent, we handle it appropriately in case it is changed to work
 		// correctly again.
-		return core.Close()
+		core.CloseWithError(fmt.Errorf("packet response refused"))
+		return nil
 	case packet.PackResponseSendPacks:
 		packs := pk.PacksToDownload
 		core.packQueue = &resourcePackQueue{packs: core.resourcePacks}
@@ -530,7 +530,7 @@ func (core *Core) handleResourcePackDataInfo(pk *packet.ResourcePackDataInfo) er
 				ChunkIndex: i,
 			})
 			select {
-			case <-core.close:
+			case <-core.WaitClosed():
 				return
 			case frag := <-pack.newFrag:
 				// Write the fragment to the full buffer of the downloading resource pack.
@@ -745,10 +745,10 @@ func (core *Core) handlePlayStatus(pk *packet.PlayStatus) error {
 		core.expect(packet.IDResourcePacksInfo)
 		return core.packetConn.Flush()
 	case packet.PlayStatusLoginFailedClient:
-		_ = core.Close()
+		core.CloseWithError(fmt.Errorf("packet.PlayStatusLoginFailedClient"))
 		return fmt.Errorf("client outdated")
 	case packet.PlayStatusLoginFailedServer:
-		_ = core.Close()
+		core.CloseWithError(fmt.Errorf("packet.PlayStatusLoginFailedServer"))
 		return fmt.Errorf("server outdated")
 	case packet.PlayStatusPlayerSpawn:
 		// We've spawned and can send the last packet in the spawn sequence.
@@ -756,22 +756,22 @@ func (core *Core) handlePlayStatus(pk *packet.PlayStatus) error {
 		core.tryFinaliseClientConn()
 		return nil
 	case packet.PlayStatusLoginFailedInvalidTenant:
-		_ = core.Close()
+		core.CloseWithError(fmt.Errorf("packet.PlayStatusLoginFailedInvalidTenant"))
 		return fmt.Errorf("invalid edu edition game owner")
 	case packet.PlayStatusLoginFailedVanillaEdu:
-		_ = core.Close()
+		core.CloseWithError(fmt.Errorf("packet.PlayStatusLoginFailedVanillaEdu"))
 		return fmt.Errorf("cannot join an edu edition game on vanilla")
 	case packet.PlayStatusLoginFailedEduVanilla:
-		_ = core.Close()
+		core.CloseWithError(fmt.Errorf("packet.PlayStatusLoginFailedEduVanilla"))
 		return fmt.Errorf("cannot join a vanilla game on edu edition")
 	case packet.PlayStatusLoginFailedServerFull:
-		_ = core.Close()
+		core.CloseWithError(fmt.Errorf("packet.PlayStatusLoginFailedServerFull"))
 		return fmt.Errorf("server full")
 	case packet.PlayStatusLoginFailedEditorVanilla:
-		_ = core.Close()
+		core.CloseWithError(fmt.Errorf("packet.PlayStatusLoginFailedEditorVanilla"))
 		return fmt.Errorf("cannot join a vanilla game on editor")
 	case packet.PlayStatusLoginFailedVanillaEditor:
-		_ = core.Close()
+		core.CloseWithError(fmt.Errorf("packet.PlayStatusLoginFailedVanillaEditor"))
 		return fmt.Errorf("cannot join an editor game on vanilla")
 	default:
 		return fmt.Errorf("unknown play status in PlayStatus packet %v", pk.Status)
@@ -800,7 +800,7 @@ func (core *Core) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
 	})
 	// We produce an encoded JWT using the header and payload above, then we send the JWT in a ServerToClient-
 	// Handshake packet so that the client can initialise encryption.
-	serverJWT, err := jwt.Signed(signer).Claims(saltClaims{Salt: base64.RawStdEncoding.EncodeToString(core.salt)}).CompactSerialize()
+	serverJWT, err := jwt.Signed(signer).Claims(saltClaims{Salt: base64.RawStdEncoding.EncodeToString(core.Salt)}).CompactSerialize()
 	if err != nil {
 		return fmt.Errorf("compact serialise server JWT: %w", err)
 	}
@@ -815,7 +815,7 @@ func (core *Core) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
 
 	sharedSecret := append(bytes.Repeat([]byte{0}, 48-len(x.Bytes())), x.Bytes()...)
 
-	keyBytes := sha256.Sum256(append(core.salt, sharedSecret...))
+	keyBytes := sha256.Sum256(append(core.Salt, sharedSecret...))
 
 	// Finally we enable encryption for the encoder and decoder using the secret key bytes we produced.
 	core.packetConn.EnableEncryption(keyBytes)
@@ -827,13 +827,4 @@ func (core *Core) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
 // expect sets the packet IDs that are next expected to arrive.
 func (core *Core) expect(packetIDs ...uint32) {
 	core.expectedIDs.Store(packetIDs)
-}
-
-// closeErr returns an adequate connection closed error for the op passed. If the connection was closed
-// through a Disconnect packet, the message is contained.
-func (core *Core) closeErr(op string) error {
-	if msg := *core.disconnectMessage.Load(); msg != "" {
-		return fmt.Errorf("connection closed: %v", msg)
-	}
-	return fmt.Errorf("connection closed")
 }

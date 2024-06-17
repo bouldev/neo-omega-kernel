@@ -28,11 +28,12 @@ type ByteFrameConnection struct {
 
 func NewConnectionFromNet(netConn net.Conn) defines.ByteFrameConn {
 	conn := &ByteFrameConnection{
-		netConn: netConn,
-		enc:     packet.NewEncoder(netConn),
-		dec:     packet.NewDecoder(netConn),
+		// close underlay conn on err
+		CanCloseWithError: can_close.NewClose(func() { netConn.Close() }),
+		netConn:           netConn,
+		enc:               packet.NewEncoder(netConn),
+		dec:               packet.NewDecoder(netConn),
 	}
-	conn.CanCloseWithError = can_close.NewClose(func() { conn.netConn.Close() })
 	conn.dec.DisableBatchPacketLimit()
 	go conn.writeRoutine(time.Second / 20)
 	return conn

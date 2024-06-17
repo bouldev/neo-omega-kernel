@@ -3,6 +3,7 @@ package options
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/rand"
 	_ "embed"
 	"encoding/base64"
 	"log"
@@ -20,20 +21,22 @@ func NewDefaultOptions(
 	PrivateKey *ecdsa.PrivateKey,
 
 ) *Options {
-	d := &Options{
+	opt := &Options{
 		ChainData:  chainData,
 		Address:    address,
 		PrivateKey: PrivateKey,
 	}
-	d.ErrorLog = log.New(os.Stderr, "", log.LstdFlags)
-	defaultIdentityData(&d.IdentityData)
-	defaultClientData(address, d.IdentityData.DisplayName, &d.ClientData)
-	setAndroidData(&d.ClientData)
-	Request := login.Encode(chainData, d.ClientData, PrivateKey)
+	opt.Salt = make([]byte, 16)
+	_, _ = rand.Read(opt.Salt)
+	opt.ErrorLog = log.New(os.Stderr, "", log.LstdFlags)
+	defaultIdentityData(&opt.IdentityData)
+	defaultClientData(address, opt.IdentityData.DisplayName, &opt.ClientData)
+	setAndroidData(&opt.ClientData)
+	Request := login.Encode(chainData, opt.ClientData, PrivateKey)
 	IdentityData, _, _, _ := login.Parse(Request)
-	d.IdentityData = IdentityData
-	d.Request = Request
-	return d
+	opt.IdentityData = IdentityData
+	opt.Request = Request
+	return opt
 }
 
 //go:embed skin_resource_patch.json

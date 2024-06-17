@@ -24,16 +24,6 @@ func (core *Core) ResourcePacks() []*resource.Pack {
 	return core.resourcePacks
 }
 
-// Close closes the Conn and its underlying connection. Before closing, it also calls Flush() so that any
-// packets currently pending are sent out.
-func (core *Core) Close() error {
-	var err error
-	core.once.Do(func() {
-		close(core.close)
-	})
-	return err
-}
-
 // ClientCacheEnabled checks if the connection has the client blob cache enabled. If true, the server may send
 // blobs to the client to reduce network transmission, but if false, the client does not support it, and the
 // server must send chunks as usual.

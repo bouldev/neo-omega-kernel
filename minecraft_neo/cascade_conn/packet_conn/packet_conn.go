@@ -18,12 +18,18 @@ type PacketConn struct {
 }
 
 func NewPacketConn(conn defines.ByteFrameConn, disconnectOnInvalidPackets bool) defines.PacketConn {
-	return &PacketConn{
+	c := &PacketConn{
+		// close underlay conn on err
 		CanCloseWithError:          can_close.NewClose(conn.Close),
 		FrameConn:                  conn,
 		disconnectOnInvalidPackets: disconnectOnInvalidPackets,
 		pool:                       packet.NewPool(),
 	}
+	go func() {
+		// close when underlay err
+		c.CloseWithError(<-conn.WaitClosed())
+	}()
+	return c
 }
 
 func (conn *PacketConn) SetShieldID(newShieldID int32) {

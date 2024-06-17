@@ -13,6 +13,7 @@ type Options struct {
 	Address    string
 	PrivateKey *ecdsa.PrivateKey
 	Request    []byte
+	Salt       []byte
 	// ErrorLog is a log.Logger that errors that occur during packet handling of servers are written to. By
 	// default, ErrorLog is set to one equal to the global logger.
 	ErrorLog *log.Logger

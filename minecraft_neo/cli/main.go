@@ -70,19 +70,4 @@ func main() {
 		panic(err)
 	}
 	panic(<-packetConn.WaitClosed())
-	// for {
-	// 	pk, err := conn.ReadPacket()
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-
-	// }
-	// frameConn := byte_frame_conn.NewConnectionFromNet(rakNetConn)
-	// packetConn := packet_conn.NewClientFromConn(frameConn)
-	// option := core_logic.NewDefaultOptions(address, chainData, privateKey)
-	// core := core_logic.NewCore(packetConn, option)
-	// go core.StartReactRoutine()
-	// core.StartLoginSequence()
-	// err = <-core.WaitClosed()
-	// fmt.Println(err)
 }
