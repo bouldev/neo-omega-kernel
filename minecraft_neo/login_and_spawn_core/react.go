@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
@@ -74,8 +73,9 @@ func (core *Core) handlePacket(pk packet.Packet) error {
 	// Internal packets destined for the server.
 	case *packet.RequestNetworkSettings:
 		return core.handleRequestNetworkSettings(pk)
-	case *packet.Login:
-		return core.handleLogin(pk)
+	// case *packet.Login:
+	// 	panic("Login!")
+	// 	return core.handleLogin(pk)
 	case *packet.ClientToServerHandshake:
 		return core.handleClientToServerHandshake()
 	case *packet.ClientCacheStatus:
@@ -151,30 +151,30 @@ func (core *Core) handleNetworkSettings(pk *packet.NetworkSettings) error {
 	return nil
 }
 
-// handleLogin handles an incoming login packet. It verifies and decodes the login request found in the packet
-// and returns an error if it couldn't be done successfully.
-func (core *Core) handleLogin(pk *packet.Login) error {
-	// The next expected packet is a response from the client to the handshake.
-	core.expect(packet.IDClientToServerHandshake)
-	var (
-		err        error
-		authResult login.AuthResult
-	)
-	core.IdentityData, core.ClientData, authResult, err = login.Parse(pk.ConnectionRequest)
-	if err != nil {
-		return fmt.Errorf("parse login request: %w", err)
-	}
+// // handleLogin handles an incoming login packet. It verifies and decodes the login request found in the packet
+// // and returns an error if it couldn't be done successfully.
+// func (core *Core) handleLogin(pk *packet.Login) error {
+// 	// The next expected packet is a response from the client to the handshake.
+// 	core.expect(packet.IDClientToServerHandshake)
+// 	var (
+// 		err        error
+// 		authResult login.AuthResult
+// 	)
+// 	core.identityData, core.clientData, authResult, err = login.Parse(pk.ConnectionRequest)
+// 	if err != nil {
+// 		return fmt.Errorf("parse login request: %w", err)
+// 	}
 
-	// Make sure the player is logged in with XBOX Live when necessary.
-	// if !authResult.XBOXLiveAuthenticated && core.authEnabled {
-	// 	_ = core.packetConn.WritePacket(&packet.Disconnect{Message: text.Colourf("<red>You must be logged in with XBOX Live to join.</red>")})
-	// 	return fmt.Errorf("connection %v was not authenticated to XBOX Live", core.RemoteAddr())
-	// }
-	if err := core.enableEncryption(authResult.PublicKey); err != nil {
-		return fmt.Errorf("error enabling encryption: %v", err)
-	}
-	return nil
-}
+// 	// Make sure the player is logged in with XBOX Live when necessary.
+// 	// if !authResult.XBOXLiveAuthenticated && core.authEnabled {
+// 	// 	_ = core.packetConn.WritePacket(&packet.Disconnect{Message: text.Colourf("<red>You must be logged in with XBOX Live to join.</red>")})
+// 	// 	return fmt.Errorf("connection %v was not authenticated to XBOX Live", core.RemoteAddr())
+// 	// }
+// 	if err := core.enableEncryption(authResult.PublicKey); err != nil {
+// 		return fmt.Errorf("error enabling encryption: %v", err)
+// 	}
+// 	return nil
+// }
 
 // handleClientToServerHandshake handles an incoming ClientToServerHandshake packet.
 func (core *Core) handleClientToServerHandshake() error {
@@ -792,37 +792,37 @@ func (core *Core) tryFinaliseClientConn() {
 	}
 }
 
-// enableEncryption enables encryption on the server side over the connection. It sends an unencrypted
-// handshake packet to the client and enables encryption after that.
-func (core *Core) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
-	signer, _ := jose.NewSigner(jose.SigningKey{Key: core.PrivateKey, Algorithm: jose.ES384}, &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]any{"x5u": login.MarshalPublicKey(&core.PrivateKey.PublicKey)},
-	})
-	// We produce an encoded JWT using the header and payload above, then we send the JWT in a ServerToClient-
-	// Handshake packet so that the client can initialise encryption.
-	serverJWT, err := jwt.Signed(signer).Claims(saltClaims{Salt: base64.RawStdEncoding.EncodeToString(core.Salt)}).CompactSerialize()
-	if err != nil {
-		return fmt.Errorf("compact serialise server JWT: %w", err)
-	}
-	if err := core.packetConn.WritePacket(&packet.ServerToClientHandshake{JWT: []byte(serverJWT)}); err != nil {
-		return fmt.Errorf("error sending ServerToClientHandshake packet: %v", err)
-	}
-	// Flush immediately as we'll enable encryption after this.
-	_ = core.packetConn.Flush()
+// // enableEncryption enables encryption on the server side over the connection. It sends an unencrypted
+// // handshake packet to the client and enables encryption after that.
+// func (core *Core) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
+// 	signer, _ := jose.NewSigner(jose.SigningKey{Key: core.PrivateKey, Algorithm: jose.ES384}, &jose.SignerOptions{
+// 		ExtraHeaders: map[jose.HeaderKey]any{"x5u": login.MarshalPublicKey(&core.PrivateKey.PublicKey)},
+// 	})
+// 	// We produce an encoded JWT using the header and payload above, then we send the JWT in a ServerToClient-
+// 	// Handshake packet so that the client can initialise encryption.
+// 	serverJWT, err := jwt.Signed(signer).Claims(saltClaims{Salt: base64.RawStdEncoding.EncodeToString(core.Salt)}).CompactSerialize()
+// 	if err != nil {
+// 		return fmt.Errorf("compact serialise server JWT: %w", err)
+// 	}
+// 	if err := core.packetConn.WritePacket(&packet.ServerToClientHandshake{JWT: []byte(serverJWT)}); err != nil {
+// 		return fmt.Errorf("error sending ServerToClientHandshake packet: %v", err)
+// 	}
+// 	// Flush immediately as we'll enable encryption after this.
+// 	_ = core.packetConn.Flush()
 
-	// We first compute the shared secret.
-	x, _ := clientPublicKey.Curve.ScalarMult(clientPublicKey.X, clientPublicKey.Y, core.PrivateKey.D.Bytes())
+// 	// We first compute the shared secret.
+// 	x, _ := clientPublicKey.Curve.ScalarMult(clientPublicKey.X, clientPublicKey.Y, core.PrivateKey.D.Bytes())
 
-	sharedSecret := append(bytes.Repeat([]byte{0}, 48-len(x.Bytes())), x.Bytes()...)
+// 	sharedSecret := append(bytes.Repeat([]byte{0}, 48-len(x.Bytes())), x.Bytes()...)
 
-	keyBytes := sha256.Sum256(append(core.Salt, sharedSecret...))
+// 	keyBytes := sha256.Sum256(append(core.Salt, sharedSecret...))
 
-	// Finally we enable encryption for the encoder and decoder using the secret key bytes we produced.
-	core.packetConn.EnableEncryption(keyBytes)
-	// core.dec.EnableEncryption(keyBytes)
+// 	// Finally we enable encryption for the encoder and decoder using the secret key bytes we produced.
+// 	core.packetConn.EnableEncryption(keyBytes)
+// 	// core.dec.EnableEncryption(keyBytes)
 
-	return nil
-}
+// 	return nil
+// }
 
 // expect sets the packet IDs that are next expected to arrive.
 func (core *Core) expect(packetIDs ...uint32) {
