@@ -24,7 +24,7 @@ const (
 	IDUpdateBlock
 	IDAddPainting
 	IDTickSync
-	_
+	IDLevelSoundEventV1 // Netease: new packet
 	IDLevelEvent
 	IDBlockEvent
 	IDActorEvent
@@ -55,7 +55,7 @@ const (
 	IDCraftingData
 	IDCraftingEvent
 	IDGUIDataPickItem
-	IDAdventureSettings
+	IDAdventureSettings // Netease: missing
 	IDBlockActorData
 	IDPlayerInput
 	IDLevelChunk
@@ -117,10 +117,10 @@ const (
 	IDUpdateSoftEnum
 	IDNetworkStackLatency
 	_
-	IDScriptCustomEvent
+	IDScriptCustomEvent // Netease: missing
 	IDSpawnParticleEffect
 	IDAvailableActorIdentifiers
-	_
+	IDLevelSoundEventV2 // Netease: new packet
 	IDNetworkChunkPublisherUpdate
 	IDBiomeDefinitionList
 	IDLevelSoundEvent
@@ -130,8 +130,8 @@ const (
 	IDAddEntity
 	IDRemoveEntity
 	IDClientCacheStatus
-	IDMapCreateLockedCopy
-	IDOnScreenTextureAnimation
+	IDOnScreenTextureAnimation // Netease: 131 -> 130
+	IDMapCreateLockedCopy      // Netease: 130 -> 131
 	IDStructureTemplateDataRequest
 	IDStructureTemplateDataResponse
 	_
@@ -173,7 +173,7 @@ const (
 	IDEducationResourceURI
 	IDCreatePhoto
 	IDUpdateSubChunkBlocks
-	IDPhotoInfoRequest
+	IDPhotoInfoRequest // Netease: missing
 	IDSubChunk
 	IDSubChunkRequest
 	IDClientStartItemCooldown
@@ -197,19 +197,34 @@ const (
 	IDGameTestRequest
 	IDGameTestResults
 	IDUpdateClientInputLocks
-	IDClientCheatAbility
+	IDClientCheatAbility // Netease: missing
 	IDCameraPresets
 	IDUnlockedRecipes
-	IDPyRpc
-	IDNemcWhatever203   = 203
-	IDNemcWhatever208   = 208
-	IDNemcWhatever210   = 210
-	IDNemcWhatever228   = 228
-	IDNemcWhatever230   = 230
-	IDNemcWhatever302   = 302
-	IDCameraInstruction = iota + 100 // Netease: 301 -> 300
-	IDCompressedBiomeDefinitionList
-	IDTrimData
-	IDOpenSign
-	IDAgentAnimation
+	IDPyRpc                                     // Netease: new packet
+	IDChangeModel                               // Netease: new packet
+	IDStoreBuySucc                              // Netease: new packet
+	IDNeteaseJson                               // Netease: new packet
+	IDChangeModelTexture                        // Netease: new packet
+	IDChangeModelOffset                         // Netease: new packet
+	IDChangeModelBind                           // Netease: new packet
+	IDHungerAttr                                // Netease: new packet
+	IDSetDimensionLocalTime                     // Netease: new packet
+	IDWithdrawFurnaceXp                         // Netease: new packet
+	IDSetDimensionLocalWeather                  // Netease: new packet
+	IDCustomV1                      = iota + 13 // Netease: new packet
+	IDCombine                                   // Netease: new packet
+	IDVConnection                               // Netease: new packet
+	IDTransport                                 // Netease: new packet
+	IDCustomV2                                  // Netease: new packet
+	IDConfirmSkin                               // Netease: new packet
+	IDTransportNoCompress                       // Netease: new packet
+	IDMobEffectV2                               // Netease: new packet
+	IDMobBlockActorChanged                      // Netease: new packet
+	IDChangeActorMotion                         // Netease: new packet
+	IDAnimateEmoteEntity                        // Netease: new packet
+	IDCameraInstruction             = iota + 79 // Netease: 301 -> 300
+	IDCompressedBiomeDefinitionList             // Netease: 302 -> 301
+	IDTrimData                                  // Netease: 303 -> 302
+	IDOpenSign                                  // Netease: 304 -> 303
+	IDAgentAnimation                            // Netease: 305 -> 304
 )

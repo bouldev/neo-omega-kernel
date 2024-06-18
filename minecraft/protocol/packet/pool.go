@@ -80,6 +80,7 @@ func init() {
 		IDUpdateBlock:       func() Packet { return &UpdateBlock{} },
 		IDAddPainting:       func() Packet { return &AddPainting{} },
 		IDTickSync:          func() Packet { return &TickSync{} },
+		IDLevelSoundEventV1: func() Packet { return &LevelSoundEventV1{} }, // Netease
 		// ---
 		IDLevelEvent:           func() Packet { return &LevelEvent{} },
 		IDBlockEvent:           func() Packet { return &BlockEvent{} },
@@ -176,6 +177,7 @@ func init() {
 		IDScriptCustomEvent:           func() Packet { return &ScriptCustomEvent{} },
 		IDSpawnParticleEffect:         func() Packet { return &SpawnParticleEffect{} },
 		IDAvailableActorIdentifiers:   func() Packet { return &AvailableActorIdentifiers{} },
+		IDLevelSoundEventV2:           func() Packet { return &LevelSoundEventV2{} }, // Netease
 		IDNetworkChunkPublisherUpdate: func() Packet { return &NetworkChunkPublisherUpdate{} },
 		IDBiomeDefinitionList:         func() Packet { return &BiomeDefinitionList{} },
 		IDLevelSoundEvent:             func() Packet { return &LevelSoundEvent{} },
@@ -256,12 +258,28 @@ func init() {
 		IDCameraPresets:                     func() Packet { return &CameraPresets{} },
 		IDUnlockedRecipes:                   func() Packet { return &UnlockedRecipes{} },
 		IDPyRpc:                             func() Packet { return &PyRpc{} },
-		IDNemcWhatever203:                   func() Packet { return &NemcWhatever203{} },
-		IDNemcWhatever208:                   func() Packet { return &NemcWhatever208{} },
-		IDNemcWhatever210:                   func() Packet { return &NemcWhatever210{} },
-		IDNemcWhatever228:                   func() Packet { return &NemcWhatever228{} },
-		IDNemcWhatever230:                   func() Packet { return &NemcWhatever230{} },
-		IDNemcWhatever302:                   func() Packet { return &NemcWhatever302{} },
+		IDChangeModel:                       func() Packet { return &ChangeModel{} },              // Netease
+		IDStoreBuySucc:                      func() Packet { return &StoreBuySucc{} },             // Netease
+		IDNeteaseJson:                       func() Packet { return &NeteaseJson{} },              // Netease
+		IDChangeModelTexture:                func() Packet { return &ChangeModelTexture{} },       // Netease
+		IDChangeModelOffset:                 func() Packet { return &ChangeModelOffset{} },        // Netease
+		IDChangeModelBind:                   func() Packet { return &ChangeModelBind{} },          // Netease
+		IDHungerAttr:                        func() Packet { return &HungerAttr{} },               // Netease
+		IDSetDimensionLocalTime:             func() Packet { return &SetDimensionLocalTime{} },    // Netease
+		IDWithdrawFurnaceXp:                 func() Packet { return &WithdrawFurnaceXp{} },        // Netease
+		IDSetDimensionLocalWeather:          func() Packet { return &SetDimensionLocalWeather{} }, // Netease
+		// ---
+		IDCustomV1:             func() Packet { return &CustomV1{} },             // Netease
+		IDCombine:              func() Packet { return &Combine{} },              // Netease
+		IDVConnection:          func() Packet { return &VConnection{} },          // Netease
+		IDTransport:            func() Packet { return &Transport{} },            // Netease
+		IDCustomV2:             func() Packet { return &CustomV2{} },             // Netease
+		IDConfirmSkin:          func() Packet { return &ConfirmSkin{} },          // Netease
+		IDTransportNoCompress:  func() Packet { return &TransportNoCompress{} },  // Netease
+		IDMobEffectV2:          func() Packet { return &MobEffectV2{} },          // Netease
+		IDMobBlockActorChanged: func() Packet { return &MobBlockActorChanged{} }, // Netease
+		IDChangeActorMotion:    func() Packet { return &ChangeActorMotion{} },    // Netease
+		IDAnimateEmoteEntity:   func() Packet { return &AnimateEmoteEntity{} },   // Netease
 		// ---
 		IDCameraInstruction:             func() Packet { return &CameraInstruction{} },
 		IDCompressedBiomeDefinitionList: func() Packet { return &CompressedBiomeDefinitionList{} },
@@ -347,12 +365,6 @@ func init() {
 		IDRequestNetworkSettings:          func() Packet { return &RequestNetworkSettings{} },
 		IDGameTestResults:                 func() Packet { return &GameTestResults{} },
 		IDPyRpc:                           func() Packet { return &PyRpc{} },
-		IDNemcWhatever203:                 func() Packet { return &NemcWhatever203{} },
-		IDNemcWhatever208:                 func() Packet { return &NemcWhatever208{} },
-		IDNemcWhatever210:                 func() Packet { return &NemcWhatever210{} },
-		IDNemcWhatever228:                 func() Packet { return &NemcWhatever228{} },
-		IDNemcWhatever230:                 func() Packet { return &NemcWhatever230{} },
-		IDNemcWhatever302:                 func() Packet { return &NemcWhatever302{} },
 		IDOpenSign:                        func() Packet { return &OpenSign{} },
 	}
 	for id, pk := range clientOriginating {

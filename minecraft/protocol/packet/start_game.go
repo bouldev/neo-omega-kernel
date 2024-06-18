@@ -243,10 +243,10 @@ type StartGame struct {
 	ServerAuthoritativeSound bool
 
 	// Netease
-	Unknown1 int64
+	Unknown1 uint64
 	// Netease: they may be a UUID
-	Unknown2 int64
-	Unknown3 int64
+	Unknown2 uint64
+	Unknown3 uint64
 	// Netease
 	Unknown4 bool
 	// Netease
@@ -391,9 +391,9 @@ func (pk *StartGame) Marshal(io protocol.IO) {
 	io.String(&pk.GameVersion)
 	io.NBT(&pk.PropertyData, nbt.NetworkLittleEndian)
 	// Netease
-	io.Int64(&pk.Unknown1)
-	io.Int64(&pk.Unknown2)
-	io.Int64(&pk.Unknown3)
+	io.Uint64(&pk.Unknown1)
+	io.Uint64(&pk.Unknown2)
+	io.Uint64(&pk.Unknown3)
 	io.Bool(&pk.Unknown4)
 	io.Bool(&pk.Unknown5)
 	io.Bool(&pk.Unknown6)

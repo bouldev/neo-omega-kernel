@@ -8,7 +8,8 @@ import (
 // entity in the sense of an in-game entity, but has to do with the ECS that Minecraft uses.
 type AddEntity struct {
 	// EntityNetworkID is the network ID of the entity that should be added.
-	EntityNetworkID uint64
+	// Netease
+	EntityNetworkID uint32
 }
 
 // ID ...
@@ -17,5 +18,5 @@ func (pk *AddEntity) ID() uint32 {
 }
 
 func (pk *AddEntity) Marshal(io protocol.IO) {
-	io.Varuint64(&pk.EntityNetworkID)
+	io.Varuint32(&pk.EntityNetworkID) // For Netease
 }

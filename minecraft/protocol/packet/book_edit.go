@@ -58,7 +58,7 @@ func (pk *BookEdit) Marshal(io protocol.IO) {
 	case BookActionReplacePage, BookActionAddPage:
 		io.Uint8(&pk.PageNumber)
 		io.String(&pk.Text)
-		io.String(&pk.PhotoName)
+		// io.String(&pk.PhotoName) // For Netease
 	case BookActionDeletePage:
 		io.Uint8(&pk.PageNumber)
 	case BookActionSwapPages:

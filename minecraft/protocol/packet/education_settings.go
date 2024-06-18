@@ -23,6 +23,8 @@ type EducationSettings struct {
 	ScreenshotBorderPath string
 	// CanModifyBlocks ...
 	CanModifyBlocks protocol.Optional[bool]
+	// Netease
+	Unknown1 bool
 	// OverrideURI ...
 	OverrideURI protocol.Optional[string]
 	// HasQuiz specifies if the world has a quiz connected to it.
@@ -44,6 +46,9 @@ func (pk *EducationSettings) Marshal(io protocol.IO) {
 	io.String(&pk.PostProcessFilter)
 	io.String(&pk.ScreenshotBorderPath)
 	protocol.OptionalFunc(io, &pk.CanModifyBlocks, io.Bool)
+	if CanModifyBlocks, _ := pk.CanModifyBlocks.Value(); CanModifyBlocks {
+		io.Bool(&pk.Unknown1)
+	} // For Netease
 	protocol.OptionalFunc(io, &pk.OverrideURI, io.String)
 	io.Bool(&pk.HasQuiz)
 	protocol.OptionalMarshaler(io, &pk.ExternalLinkSettings)

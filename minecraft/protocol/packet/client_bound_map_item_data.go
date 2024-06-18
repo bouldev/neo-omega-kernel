@@ -68,6 +68,8 @@ type ClientBoundMapItemData struct {
 	YOffset int32
 	// Pixels is a list of pixel colours for the new texture of the map. It is indexed as Pixels[y*height + x].
 	Pixels []color.RGBA
+	// Netease: a possible way to prase it can be found in PhonixBuilder repo
+	Unknown1 []byte
 }
 
 // ID ...
@@ -99,4 +101,7 @@ func (pk *ClientBoundMapItemData) Marshal(io protocol.IO) {
 		io.Varint32(&pk.YOffset)
 		protocol.FuncSlice(io, &pk.Pixels, io.VarRGBA)
 	}
+
+	// Netease
+	io.Bytes(&pk.Unknown1)
 }

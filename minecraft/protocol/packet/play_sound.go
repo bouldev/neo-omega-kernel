@@ -30,7 +30,7 @@ func (*PlaySound) ID() uint32 {
 
 func (pk *PlaySound) Marshal(io protocol.IO) {
 	io.String(&pk.SoundName)
-	io.SoundPos(&pk.Position)
+	io.USoundPos(&pk.Position) // For Netease
 	io.Float32(&pk.Volume)
 	io.Float32(&pk.Pitch)
 }

@@ -37,7 +37,7 @@ func (*ClientBoundDebugRenderer) ID() uint32 {
 }
 
 func (pk *ClientBoundDebugRenderer) Marshal(io protocol.IO) {
-	io.Varuint32(&pk.Type)
+	io.Uint32(&pk.Type) // For Netease
 	if pk.Type == ClientBoundDebugRendererAddCube {
 		io.String(&pk.Text)
 		io.Vec3(&pk.Position)

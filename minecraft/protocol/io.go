@@ -39,6 +39,7 @@ type IO interface {
 	SubChunkPos(x *SubChunkPos)
 	USubChunkPos(x *SubChunkPos)
 	SoundPos(x *mgl32.Vec3)
+	USoundPos(x *mgl32.Vec3)
 	ByteFloat(x *float32)
 	Bytes(p *[]byte)
 	NBT(m *map[string]any, encoding nbt.Encoding)

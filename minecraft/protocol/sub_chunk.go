@@ -35,7 +35,8 @@ type SubChunkEntry struct {
 	// HeightMapType is always one of the constants defined in the HeightMapData constants.
 	HeightMapType byte
 	// HeightMapData is the data for the height map.
-	HeightMapData []int8
+	// Netease
+	HeightMapData []uint8
 	// BlobHash is the hash of the blob.
 	BlobHash uint64
 }
@@ -49,7 +50,7 @@ func (x *SubChunkEntry) Marshal(r IO) {
 	}
 	r.Uint8(&x.HeightMapType)
 	if x.HeightMapType == HeightMapDataHasData {
-		FuncSliceOfLen(r, 256, &x.HeightMapData, r.Int8)
+		FuncSliceOfLen(r, 256, &x.HeightMapData, r.Uint8) // For Netease
 	}
 	r.Uint64(&x.BlobHash)
 }
@@ -61,16 +62,18 @@ func SubChunkEntryNoCache(r IO, x *SubChunkEntry) {
 	r.ByteSlice(&x.RawPayload)
 	r.Uint8(&x.HeightMapType)
 	if x.HeightMapType == HeightMapDataHasData {
-		FuncSliceOfLen(r, 256, &x.HeightMapData, r.Int8)
+		FuncSliceOfLen(r, 256, &x.HeightMapData, r.Uint8) // For Netease
 	}
 }
 
 // SubChunkOffset represents an offset from the base position of another sub chunk.
-type SubChunkOffset [3]int8
+// Netease
+type SubChunkOffset [3]uint8
 
 // Marshal encodes/decodes a SubChunkOffset.
+// Netease: Int8 -> Uint8
 func (x *SubChunkOffset) Marshal(r IO) {
-	r.Int8(&x[0])
-	r.Int8(&x[1])
-	r.Int8(&x[2])
+	r.Uint8(&x[0])
+	r.Uint8(&x[1])
+	r.Uint8(&x[2])
 }
