@@ -240,6 +240,7 @@ func (c *CmdSenderBasic) packAICmdWithUUID(runtimeid string, cmd string, ud uuid
 			},
 			nil,
 		},
+		OperationType: packet.PyRpcOperationTypeSend,
 	}
 	return commandRequest
 }

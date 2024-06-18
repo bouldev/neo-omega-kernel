@@ -96,6 +96,7 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 				data,
 				nil,
 			},
+			OperationType: packet.PyRpcOperationTypeSend,
 		})
 	} else if command == "GetStartType" {
 		if len(data) < 1 {
@@ -111,6 +112,7 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 				[]interface{}{response},
 				nil,
 			},
+			OperationType: packet.PyRpcOperationTypeSend,
 		})
 		if !o.isGetStartTypeResponded {
 			o.isGetStartTypeResponded = true
@@ -148,6 +150,7 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 				},
 				nil,
 			},
+			OperationType: packet.PyRpcOperationTypeSend,
 		})
 		o.isCheckNumResponded = true
 		close(o.chanCheckNumResponded)

@@ -92,6 +92,7 @@ func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minec
 			[]any{},
 			nil,
 		},
+		OperationType: packet.PyRpcOperationTypeSend,
 	})
 
 	// Only this packet is necessary
@@ -101,6 +102,7 @@ func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minec
 			[]any{},
 			nil,
 		},
+		OperationType: packet.PyRpcOperationTypeSend,
 	})
 
 	// Generally, following packets are sent after "SetStartType"
@@ -110,6 +112,7 @@ func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minec
 			[]any{},
 			nil,
 		},
+		OperationType: packet.PyRpcOperationTypeSend,
 	})
 	packetConn.WritePacket(&packet.PyRpc{
 		Value: []any{
@@ -122,6 +125,7 @@ func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minec
 			},
 			nil,
 		},
+		OperationType: packet.PyRpcOperationTypeSend,
 	})
 	packetConn.WritePacket(&packet.PyRpc{
 		Value: []any{
@@ -129,6 +133,7 @@ func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minec
 			[]any{},
 			nil,
 		},
+		OperationType: packet.PyRpcOperationTypeSend,
 	})
 	packetConn.Flush()
 	fmt.Println(i18n.T(i18n.S_packing_core))

@@ -564,5 +564,4 @@ func (w *Writer) MsgPack(x *any) {
 	var msgPackBytes []byte
 	codec.NewEncoderBytes(&msgPackBytes, &codec.MsgpackHandle{}).Encode(x)
 	w.ByteSlice(&msgPackBytes)
-	w.Bytes(&[]byte{0xae, 0x23, 0xdb, 0x05})
 }

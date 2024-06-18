@@ -725,11 +725,9 @@ func (r *Reader) panic(err error) {
 func (r *Reader) MsgPack(x *any) {
 	var (
 		str            []byte // string
-		num            uint32 // consume unknown uint32
 		msgPackHandler codec.MsgpackHandle
 	)
 	r.ByteSlice(&str)
-	r.Uint32(&num)
 
 	msgPackHandler.RawToString = true
 	codec.NewDecoderBytes(str, &msgPackHandler).Decode(x)
