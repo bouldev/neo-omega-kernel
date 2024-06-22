@@ -41,7 +41,7 @@ func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minec
 	publicKey, _ := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
 
 	fmt.Println(i18n.T(i18n.S_retrieving_client_information_from_auth_server))
-	address, chainData, err := authenticator.GetAccess(ctx, publicKey)
+	address, chainData, growthLevel, err := authenticator.GetAccess(ctx, publicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minec
 	packetConn := packet_conn.NewPacketConn(byteFrameConn, false)
 
 	fmt.Println(i18n.T(i18n.S_generating_key_login_request))
-	opt := options.NewDefaultOptions(address, chainData, privateKey)
+	opt := options.NewDefaultOptions(address, chainData, growthLevel, privateKey)
 
 	fmt.Println(i18n.T(i18n.S_exchanging_login_data))
 	readQueue := NewInfinityQueue()

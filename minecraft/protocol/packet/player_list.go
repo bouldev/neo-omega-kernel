@@ -30,7 +30,7 @@ type PlayerList struct {
 	// NetEase
 	Unknown4 []string
 	// NetEase: launcher levels (1 - 50), such as "Diamond V", "Bedrock III"..
-	LauncherLevels []uint32
+	GrowthLevels []uint32
 }
 
 // ID ...
@@ -66,9 +66,9 @@ func (pk *PlayerList) Marshal(io protocol.IO) {
 		// 		io.String(&pk.Unknown4[i])
 		// 	}
 		// }
-		pk.LauncherLevels = make([]uint32, len)
+		pk.GrowthLevels = make([]uint32, len)
 		for i := 0; i < len; i++ {
-			io.Uint32(&pk.LauncherLevels[i])
+			io.Uint32(&pk.GrowthLevels[i])
 		}
 	}
 }

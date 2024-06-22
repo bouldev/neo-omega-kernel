@@ -17,6 +17,7 @@ import (
 
 func NewDefaultOptions(
 	address, chainData string,
+	growthLevel int,
 	PrivateKey *ecdsa.PrivateKey,
 
 ) *Options {
@@ -26,7 +27,7 @@ func NewDefaultOptions(
 		ErrorLog:   log.New(os.Stderr, "", log.LstdFlags),
 	}
 	_, _ = rand.Read(opt.Salt)
-	opt.ClientData = defaultClientData(address)
+	opt.ClientData = defaultClientData(address, growthLevel)
 	opt.Request = login.Encode(chainData, opt.ClientData, PrivateKey)
 	opt.IdentityData, _, _, _ = login.Parse(opt.Request)
 	opt.ClientData.ThirdPartyName = opt.IdentityData.DisplayName
@@ -46,14 +47,15 @@ var skinResourcePatch []byte
 var skinGeometry []byte
 
 // defaultClientData edits the ClientData passed to have defaults set to all fields that were left unchanged.
-func defaultClientData(address string) login.ClientData {
+func defaultClientData(address string, growthLevel int) login.ClientData {
 	d := login.ClientData{}
 	d.ServerAddress = address
 	d.DeviceOS = protocol.DeviceAndroid
 	d.GameVersion = protocol.CurrentVersion
+	d.GrowthLevel = growthLevel
 	d.ClientRandomID = rand2.Int63()
 	d.DeviceID = uuid.New().String()
-	d.LanguageCode = "en_GB"
+	d.LanguageCode = "zh_CN"
 	d.AnimatedImageData = make([]login.SkinAnimation, 0)
 	d.PersonaPieces = make([]login.PersonaPiece, 0)
 	d.PieceTintColours = make([]login.PersonaPieceTintColour, 0)

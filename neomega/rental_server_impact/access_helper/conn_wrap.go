@@ -10,7 +10,7 @@ import (
 )
 
 type Authenticator interface {
-	GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error)
+	GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, growthLevel int, err error)
 }
 
 type InfinityQueue struct {
