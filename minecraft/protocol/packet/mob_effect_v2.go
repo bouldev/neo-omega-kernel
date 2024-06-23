@@ -16,5 +16,5 @@ func (*MobEffectV2) ID() uint32 {
 }
 
 func (pk *MobEffectV2) Marshal(io protocol.IO) {
-	protocol.SliceUint32Length(io, &pk.Items)
+	protocol.SliceVaruint32Length(io, &pk.Items)
 }

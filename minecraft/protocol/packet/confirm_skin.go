@@ -7,8 +7,6 @@ import (
 // Netease packet
 type ConfirmSkin struct {
 	// Netease
-	Count uint32
-	// Netease
 	Unknown1 []protocol.ConfirmSkinUnknownEntry
 	// Netease
 	Unknown2 []string
@@ -22,10 +20,7 @@ func (*ConfirmSkin) ID() uint32 {
 }
 
 func (pk *ConfirmSkin) Marshal(io protocol.IO) {
-	io.Varuint32(&pk.Count)
-	if pk.Count > 0 {
-		protocol.SliceOfLen(io, pk.Count, &pk.Unknown1)
-		protocol.FuncSliceOfLen(io, pk.Count, &pk.Unknown2, io.String)
-		protocol.FuncSliceOfLen(io, pk.Count, &pk.Unknown3, io.String)
-	}
+	protocol.SliceVaruint32Length(io, &pk.Unknown1)
+	protocol.FuncSliceOfLen(io, uint32(len(pk.Unknown1)), &pk.Unknown2, io.String)
+	protocol.FuncSliceOfLen(io, uint32(len(pk.Unknown1)), &pk.Unknown3, io.String)
 }
