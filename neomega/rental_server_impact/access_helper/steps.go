@@ -41,7 +41,7 @@ func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minec
 	publicKey, _ := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
 
 	fmt.Println(i18n.T(i18n.S_retrieving_client_information_from_auth_server))
-	address, chainData, growthLevel, err := authenticator.GetAccess(ctx, publicKey)
+	address, chainData, botUid, growthLevel, err := authenticator.GetAccess(ctx, publicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +78,9 @@ func loginMCServer(ctx context.Context, authenticator Authenticator) (conn minec
 	fmt.Println(i18n.T(i18n.S_sending_additional_information))
 	packetConn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
+	})
+	packetConn.WritePacket(&packet.NeteaseJson{
+		Data: []byte(fmt.Sprintf(`{"eventName":"LOGIN_UID","resid":"","uid":"%s"}`, botUid)),
 	})
 	// conn.WritePacket(&packet.PyRpc{
 	// 	Value: py_rpc.FromGo([]any{
