@@ -21,6 +21,7 @@ const (
 	ContainerRecipeItems
 	ContainerRecipeSearch
 	ContainerRecipeSearchBar
+	_ // Netease: Unknown extra container type between 14 and 22
 	ContainerRecipeEquipment
 	ContainerRecipeBook
 	ContainerEnchantingInput
