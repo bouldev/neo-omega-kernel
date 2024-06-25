@@ -97,23 +97,19 @@ func WriteFBToken(token string, tokenPath string) {
 const (
 	AUTH_SERVER_FB_OFFICIAL = "https://api.fastbuilder.pro"
 	AUTH_SERVER_LILIYA      = "https://liliya233.uk"
-	AUTH_SERVER_EDOTCS      = "https://uc.edotcs.cn/Fastbuilder"
 )
 
 var AUTH_SERVER_NAMES = map[string]string{
 	AUTH_SERVER_FB_OFFICIAL: i18n.T(i18n.S_auth_server_name_official),
 	AUTH_SERVER_LILIYA:      i18n.T(i18n.S_auth_server_name_liliya),
-	AUTH_SERVER_EDOTCS:      i18n.T(i18n.S_auth_server_name_edotcs),
 }
-var AUTH_SERVER_SELECT_STRINGS = []string{"1. " + i18n.T(i18n.S_auth_server_name_official), "2. " + i18n.T(i18n.S_auth_server_name_liliya), "3. " + i18n.T(i18n.S_auth_server_name_edotcs)}
+var AUTH_SERVER_SELECT_STRINGS = []string{"1. " + i18n.T(i18n.S_auth_server_name_official), "2. " + i18n.T(i18n.S_auth_server_name_liliya)}
 
 func TranslateInputToAuthServer(input string) (authServer string, authServerName string, err error) {
 	if strings.Contains(input, "1") {
 		return AUTH_SERVER_FB_OFFICIAL, i18n.T(i18n.S_auth_server_name_official), nil
 	} else if strings.Contains(input, "2") {
 		return AUTH_SERVER_LILIYA, i18n.T(i18n.S_auth_server_name_liliya), nil
-	} else if strings.Contains(input, "3") {
-		return AUTH_SERVER_EDOTCS, i18n.T(i18n.S_auth_server_name_edotcs), nil
 	}
 	return "", "", fmt.Errorf(i18n.T(i18n.S_invalid_selection_please_select_in_1_to_3))
 }
@@ -167,10 +163,6 @@ func ReadUserInfo(userName, userPassword, userToken, serverCode, serverPassword,
 			} else if strings.HasPrefix(userToken, "y8/") {
 				authServer = AUTH_SERVER_LILIYA
 				flagAuthServerGiven = true
-				// if token begins with ed/, then EDotCS
-			} else if strings.HasPrefix(userToken, "ed/") {
-				authServer = AUTH_SERVER_EDOTCS
-				flagAuthServerGiven = true
 			}
 		}
 		if !flagAuthServerGiven {
@@ -205,10 +197,6 @@ func ReadUserInfo(userName, userPassword, userToken, serverCode, serverPassword,
 					// if token begins with y8/, then Liliya
 				} else if strings.HasPrefix(userToken, "y8/") {
 					authServer = AUTH_SERVER_LILIYA
-					flagAuthServerGiven = true
-					// if token begins with ed/, then EDotCS
-				} else if strings.HasPrefix(userToken, "ed/") {
-					authServer = AUTH_SERVER_EDOTCS
 					flagAuthServerGiven = true
 				}
 			}
