@@ -22,14 +22,12 @@ type PlayerList struct {
 	// depending on the ActionType set.
 	Entries []protocol.PlayerListEntry
 	// Netease
-	Unknown1 []bool
+	Unknown1 []protocol.NeteaseUnknownPlayerListEntry
 	// Netease
 	Unknown2 []protocol.NeteaseUnknownPlayerListEntry
 	// Netease
-	Unknown3 []protocol.NeteaseUnknownPlayerListEntry
-	// NetEase
-	Unknown4 []string
-	// NetEase: launcher levels (1 - 50), such as "Diamond V", "Bedrock III"..
+	Unknown3 []string
+	// Netease: launcher levels (1 - 50), such as "Diamond V", "Bedrock III"..
 	GrowthLevels []uint32
 }
 
@@ -53,13 +51,9 @@ func (pk *PlayerList) Marshal(io protocol.IO) {
 		for i := 0; i < len; i++ {
 			io.Bool(&pk.Entries[i].Skin.Trusted)
 		}
-		// Netease
-		protocol.FuncSliceOfLen(io, uint32(len), &pk.Unknown1, io.Bool)
+		protocol.SliceOfLen(io, uint32(len), &pk.Unknown1)
 		protocol.SliceOfLen(io, uint32(len), &pk.Unknown2)
-		protocol.SliceOfLen(io, uint32(len), &pk.Unknown3)
-		// if something {
-		// 	protocol.FuncSliceOfLen(io, uint32(len), &pk.Unknown4, io.String)
-		// }
+		protocol.FuncSliceOfLen(io, uint32(len), &pk.Unknown3, io.String)
 		protocol.FuncSliceOfLen(io, uint32(len), &pk.GrowthLevels, io.Uint32)
 	}
 }
