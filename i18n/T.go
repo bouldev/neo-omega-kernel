@@ -34,7 +34,7 @@ const (
 	S_fail_to_write_token                                                                       = "fail to write token: %v \n"
 	S_auth_server_name_official                                                                 = "FastBuilder Official Auth Server"
 	S_auth_server_name_liliya                                                                   = "Liliya233 Auth Server (require individual account)"
-	S_invalid_selection_please_select_in_1_to_3                                                 = "invalid input, please input in 1 ~ 3"
+	S_invalid_selection_please_select_in_1_to_2                                                 = "invalid input, please input in 1 ~ 2"
 	S_auth_server_name_user_specific                                                            = "[auth server: %v]"
 	S_please_select_auth_server                                                                 = "please select auth server:\n%v\ninput selection: "
 	S_re_login_with_another_account                                                             = "re-login with another account?:"
@@ -152,7 +152,7 @@ var I18nDict_zh_cn map[string]string = map[string]string{
 	S_fail_to_write_token:                                      "无法写入 token 文件 -> 这应该不是大问题\n",
 	S_auth_server_name_official:                                "FastBuilder 官方验证服务器",
 	S_auth_server_name_liliya:                                  "咕咕酱的验证服务器 (需要独立账户)",
-	S_invalid_selection_please_select_in_1_to_3:                "无效的输入，请输入 1 ~ 3 间的选择",
+	S_invalid_selection_please_select_in_1_to_2:                "无效的输入，请输入 1 ~ 2 间的选择",
 	S_auth_server_name_user_specific:                           "[验证服务器: %v]",
 	S_please_select_auth_server:                                "请选择验证服务器:\n%v\n请输入编号: ",
 	S_re_login_with_another_account:                            "需要使用其它账户(而非现有 token 中的账户)登陆吗? (y/n): ",

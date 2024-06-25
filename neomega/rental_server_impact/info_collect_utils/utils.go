@@ -111,7 +111,7 @@ func TranslateInputToAuthServer(input string) (authServer string, authServerName
 	} else if strings.Contains(input, "2") {
 		return AUTH_SERVER_LILIYA, i18n.T(i18n.S_auth_server_name_liliya), nil
 	}
-	return "", "", fmt.Errorf(i18n.T(i18n.S_invalid_selection_please_select_in_1_to_3))
+	return "", "", fmt.Errorf(i18n.T(i18n.S_invalid_selection_please_select_in_1_to_2))
 }
 
 func TranslateAuthServerToAuthServerName(authServer string) (authServerName string) {
