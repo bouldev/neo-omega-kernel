@@ -1,8 +1,11 @@
 package nodes
 
-import "time"
+import (
+	"neo-omega-kernel/nodes/defines"
+	"time"
+)
 
-func WaitUntilConflictNodeOffline(node Node, tag string, maxWaitTime time.Duration) bool {
+func WaitUntilConflictNodeOffline(node defines.Node, tag string, maxWaitTime time.Duration) bool {
 	deadlineTime := time.Now().Add(maxWaitTime)
 	for node.CheckNetTag(tag) {
 		time.Sleep(time.Second / 2)

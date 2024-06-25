@@ -1,7 +1,8 @@
-package nodes
+package defines
 
 import (
 	"context"
+	"neo-omega-kernel/minecraft_neo/can_close"
 	"time"
 )
 
@@ -55,10 +56,11 @@ type TimeLockNode interface {
 }
 
 type Node interface {
-	// IsMaster() bool
-	Dead() chan error
+	can_close.CanCloseWithError
 	FundamentalNode
 	KVDataNode
 	RolesNode
 	TimeLockNode
 }
+
+type AsyncAPI func(args Values, setResult func(rets Values, err error))

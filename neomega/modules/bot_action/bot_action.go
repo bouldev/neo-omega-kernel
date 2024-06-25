@@ -8,6 +8,7 @@ import (
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"time"
 )
@@ -22,13 +23,13 @@ type AccessPointBotActionWithPersistData struct {
 	currentContainerCloseListener    func(*packet.ContainerClose)
 	currentItemStackResponseListener func(*packet.ItemStackResponse)
 	clientInfo                       *MaintainedGameInfo
-	node                             nodes.APINode
+	node                             defines.APINode
 	muChan                           chan struct{}
 }
 
 func NewAccessPointBotActionWithPersistData(
 	uq neomega.MicroUQHolder, ctrl neomega.InteractCore, listener neomega.ReactCore, cmdSender neomega.CmdSender,
-	node nodes.Node,
+	node defines.Node,
 ) neomega.BotAction {
 	ba := &AccessPointBotActionWithPersistData{
 		BotActionSimple: NewBotActionSimple(uq, ctrl),

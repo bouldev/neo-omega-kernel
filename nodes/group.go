@@ -1,12 +1,13 @@
 package nodes
 
 import (
+	"neo-omega-kernel/nodes/defines"
 	"strings"
 	"time"
 )
 
 type group struct {
-	Node
+	defines.Node
 	name          string
 	allowAbsolute bool
 }
@@ -20,25 +21,25 @@ func (n *group) translateName(name string) string {
 	}
 }
 
-func (n *group) ExposeAPI(apiName string, api API, newGoroutine bool) error {
+func (n *group) ExposeAPI(apiName string, api defines.API, newGoroutine bool) error {
 	return n.Node.ExposeAPI(n.translateName(apiName), api, newGoroutine)
 }
-func (n *group) CallOmitResponse(api string, args Values) {
+func (n *group) CallOmitResponse(api string, args defines.Values) {
 	n.Node.CallOmitResponse(n.translateName(api), args)
 }
-func (n *group) CallWithResponse(api string, args Values) RemoteResultHandler {
+func (n *group) CallWithResponse(api string, args defines.Values) defines.RemoteResultHandler {
 	return n.Node.CallWithResponse(n.translateName(api), args)
 }
-func (n *group) PublishMessage(topic string, msg Values) {
+func (n *group) PublishMessage(topic string, msg defines.Values) {
 	n.Node.PublishMessage(n.translateName(topic), msg)
 }
-func (n *group) ListenMessage(topic string, listener MsgListener, newGoroutine bool) {
+func (n *group) ListenMessage(topic string, listener defines.MsgListener, newGoroutine bool) {
 	n.Node.ListenMessage(n.translateName(topic), listener, newGoroutine)
 }
-func (n *group) GetValue(key string) (val Values, found bool) {
+func (n *group) GetValue(key string) (val defines.Values, found bool) {
 	return n.Node.GetValue(n.translateName(key))
 }
-func (n *group) SetValue(key string, val Values) {
+func (n *group) SetValue(key string, val defines.Values) {
 	n.Node.SetValue(n.translateName(key), val)
 }
 func (n *group) SetTags(tags ...string) {
@@ -66,7 +67,7 @@ func (n *group) Unlock(name string) {
 	n.Node.Unlock(n.translateName(name))
 }
 
-func NewGroup(name string, node Node, allowAbsolute bool) Node {
+func NewGroup(name string, node defines.Node, allowAbsolute bool) defines.Node {
 	if !strings.HasPrefix(name, "/") {
 		name = "/" + name
 	}

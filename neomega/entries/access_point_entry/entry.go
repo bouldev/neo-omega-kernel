@@ -8,6 +8,8 @@ import (
 	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
 	"neo-omega-kernel/neomega/rental_server_impact/info_collect_utils"
 	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
+	"neo-omega-kernel/nodes/underlay_conn"
 )
 
 const ENTRY_NAME = "omega_access_point"
@@ -28,14 +30,13 @@ func Entry(args *Args) {
 	accessOption.ReasonWithPrivilegeStuff = true
 
 	var omegaCore neomega.MicroOmega
-	var node nodes.Node
+	var node defines.Node
 	ctx := context.Background()
 	{
-		socket, err := nodes.CreateZMQServerSocket(args.AccessArgs.AccessPointAddr)
+		server, err := underlay_conn.NewServerFromBasicNet(args.AccessArgs.AccessPointAddr)
 		if err != nil {
 			panic(err)
 		}
-		server := nodes.NewSimpleZMQServer(socket)
 		master := nodes.NewZMQMasterNode(server)
 		node = nodes.NewGroup("neo-omega-kernel/neomega", master, false)
 	}
@@ -44,7 +45,7 @@ func Entry(args *Args) {
 		panic(err)
 	}
 	node.SetTags("access-point-ready")
-	node.PublishMessage("reboot", nodes.FromString("reboot to refresh data"))
+	node.PublishMessage("reboot", defines.FromString("reboot to refresh data"))
 	fmt.Println(i18n.T(i18n.S_neomega_access_point_ready))
 
 	panic(<-omegaCore.Dead())

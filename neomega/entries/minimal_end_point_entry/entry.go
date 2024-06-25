@@ -7,6 +7,8 @@ import (
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega/bundle"
 	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
+	"neo-omega-kernel/nodes/underlay_conn"
 	"os"
 	"strings"
 	"time"
@@ -15,20 +17,19 @@ import (
 const ENTRY_NAME = "omega_minimal_end_point"
 
 func Entry(args *Args) {
-	var node nodes.Node
+	var node defines.Node
 	// ctx := context.Background()
 	{
-		socket, err := nodes.CreateZMQClientSocket(args.AccessPointAddr)
+		client, err := underlay_conn.NewClientFromBasicNet(args.AccessPointAddr, time.Second)
 		if err != nil {
 			panic(err)
 		}
-		client := nodes.NewSimpleZMQAPIClient(socket)
 		slave, err := nodes.NewZMQSlaveNode(client)
 		if err != nil {
 			panic(err)
 		}
 		node = nodes.NewGroup("neo-omega-kernel/neomega", slave, false)
-		node.ListenMessage("reboot", func(msg nodes.Values) {
+		node.ListenMessage("reboot", func(msg defines.Values) {
 			reason, _ := msg.ToString()
 			fmt.Println(reason)
 			os.Exit(3)
@@ -136,7 +137,7 @@ func Entry(args *Args) {
 	// containerInfo, _ := neomega.GenContainerItemsInfoFromItemsNbt(nbtData.([]any))
 	// fmt.Println(containerInfo)
 	// blockName, found := blocks.RuntimeIDToBlockNameWithStateStr(decoded.ForeGround[0])
-	// if !found {
+	// if !found {nodes
 	// 	panic(err)
 	// }
 	// fmt.Println(blockName)
@@ -295,5 +296,5 @@ func Entry(args *Args) {
 		}
 	}()
 
-	panic(<-node.Dead())
+	panic(<-node.WaitClosed())
 }

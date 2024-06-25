@@ -1,17 +1,14 @@
 package byte_frame_conn
 
 import (
-	"fmt"
+	"context"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/minecraft_neo/can_close"
-	"neo-omega-kernel/minecraft_neo/cascade_conn/defines"
 
 	// "neo-omega-kernel/minecraft_neo/defines"
 	"net"
 	"sync"
 	"time"
-
-	"github.com/sandertv/go-raknet"
 )
 
 type ByteFrameConnection struct {
@@ -26,7 +23,7 @@ type ByteFrameConnection struct {
 	sendMu       sync.Mutex
 }
 
-func NewConnectionFromNet(netConn net.Conn) defines.ByteFrameConn {
+func NewConnectionFromNet(netConn net.Conn) *ByteFrameConnection {
 	conn := &ByteFrameConnection{
 		// close underlay conn on err
 		CanCloseWithError: can_close.NewClose(func() { netConn.Close() }),
@@ -36,6 +33,18 @@ func NewConnectionFromNet(netConn net.Conn) defines.ByteFrameConn {
 	}
 	conn.dec.DisableBatchPacketLimit()
 	go conn.writeRoutine(time.Second / 20)
+	return conn
+}
+
+func NewConnectionFromNetWithCtx(netConn net.Conn, ctx context.Context) *ByteFrameConnection {
+	conn := NewConnectionFromNet(netConn)
+	go func() {
+		select {
+		case <-conn.WaitClosed():
+		case <-ctx.Done():
+			conn.CloseWithError(ctx.Err())
+		}
+	}()
 	return conn
 }
 
@@ -51,18 +60,16 @@ func (c *ByteFrameConnection) writeRoutine(period time.Duration) {
 }
 
 func (conn *ByteFrameConnection) Flush() error {
-	select {
-	case <-conn.WaitClosed():
-		return fmt.Errorf("flush on close connection")
-	default:
+	if conn.Closed() {
+		return conn.CloseError()
 	}
 	conn.sendMu.Lock()
 	defer conn.sendMu.Unlock()
 
 	if len(conn.bufferedSend) > 0 {
-		if err := conn.enc.Encode(conn.bufferedSend); err != nil && !raknet.ErrConnectionClosed(err) {
+		if err := conn.enc.Encode(conn.bufferedSend); err != nil {
 			// Should never happen.
-			return fmt.Errorf("error encoding packet batch: %v", err)
+			return err
 		}
 		// First manually clear out conn.bufferedSend so that re-using the slice after resetting its length to
 		// 0 doesn't result in an 'invisible' memory leak.
@@ -106,9 +113,6 @@ func (conn *ByteFrameConnection) ReadRoutine(onPacket func([]byte)) {
 	for {
 		packets, err := conn.dec.Decode()
 		if err != nil {
-			if !raknet.ErrConnectionClosed(err) {
-				fmt.Printf("error reading from dialer connection: %v\n", err)
-			}
 			conn.CloseWithError(err)
 		}
 		for _, data := range packets {

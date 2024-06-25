@@ -6,7 +6,7 @@ import (
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
 	"sync"
 	"time"
 
@@ -33,7 +33,7 @@ type AccessPointCmdSender struct {
 	needFeedBackPackets     []*needFeedBackPacket
 }
 
-func NewAccessPointCmdSender(node nodes.APINode, reactable neomega.ReactCore, interactable neomega.InteractCore) neomega.CmdSender {
+func NewAccessPointCmdSender(node defines.APINode, reactable neomega.ReactCore, interactable neomega.InteractCore) neomega.CmdSender {
 	c := &AccessPointCmdSender{
 		CmdSenderBasic:          NewCmdSenderBasic(reactable, interactable),
 		expectedCmdFeedback:     false,
@@ -65,7 +65,7 @@ func NewAccessPointCmdSender(node nodes.APINode, reactable neomega.ReactCore, in
 		<-ctx.Done()
 		fmt.Printf(i18n.T(i18n.S_send_commandfeedback_is_set_to_be)+"\n", c.expectedCmdFeedback)
 	}()
-	node.ExposeAPI("send-player-command", func(args nodes.Values) (result nodes.Values, err error) {
+	node.ExposeAPI("send-player-command", func(args defines.Values) (result defines.Values, err error) {
 		cmd, err := args.ToString()
 		if err != nil {
 			return
@@ -80,9 +80,9 @@ func NewAccessPointCmdSender(node nodes.APINode, reactable neomega.ReactCore, in
 			c.SendPacket(pkt)
 		}
 		c.launchOrDeferPlayerCommand(do)
-		return nodes.Empty, nil
+		return defines.Empty, nil
 	}, false)
-	node.ExposeAPI("send-ai-command", func(args nodes.Values) (result nodes.Values, err error) {
+	node.ExposeAPI("send-ai-command", func(args defines.Values) (result defines.Values, err error) {
 		// fmt.Println("ai command")
 		runtimeid, err := args.ToString()
 		if err != nil {
@@ -103,7 +103,7 @@ func NewAccessPointCmdSender(node nodes.APINode, reactable neomega.ReactCore, in
 			c.SendPacket(pkt)
 		}
 		c.launchOrDeferPlayerCommand(do)
-		return nodes.Empty, nil
+		return defines.Empty, nil
 	}, false)
 	// deduce command feed back
 	// no we cannot do this since bot currently not pass the challenge

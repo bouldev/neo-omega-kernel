@@ -18,7 +18,10 @@ import (
 	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
 	"neo-omega-kernel/neomega/rental_server_impact/info_collect_utils"
 	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
+	"neo-omega-kernel/nodes/underlay_conn"
 	"neo-omega-kernel/utils/sync_wrapper"
+	"time"
 	"unsafe"
 
 	"neo-omega-kernel/minecraft/protocol"
@@ -602,14 +605,13 @@ func ConnectOmega(address *C.char) (Cerr *C.char) {
 	if GOmegaCore != nil {
 		return C.CString("connect has been established")
 	}
-	var node nodes.Node
+	var node defines.Node
 	// ctx := context.Background()
 	{
-		socket, err := nodes.CreateZMQClientSocket(C.GoString(address))
+		client, err := underlay_conn.NewClientFromBasicNet(C.GoString(address), time.Second)
 		if err != nil {
 			return C.CString(err.Error())
 		}
-		client := nodes.NewSimpleZMQAPIClient(socket)
 		slave, err := nodes.NewZMQSlaveNode(client)
 		if err != nil {
 			return C.CString(err.Error())
@@ -632,7 +634,7 @@ func StartOmega(address *C.char, impactOptionsJson *C.char) (Cerr *C.char) {
 	if GOmegaCore != nil {
 		return C.CString("connect has been established")
 	}
-	var node nodes.Node
+	var node defines.Node
 	accessOption := access_helper.DefaultOptions()
 	// ctx := context.Background()
 	{
@@ -648,11 +650,11 @@ func StartOmega(address *C.char, impactOptionsJson *C.char) (Cerr *C.char) {
 		accessOption.ReasonWithPrivilegeStuff = true
 
 		{
-			socket, err := nodes.CreateZMQServerSocket(C.GoString(address))
+			server, err := underlay_conn.NewServerFromBasicNet(C.GoString(address))
 			if err != nil {
 				panic(err)
 			}
-			server := nodes.NewSimpleZMQServer(socket)
+			// server := nodes.NewSimpleZMQServer(socket)
 			master := nodes.NewZMQMasterNode(server)
 			node = nodes.NewGroup("neo-omega-kernel/neomega", master, false)
 		}

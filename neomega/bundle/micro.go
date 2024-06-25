@@ -5,13 +5,13 @@ import (
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
+	"neo-omega-kernel/nodes/defines"
 
 	// "neo-omega-kernel/neomega/modules/block/placer"
 	"neo-omega-kernel/neomega/modules/bot_action"
 	"neo-omega-kernel/neomega/modules/info_sender"
 	"neo-omega-kernel/neomega/modules/player_interact"
 	"neo-omega-kernel/neomega/modules/structure"
-	"neo-omega-kernel/nodes"
 	"sync"
 	"time"
 )
@@ -46,7 +46,7 @@ func NewMicroOmega(
 	reactCore neomega.UnStartedReactCore,
 	microUQHolder neomega.MicroUQHolder,
 	cmdSender neomega.CmdSender,
-	node nodes.Node,
+	node defines.Node,
 	isAccessPoint bool,
 ) neomega.UnReadyMicroOmega {
 	infoSender := info_sender.NewInfoSender(interactCore, cmdSender, microUQHolder.GetBotBasicInfo())

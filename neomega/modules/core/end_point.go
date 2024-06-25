@@ -6,22 +6,22 @@ import (
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/nodes"
-	"sync"
+	"neo-omega-kernel/nodes/defines"
 	"time"
 )
 
 type EndPointInteractCore struct {
-	nodes.APINode
-	shieldID             int32
-	sendMu               sync.Mutex
-	queuedSendingPackets [][]byte
+	defines.APINode
+	shieldID int32
+	// sendMu               sync.Mutex
+	// queuedSendingPackets [][]byte
 }
 
 func (i *EndPointInteractCore) SendPacketBytes(packet []byte) {
-	i.sendMu.Lock()
-	defer i.sendMu.Unlock()
-	i.queuedSendingPackets = append(i.queuedSendingPackets, packet)
+	// i.sendMu.Lock()
+	// defer i.sendMu.Unlock()
+	// i.queuedSendingPackets = append(i.queuedSendingPackets, packet)
+	i.CallOmitResponse("send-packet-bytes", defines.Empty.ExtendFrags(packet))
 }
 
 func (i *EndPointInteractCore) SendPacket(pk packet.Packet) {
@@ -31,17 +31,18 @@ func (i *EndPointInteractCore) SendPacket(pk packet.Packet) {
 	hdr.Write(writer)
 	w := protocol.NewWriter(writer, i.shieldID)
 	pk.Marshal(w)
-	i.sendMu.Lock()
-	defer i.sendMu.Unlock()
-	i.queuedSendingPackets = append(i.queuedSendingPackets, writer.Bytes())
+	i.SendPacketBytes(writer.Bytes())
+	// i.sendMu.Lock()
+	// defer i.sendMu.Unlock()
+	// i.queuedSendingPackets = append(i.queuedSendingPackets, writer.Bytes())
 }
 
 type canNotifyShieldIDChange interface {
 	ListenShieldIDUpdate(func(int32))
 }
 
-func NewEndPointInteractCore(node nodes.Node, shieldIDProvider canNotifyShieldIDChange) (neomega.InteractCore, error) {
-	result, err := node.CallWithResponse("get-shield-id", nodes.Empty).SetTimeout(time.Second * 3).BlockGetResponse()
+func NewEndPointInteractCore(node defines.Node, shieldIDProvider canNotifyShieldIDChange) (neomega.InteractCore, error) {
+	result, err := node.CallWithResponse("get-shield-id", defines.Empty).SetTimeout(time.Second * 3).BlockGetResponse()
 	if err != nil {
 		return nil, err
 	}
@@ -49,26 +50,26 @@ func NewEndPointInteractCore(node nodes.Node, shieldIDProvider canNotifyShieldID
 	if err != nil {
 		return nil, err
 	}
-	core := &EndPointInteractCore{node, currentShieldID, sync.Mutex{}, [][]byte{}}
-	go func() {
-		ticker := time.NewTicker(time.Second / 20)
-		for {
-			select {
-			case <-ticker.C:
-				if len(core.queuedSendingPackets) > 0 {
-					var catBytes []byte
-					core.sendMu.Lock()
-					catBytes = byteSlicesToBytes(core.queuedSendingPackets)
-					core.queuedSendingPackets = [][]byte{}
-					core.sendMu.Unlock()
-					node.CallOmitResponse("send-packet-bytes", nodes.Empty.ExtendFrags(catBytes))
-				}
-			case <-node.Dead():
-				return
-			}
+	core := &EndPointInteractCore{node, currentShieldID}
+	// go func() {
+	// 	ticker := time.NewTicker(time.Second / 20)
+	// 	for {
+	// 		select {
+	// 		case <-ticker.C:
+	// 			if len(core.queuedSendingPackets) > 0 {
+	// 				var catBytes []byte
+	// 				core.sendMu.Lock()
+	// 				catBytes = byteSlicesToBytes(core.queuedSendingPackets)
+	// 				core.queuedSendingPackets = [][]byte{}
+	// 				core.sendMu.Unlock()
+	// 				node.CallOmitResponse("send-packet-bytes", defines.Empty.ExtendFrags(catBytes))
+	// 			}
+	// 		case <-node.WaitClosed():
+	// 			return
+	// 		}
 
-		}
-	}()
+	// 	}
+	// }()
 	shieldIDProvider.ListenShieldIDUpdate(func(newShieldID int32) {
 		core.shieldID = newShieldID
 	})
@@ -111,13 +112,13 @@ func safeDecode(pkt packet.Packet, r *protocol.Reader) (p packet.Packet, err err
 	return pkt, nil
 }
 
-func NewEndPointReactCore(node nodes.Node) interface {
+func NewEndPointReactCore(node defines.Node) interface {
 	neomega.UnStartedReactCore
 	canNotifyShieldIDChange
 } {
 	core := NewReactCore()
 	go func() {
-		nodeDead := <-node.Dead()
+		nodeDead := <-node.WaitClosed()
 		err := fmt.Errorf("node dead: %v", nodeDead)
 		core.DeadReason <- err
 	}()
@@ -127,7 +128,7 @@ func NewEndPointReactCore(node nodes.Node) interface {
 		listeners:       make([]func(int32), 0, 1),
 	}
 	// prob := block_prob.NewBlockProb("End Point MC Packet Handle Block Prob", time.Second/10)
-	node.ListenMessage("packets", func(msg nodes.Values) {
+	node.ListenMessage("packets", func(msg defines.Values) {
 		shieldID, err := msg.ToInt32()
 		if err != nil {
 			err := fmt.Errorf("end point get shield id dead: %v", err)
@@ -136,39 +137,39 @@ func NewEndPointReactCore(node nodes.Node) interface {
 		}
 		shieldIDUpdateNotifier.updateShieldID(shieldID)
 		msg = msg.ConsumeHead()
-		catBytes, err := msg.ToBytes()
+		packetData, err := msg.ToBytes()
 		if err != nil {
 			err := fmt.Errorf("end point get msg dead: %v", err)
 			core.DeadReason <- err
 			return
 		}
-		batchedBytes := bytesToBytesSlices(catBytes)
+		// batchedBytes := bytesToBytesSlices(catBytes)
 		{
-			for _, packetData := range batchedBytes {
-				reader := bytes.NewBuffer(packetData)
-				header := &packet.Header{}
-				if err := header.Read(reader); err != nil {
-					core.DeadReason <- fmt.Errorf("end point error reading packet header: %v", err)
-					return
-				}
-				r := protocol.NewReader(reader, shieldID, false)
-				if pktMake, found := pool[header.PacketID]; found {
-					pk := pktMake()
-					pk, err = safeDecode(pk, r)
-					if err != nil {
-						// fmt.Println(err)
-					} else {
-						// mark := prob.MarkEventStartByTimeout(func() string {
-						// 	bs, _ := json.Marshal(pk)
-						// 	return fmt.Sprint(pk.ID()) + string(bs)
-						// }, time.Second/5)
-						core.handlePacket(pk)
-						// prob.MarkEventFinished(mark)
-					}
-				} else {
-					// fmt.Printf("pktID %v not found\n", header.PacketID)
-				}
+			// for _, packetData := range batchedBytes {
+			reader := bytes.NewBuffer(packetData)
+			header := &packet.Header{}
+			if err := header.Read(reader); err != nil {
+				core.DeadReason <- fmt.Errorf("end point error reading packet header: %v", err)
+				return
 			}
+			r := protocol.NewReader(reader, shieldID, false)
+			if pktMake, found := pool[header.PacketID]; found {
+				pk := pktMake()
+				pk, err = safeDecode(pk, r)
+				if err != nil {
+					// fmt.Println(err)
+				} else {
+					// mark := prob.MarkEventStartByTimeout(func() string {
+					// 	bs, _ := json.Marshal(pk)
+					// 	return fmt.Sprint(pk.ID()) + string(bs)
+					// }, time.Second/5)
+					core.handlePacket(pk)
+					// prob.MarkEventFinished(mark)
+				}
+			} else {
+				// fmt.Printf("pktID %v not found\n", header.PacketID)
+			}
+			// }
 		}
 	}, false)
 	return struct {

@@ -9,7 +9,7 @@ import (
 	"neo-omega-kernel/neomega/encoding/binary_read_write"
 	"neo-omega-kernel/neomega/encoding/little_endian"
 	"neo-omega-kernel/neomega/minecraft_conn"
-	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
 	"sync"
 	"time"
 )
@@ -31,23 +31,23 @@ type MicroUQHolder struct {
 	mu sync.Mutex
 }
 
-func NewAccessPointMicroUQHolder(node nodes.APINode, conn minecraft_conn.Conn, reactCore neomega.ReactCore) *MicroUQHolder {
+func NewAccessPointMicroUQHolder(node defines.APINode, conn minecraft_conn.Conn, reactCore neomega.ReactCore) *MicroUQHolder {
 	uq := &MicroUQHolder{
 		NewBotInfoHolder(conn),
 		NewPlayers(),
 		NewExtendInfoHolder(conn),
 		sync.Mutex{},
 	}
-	node.ExposeAPI("get-uqholder", func(args nodes.Values) (result nodes.Values, err error) {
+	node.ExposeAPI("get-uqholder", func(args defines.Values) (result defines.Values, err error) {
 		data, err := uq.Marshal()
-		return nodes.FromFrags(data), err
+		return defines.FromFrags(data), err
 	}, false)
 	reactCore.SetAnyPacketCallBack(uq.UpdateFromPacket, false)
 	return uq
 }
 
-func NewEndPointMicroUQHolder(node nodes.APINode, reactCore neomega.ReactCore) (uq *MicroUQHolder, err error) {
-	rets, err := node.CallWithResponse("get-uqholder", nodes.Empty).SetTimeout(time.Second * 3).BlockGetResponse()
+func NewEndPointMicroUQHolder(node defines.APINode, reactCore neomega.ReactCore) (uq *MicroUQHolder, err error) {
+	rets, err := node.CallWithResponse("get-uqholder", defines.Empty).SetTimeout(time.Second * 3).BlockGetResponse()
 	if err != nil {
 		return nil, err
 	}

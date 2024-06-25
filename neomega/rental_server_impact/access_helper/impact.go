@@ -7,7 +7,7 @@ import (
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/bundle"
 	"neo-omega-kernel/neomega/rental_server_impact/challenges"
-	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
 	"time"
 )
 
@@ -16,7 +16,7 @@ type AuthenticatorWithToken interface {
 	GetToken() string
 }
 
-func ImpactServer(ctx context.Context, node nodes.Node, options *Options) (omegaCore neomega.MicroOmega, err error) {
+func ImpactServer(ctx context.Context, node defines.Node, options *Options) (omegaCore neomega.MicroOmega, err error) {
 	defer func() {
 		if err != nil {
 			err = i18n.FuzzyTransErr(err)

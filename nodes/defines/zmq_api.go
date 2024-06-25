@@ -1,11 +1,12 @@
-package nodes
+package defines
 
 import (
 	"context"
+	"neo-omega-kernel/minecraft_neo/can_close"
 	"time"
 )
 
-type ZMQCaller []byte
+type ZMQCaller string
 
 type ZMQClientAPI func(args Values) Values
 type ZMQServerAPI func(caller ZMQCaller, args Values) Values
@@ -21,7 +22,7 @@ type ZMQAPIClient interface {
 	CallOmitResponse(api string, args Values)
 	CallWithResponse(api string, args Values) ZMQResultHandler
 	ExposeAPI(apiName string, api ZMQClientAPI, newGoroutine bool)
-	Run() error
+	can_close.CanClose
 }
 
 type ZMQAPIServer interface {
@@ -29,5 +30,5 @@ type ZMQAPIServer interface {
 	ConcealAPI(apiName string)
 	CallOmitResponse(callee ZMQCaller, api string, args Values)
 	CallWithResponse(callee ZMQCaller, api string, args Values) ZMQResultHandler
-	Serve() error
+	can_close.CanClose
 }

@@ -9,7 +9,7 @@ import (
 	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/chunks"
 	"neo-omega-kernel/neomega/chunks/define"
-	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
 	"strings"
 	"time"
 
@@ -25,13 +25,13 @@ type BotActionHighLevel struct {
 	microAction        neomega.BotAction
 	pickedItemChan     chan protocol.InventoryAction
 	muChan             chan struct{}
-	node               nodes.Node
+	node               defines.Node
 	// asyncNBTBlockPlacer neomega.AsyncNBTBlockPlacer
 }
 
 func NewBotActionHighLevel(
 	uq neomega.MicroUQHolder, ctrl neomega.InteractCore, react neomega.ReactCore, cmdSender neomega.CmdSender, cmdHelper neomega.CommandHelper, structureRequester neomega.StructureRequester, microAction neomega.BotAction,
-	node nodes.Node,
+	node defines.Node,
 ) neomega.BotActionHighLevel {
 	muChan := make(chan struct{}, 1)
 	muChan <- struct{}{}

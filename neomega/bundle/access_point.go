@@ -6,10 +6,10 @@ import (
 	"neo-omega-kernel/neomega/modules/cmd_sender"
 	"neo-omega-kernel/neomega/modules/core"
 	"neo-omega-kernel/neomega/uqholder"
-	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
 )
 
-func NewAccessPointMicroOmega(node nodes.Node, conn minecraft_conn.Conn) neomega.UnReadyMicroOmega {
+func NewAccessPointMicroOmega(node defines.Node, conn minecraft_conn.Conn) neomega.UnReadyMicroOmega {
 	interactCore := core.NewAccessPointInteractCore(node, conn)
 	reactCore := core.NewAccessPointReactCore(node, conn)
 	microUQHolder := uqholder.NewAccessPointMicroUQHolder(node, conn, reactCore)

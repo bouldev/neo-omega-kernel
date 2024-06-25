@@ -6,7 +6,7 @@ import (
 	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/minecraft_conn"
-	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
 	"time"
 )
 
@@ -22,30 +22,27 @@ func (i *AccessPointInteractCore) SendPacketBytes(packet []byte) {
 	i.WriteBytePacket(packet)
 }
 
-func NewAccessPointInteractCore(node nodes.APINode, conn minecraft_conn.Conn) neomega.InteractCore {
+func NewAccessPointInteractCore(node defines.APINode, conn minecraft_conn.Conn) neomega.InteractCore {
 	core := &AccessPointInteractCore{Conn: conn}
-	node.ExposeAPI("send-packet-bytes", func(args nodes.Values) (result nodes.Values, err error) {
-		packetDataBytes, err := args.ToBytes()
+	node.ExposeAPI("send-packet-bytes", func(args defines.Values) (result defines.Values, err error) {
+		packetBytes, err := args.ToBytes()
 		if err != nil {
-			return nodes.Empty, err
+			return defines.Empty, err
 		}
-		pks := bytesToBytesSlices(packetDataBytes)
-		for _, pk := range pks {
-			conn.WriteBytePacket(pk)
-		}
-		return nodes.Empty, nil
+		conn.WriteBytePacket(packetBytes)
+		return defines.Empty, nil
 	}, false)
-	node.ExposeAPI("get-shield-id", func(args nodes.Values) (result nodes.Values, err error) {
+	node.ExposeAPI("get-shield-id", func(args defines.Values) (result defines.Values, err error) {
 		shieldID := conn.GetShieldID()
-		return nodes.FromInt32(shieldID), nil
+		return defines.FromInt32(shieldID), nil
 	}, false)
 	return core
 }
 
-func NewAccessPointReactCore(node nodes.Node, conn minecraft_conn.Conn) neomega.UnStartedReactCore {
+func NewAccessPointReactCore(node defines.Node, conn minecraft_conn.Conn) neomega.UnStartedReactCore {
 	core := NewReactCore()
 	go func() {
-		nodeDead := <-node.Dead()
+		nodeDead := <-node.WaitClosed()
 		err := fmt.Errorf("node dead: %v", nodeDead)
 		core.DeadReason <- err
 	}()
@@ -64,8 +61,6 @@ func NewAccessPointReactCore(node nodes.Node, conn minecraft_conn.Conn) neomega.
 			core.handlePacket(pkt)
 		}
 		// prob := block_prob.NewBlockProb("Access Point MC Packet Handle Block Prob", time.Second/10)
-		ticker := time.NewTicker(time.Second / 20)
-		batchedBytes := [][]byte{}
 		for {
 			pkt, packetData = conn.ReadPacketAndBytes()
 			if err != nil {
@@ -105,14 +100,7 @@ func NewAccessPointReactCore(node nodes.Node, conn minecraft_conn.Conn) neomega.
 					continue
 				}
 			}
-			batchedBytes = append(batchedBytes, packetData)
-			select {
-			case <-ticker.C:
-				catBytes := byteSlicesToBytes(batchedBytes)
-				batchedBytes = [][]byte{}
-				node.PublishMessage("packets", nodes.FromInt32(conn.GetShieldID()).ExtendFrags(catBytes))
-			default:
-			}
+			node.PublishMessage("packets", defines.FromInt32(conn.GetShieldID()).ExtendFrags(packetData))
 			// node.PublishMessage("packet", nodes.FromInt32(conn.GetShieldID()).ExtendFrags(packetData))
 			// prob.MarkEventFinished(mark)
 		}

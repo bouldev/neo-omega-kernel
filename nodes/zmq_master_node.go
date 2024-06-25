@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"neo-omega-kernel/minecraft_neo/can_close"
+	"neo-omega-kernel/nodes/defines"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"time"
 )
@@ -11,7 +13,7 @@ import (
 type SlaveNodeInfo struct {
 	Ctx              context.Context
 	cancelFn         func()
-	MsgToPub         chan Values
+	MsgToPub         chan defines.Values
 	SubScribedTopics *sync_wrapper.SyncKVMap[string, struct{}]
 	ExposedApis      *sync_wrapper.SyncKVMap[string, struct{}]
 	AcquiredLocks    *sync_wrapper.SyncKVMap[string, struct{}]
@@ -20,27 +22,21 @@ type SlaveNodeInfo struct {
 
 var ErrNotReg = errors.New("need reg node first")
 
-type AsyncAPI func(args Values, setResult func(rets Values, err error))
-
 type ZMQMasterNode struct {
-	server ZMQAPIServer
+	server defines.ZMQAPIServer
 	*LocalAPINode
 	*LocalLock
 	*LocalTags
 	*LocalTopicNet
 	slaves                *sync_wrapper.SyncKVMap[string, *SlaveNodeInfo]
-	slaveSubscribedTopics *sync_wrapper.SyncKVMap[string, *sync_wrapper.SyncKVMap[string, chan Values]]
+	slaveSubscribedTopics *sync_wrapper.SyncKVMap[string, *sync_wrapper.SyncKVMap[string, chan defines.Values]]
 	ApiProvider           *sync_wrapper.SyncKVMap[string, string]
-	values                *sync_wrapper.SyncKVMap[string, Values]
-	runErr                chan error
+	values                *sync_wrapper.SyncKVMap[string, defines.Values]
+	can_close.CanCloseWithError
 }
 
 func (n *ZMQMasterNode) IsMaster() bool {
 	return true
-}
-
-func (n *ZMQMasterNode) Dead() chan error {
-	return n.runErr
 }
 
 func (n *ZMQMasterNode) onNewNode(id string) *SlaveNodeInfo {
@@ -49,7 +45,7 @@ func (n *ZMQMasterNode) onNewNode(id string) *SlaveNodeInfo {
 	nodeInfo := &SlaveNodeInfo{
 		Ctx:              ctx,
 		cancelFn:         cancelFn,
-		MsgToPub:         make(chan Values, 1024),
+		MsgToPub:         make(chan defines.Values, 1024),
 		SubScribedTopics: sync_wrapper.NewSyncKVMap[string, struct{}](),
 		ExposedApis:      sync_wrapper.NewSyncKVMap[string, struct{}](),
 		AcquiredLocks:    sync_wrapper.NewSyncKVMap[string, struct{}](),
@@ -84,11 +80,11 @@ func (n *ZMQMasterNode) onNodeOffline(id string, info *SlaveNodeInfo) {
 	// fmt.Printf("node %v offline\n", string(id))
 }
 
-func (n *ZMQMasterNode) publishMessage(source string, topic string, msg Values) {
+func (n *ZMQMasterNode) publishMessage(source string, topic string, msg defines.Values) {
 	msgWithTopic := n.LocalTopicNet.publishMessage(topic, msg)
 	subScribers, ok := n.slaveSubscribedTopics.Get(topic)
 	if ok {
-		subScribers.Iter(func(receiver string, msgC chan Values) (continueInter bool) {
+		subScribers.Iter(func(receiver string, msgC chan defines.Values) (continueInter bool) {
 			if receiver == source {
 				return true
 			}
@@ -105,27 +101,27 @@ func (n *ZMQMasterNode) publishMessage(source string, topic string, msg Values) 
 	}
 }
 
-func (n *ZMQMasterNode) PublishMessage(topic string, msg Values) {
+func (n *ZMQMasterNode) PublishMessage(topic string, msg defines.Values) {
 	n.publishMessage("", topic, msg)
 }
 
-func (n *ZMQMasterNode) ExposeAPI(apiName string, api API, newGoroutine bool) error {
+func (n *ZMQMasterNode) ExposeAPI(apiName string, api defines.API, newGoroutine bool) error {
 	// master to master call
 	n.LocalAPINode.ExposeAPI(apiName, api, newGoroutine)
 	// slave to master call
-	n.server.ExposeAPI(apiName, func(caller ZMQCaller, args Values) Values {
+	n.server.ExposeAPI(apiName, func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		result, err := api(args)
-		return wrapOutput(result, err)
+		return defines.WrapOutput(result, err)
 	}, newGoroutine)
 	return nil
 }
 
-func (c *ZMQMasterNode) GetValue(key string) (val Values, found bool) {
+func (c *ZMQMasterNode) GetValue(key string) (val defines.Values, found bool) {
 	v, ok := c.values.Get(key)
 	return v, ok
 }
 
-func (c *ZMQMasterNode) SetValue(key string, val Values) {
+func (c *ZMQMasterNode) SetValue(key string, val defines.Values) {
 	c.values.Set(key, val)
 }
 
@@ -169,7 +165,7 @@ func (c *ZMQMasterNode) unlock(name string, owner string) {
 	}
 }
 
-func NewZMQMasterNode(server ZMQAPIServer) Node {
+func NewZMQMasterNode(server defines.ZMQAPIServer) defines.Node {
 	master := &ZMQMasterNode{
 		server:                server,
 		LocalAPINode:          NewLocalAPINode(),
@@ -177,22 +173,22 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 		LocalTags:             NewLocalTags(),
 		LocalTopicNet:         NewLocalTopicNet(),
 		slaves:                sync_wrapper.NewSyncKVMap[string, *SlaveNodeInfo](),
-		slaveSubscribedTopics: sync_wrapper.NewSyncKVMap[string, *sync_wrapper.SyncKVMap[string, chan Values]](),
-		runErr:                make(chan error, 2),
+		slaveSubscribedTopics: sync_wrapper.NewSyncKVMap[string, *sync_wrapper.SyncKVMap[string, chan defines.Values]](),
 		ApiProvider:           sync_wrapper.NewSyncKVMap[string, string](),
-		values:                sync_wrapper.NewSyncKVMap[string, Values](),
+		values:                sync_wrapper.NewSyncKVMap[string, defines.Values](),
+		CanCloseWithError:     can_close.NewClose(server.Close),
 	}
 	go func() {
-		master.runErr <- master.server.Serve()
+		master.CloseWithError(<-server.WaitClosed())
 	}()
-	server.ExposeAPI("/ping", func(caller ZMQCaller, args Values) Values {
-		return Values{[]byte("pong")}
+	server.ExposeAPI("/ping", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
+		return defines.Values{[]byte("pong")}
 	}, false)
-	server.ExposeAPI("/new_client", func(caller ZMQCaller, args Values) Values {
+	server.ExposeAPI("/new_client", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		nodeInfo := master.onNewNode(string(caller))
 		go func() {
 			for {
-				if !server.CallWithResponse(caller, "/ping", Empty).
+				if !server.CallWithResponse(caller, "/ping", defines.Empty).
 					SetTimeout(time.Second).
 					BlockGetResponse().
 					EqualString("pong") {
@@ -212,142 +208,142 @@ func NewZMQMasterNode(server ZMQAPIServer) Node {
 				}
 			}
 		}()
-		return FromString("ok")
+		return defines.FromString("ok")
 	}, false)
-	server.ExposeAPI("/subscribe", func(caller ZMQCaller, args Values) Values {
+	server.ExposeAPI("/subscribe", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		slaveInfo, ok := master.slaves.Get(string(caller))
 		if !ok {
-			return Empty
+			return defines.Empty
 		}
 		topic, err := args.ToString()
 		if err != nil {
-			return Empty
+			return defines.Empty
 		}
 		slaveInfo.SubScribedTopics.Set(topic, struct{}{})
-		master.slaveSubscribedTopics.UnsafeGetAndUpdate(topic, func(val *sync_wrapper.SyncKVMap[string, chan Values]) *sync_wrapper.SyncKVMap[string, chan Values] {
+		master.slaveSubscribedTopics.UnsafeGetAndUpdate(topic, func(val *sync_wrapper.SyncKVMap[string, chan defines.Values]) *sync_wrapper.SyncKVMap[string, chan defines.Values] {
 			if val == nil {
-				val = sync_wrapper.NewSyncKVMap[string, chan Values]()
+				val = sync_wrapper.NewSyncKVMap[string, chan defines.Values]()
 			}
 			val.Set(string(caller), slaveInfo.MsgToPub)
 			return val
 		})
-		return Empty
+		return defines.Empty
 	}, false)
-	server.ExposeAPI("/publish", func(caller ZMQCaller, args Values) Values {
+	server.ExposeAPI("/publish", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		topic, err := args.ToString()
 		if err != nil {
-			return Empty
+			return defines.Empty
 		}
 		msg := args.ConsumeHead()
 		master.publishMessage(string(caller), topic, msg)
-		return Empty
+		return defines.Empty
 	}, false)
-	server.ExposeAPI("/reg_api", func(provider ZMQCaller, args Values) Values {
+	server.ExposeAPI("/reg_api", func(provider defines.ZMQCaller, args defines.Values) defines.Values {
 		apiName, err := args.ToString()
 		if err != nil {
-			return Empty
+			return defines.Empty
 		}
 		slaveInfo, ok := master.slaves.Get(string(provider))
 		if !ok {
-			return FromString(ErrNotReg.Error())
+			return defines.FromString(ErrNotReg.Error())
 		}
 		// reject if api exist
 		if master.LocalAPINode.HasAPI(apiName) {
-			return FromString(ErrAPIExist.Error())
+			return defines.FromString(ErrAPIExist.Error())
 		}
 		slaveInfo.ExposedApis.Set(apiName, struct{}{})
 		master.ApiProvider.Set(apiName, string(provider))
 		// master to slave call
-		master.LocalAPINode.ExposeAPI(apiName, func(args Values) (result Values, err error) {
+		master.LocalAPINode.ExposeAPI(apiName, func(args defines.Values) (result defines.Values, err error) {
 			callerInfo, ok := master.slaves.Get(string(provider))
 			if !ok {
-				return Empty, fmt.Errorf("not found")
+				return defines.Empty, fmt.Errorf("not found")
 			} else {
-				return unwrapOutput(server.CallWithResponse(provider, apiName, args).SetContext(callerInfo.Ctx).BlockGetResponse())
+				return defines.UnwrapOutput(server.CallWithResponse(provider, apiName, args).SetContext(callerInfo.Ctx).BlockGetResponse())
 			}
 		}, false)
 		// slave to salve call
-		server.ExposeAPI(apiName, func(caller ZMQCaller, args Values) Values {
+		server.ExposeAPI(apiName, func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 			callerInfo, ok := master.slaves.Get(string(provider))
 			if !ok {
-				return Empty
+				return defines.Empty
 			}
 			return server.CallWithResponse(provider, apiName, args).SetContext(callerInfo.Ctx).BlockGetResponse()
 		}, false)
-		return FromString("ok")
+		return defines.FromString("ok")
 	}, false)
-	master.ExposeAPI("/set-value", func(args Values) (result Values, err error) {
+	master.ExposeAPI("/set-value", func(args defines.Values) (result defines.Values, err error) {
 		key, err := args.ToString()
 		if err != nil {
-			return Empty, err
+			return defines.Empty, err
 		}
 		master.values.Set(key, args.ConsumeHead())
-		return Empty, nil
+		return defines.Empty, nil
 	}, false)
-	master.ExposeAPI("/get-value", func(args Values) (result Values, err error) {
+	master.ExposeAPI("/get-value", func(args defines.Values) (result defines.Values, err error) {
 		key, err := args.ToString()
 		if err != nil {
-			return Empty, err
+			return defines.Empty, err
 		}
 		head, ok := master.values.Get(key)
 		if ok {
 			return head, nil
 		} else {
-			return Empty, nil
+			return defines.Empty, nil
 		}
 	}, false)
-	server.ExposeAPI("/set-tags", func(caller ZMQCaller, args Values) Values {
+	server.ExposeAPI("/set-tags", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		tags := args.ToStrings()
 		slaveInfo, ok := master.slaves.Get(string(caller))
 		if !ok {
-			return FromString("need reg first")
+			return defines.FromString("need reg first")
 		}
 		for _, tag := range tags {
 			slaveInfo.Tags.Set(tag, struct{}{})
 		}
-		return Empty
+		return defines.Empty
 	}, false)
-	server.ExposeAPI("/check-tag", func(caller ZMQCaller, args Values) Values {
+	server.ExposeAPI("/check-tag", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		tag, err := args.ToString()
 		if err != nil {
-			return wrapOutput(Empty, err)
+			return defines.WrapOutput(defines.Empty, err)
 		}
 		has := master.CheckNetTag(tag)
-		return wrapOutput(FromBool(has), nil)
+		return defines.WrapOutput(defines.FromBool(has), nil)
 	}, false)
-	server.ExposeAPI("/try-lock", func(caller ZMQCaller, args Values) Values {
+	server.ExposeAPI("/try-lock", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		lockName, err := args.ToString()
 		if err != nil {
-			return wrapOutput(Empty, err)
+			return defines.WrapOutput(defines.Empty, err)
 		}
 		ms, err := args.ConsumeHead().ToInt64()
 		if err != nil {
-			return wrapOutput(Empty, err)
+			return defines.WrapOutput(defines.Empty, err)
 		}
 		lockTime := time.Duration(ms * int64(time.Millisecond))
 		has := master.tryLock(lockName, lockTime, string(caller))
-		return wrapOutput(FromBool(has), nil)
+		return defines.WrapOutput(defines.FromBool(has), nil)
 	}, false)
-	server.ExposeAPI("/reset-lock-time", func(caller ZMQCaller, args Values) Values {
+	server.ExposeAPI("/reset-lock-time", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		lockName, err := args.ToString()
 		if err != nil {
-			return wrapOutput(Empty, err)
+			return defines.WrapOutput(defines.Empty, err)
 		}
 		ms, err := args.ConsumeHead().ToInt64()
 		if err != nil {
-			return wrapOutput(Empty, err)
+			return defines.WrapOutput(defines.Empty, err)
 		}
 		lockTime := time.Duration(ms * int64(time.Millisecond))
 		has := master.resetLockTime(lockName, lockTime, string(caller))
-		return wrapOutput(FromBool(has), nil)
+		return defines.WrapOutput(defines.FromBool(has), nil)
 	}, false)
-	server.ExposeAPI("/unlock", func(caller ZMQCaller, args Values) Values {
+	server.ExposeAPI("/unlock", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		lockName, err := args.ToString()
 		if err != nil {
-			return wrapOutput(Empty, err)
+			return defines.WrapOutput(defines.Empty, err)
 		}
 		master.unlock(lockName, string(caller))
-		return Empty
+		return defines.Empty
 	}, false)
 	return master
 }

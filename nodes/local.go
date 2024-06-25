@@ -4,40 +4,42 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"neo-omega-kernel/minecraft_neo/can_close"
+	"neo-omega-kernel/nodes/defines"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"time"
 )
 
 type alwaysErrorResultHandler struct{ error }
 
-func (h *alwaysErrorResultHandler) SetContext(ctx context.Context) RemoteResultHandler {
+func (h *alwaysErrorResultHandler) SetContext(ctx context.Context) defines.RemoteResultHandler {
 	return h
 }
 
-func (h *alwaysErrorResultHandler) SetTimeout(timeout time.Duration) RemoteResultHandler {
+func (h *alwaysErrorResultHandler) SetTimeout(timeout time.Duration) defines.RemoteResultHandler {
 	return h
 }
 
-func (h *alwaysErrorResultHandler) BlockGetResponse() (Values, error) {
-	return Empty, h
+func (h *alwaysErrorResultHandler) BlockGetResponse() (defines.Values, error) {
+	return defines.Empty, h
 }
 
-func (h *alwaysErrorResultHandler) AsyncGetResponse(callback func(Values, error)) {
-	go func() { callback(Empty, h) }()
+func (h *alwaysErrorResultHandler) AsyncGetResponse(callback func(defines.Values, error)) {
+	go func() { callback(defines.Empty, h) }()
 }
 
 type LocalAPINode struct {
-	RegedApi *sync_wrapper.SyncKVMap[string, AsyncAPI]
+	RegedApi *sync_wrapper.SyncKVMap[string, defines.AsyncAPI]
 }
 
-var ErrAPIExist = errors.New("API already exposed")
-var ErrAPINotExist = errors.New("API not exist")
+var ErrAPIExist = errors.New("defines.API already exposed")
+var ErrAPINotExist = errors.New("defines.API not exist")
 
-func (n *LocalAPINode) ExposeAPI(apiName string, api API, newGoroutine bool) error {
+func (n *LocalAPINode) ExposeAPI(apiName string, api defines.API, newGoroutine bool) error {
 	if n.HasAPI(apiName) {
 		return ErrAPIExist
 	}
-	n.RegedApi.Set(apiName, func(args Values, setResult func(Values, error)) {
+	n.RegedApi.Set(apiName, func(args defines.Values, setResult func(defines.Values, error)) {
 		if newGoroutine {
 			go func() {
 				rets, err := api(args)
@@ -61,29 +63,29 @@ func (n *LocalAPINode) HasAPI(apiName string) bool {
 }
 
 type remoteRespHandler struct {
-	asyncAPI AsyncAPI
-	args     Values
+	asyncAPI defines.AsyncAPI
+	args     defines.Values
 	ctx      context.Context
 }
 
-func (h *remoteRespHandler) SetContext(ctx context.Context) RemoteResultHandler {
+func (h *remoteRespHandler) SetContext(ctx context.Context) defines.RemoteResultHandler {
 	h.ctx = ctx
 	return h
 }
 
-func (h *remoteRespHandler) SetTimeout(timeout time.Duration) RemoteResultHandler {
+func (h *remoteRespHandler) SetTimeout(timeout time.Duration) defines.RemoteResultHandler {
 	h.ctx, _ = context.WithTimeout(h.ctx, timeout)
 	return h
 }
 
-func (h *remoteRespHandler) BlockGetResponse() (Values, error) {
+func (h *remoteRespHandler) BlockGetResponse() (defines.Values, error) {
 	w := make(chan struct {
-		Values
+		defines.Values
 		error
 	})
-	h.AsyncGetResponse(func(ret Values, err error) {
+	h.AsyncGetResponse(func(ret defines.Values, err error) {
 		w <- struct {
-			Values
+			defines.Values
 			error
 		}{
 			ret, err,
@@ -93,14 +95,14 @@ func (h *remoteRespHandler) BlockGetResponse() (Values, error) {
 	return r.Values, r.error
 }
 
-func (h *remoteRespHandler) AsyncGetResponse(callback func(Values, error)) {
+func (h *remoteRespHandler) AsyncGetResponse(callback func(defines.Values, error)) {
 	resolver := make(chan struct {
-		Values
+		defines.Values
 		error
 	}, 1)
-	h.asyncAPI(h.args, func(ret Values, err error) {
+	h.asyncAPI(h.args, func(ret defines.Values, err error) {
 		resolver <- struct {
-			Values
+			defines.Values
 			error
 		}{
 			ret, err,
@@ -111,13 +113,13 @@ func (h *remoteRespHandler) AsyncGetResponse(callback func(Values, error)) {
 		case ret := <-resolver:
 			callback(ret.Values, ret.error)
 		case <-h.ctx.Done():
-			callback(Empty, fmt.Errorf("timeout"))
+			callback(defines.Empty, fmt.Errorf("timeout"))
 			return
 		}
 	}()
 }
 
-func (c *LocalAPINode) CallWithResponse(api string, args Values) RemoteResultHandler {
+func (c *LocalAPINode) CallWithResponse(api string, args defines.Values) defines.RemoteResultHandler {
 	if asyncAPI, ok := c.RegedApi.Get(api); ok {
 		return &remoteRespHandler{
 			asyncAPI, args, context.Background(),
@@ -127,15 +129,15 @@ func (c *LocalAPINode) CallWithResponse(api string, args Values) RemoteResultHan
 	}
 }
 
-func (c *LocalAPINode) CallOmitResponse(api string, args Values) {
+func (c *LocalAPINode) CallOmitResponse(api string, args defines.Values) {
 	if asyncAPI, ok := c.RegedApi.Get(api); ok {
-		asyncAPI(args, func(Values, error) {})
+		asyncAPI(args, func(defines.Values, error) {})
 	}
 }
 
 func NewLocalAPINode() *LocalAPINode {
 	return &LocalAPINode{
-		RegedApi: sync_wrapper.NewSyncKVMap[string, AsyncAPI](),
+		RegedApi: sync_wrapper.NewSyncKVMap[string, defines.AsyncAPI](),
 	}
 }
 
@@ -277,34 +279,34 @@ func NewLocalTags() *LocalTags {
 }
 
 type LocalTopicNet struct {
-	listenedTopics *sync_wrapper.SyncKVMap[string, []MsgListener]
+	listenedTopics *sync_wrapper.SyncKVMap[string, []defines.MsgListener]
 }
 
 func NewLocalTopicNet() *LocalTopicNet {
 	return &LocalTopicNet{
-		listenedTopics: sync_wrapper.NewSyncKVMap[string, []MsgListener](),
+		listenedTopics: sync_wrapper.NewSyncKVMap[string, []defines.MsgListener](),
 	}
 }
 
-func (n *LocalTopicNet) ListenMessage(topic string, listener MsgListener, newGoroutine bool) {
-	wrappedListener := func(msg Values) {
+func (n *LocalTopicNet) ListenMessage(topic string, listener defines.MsgListener, newGoroutine bool) {
+	wrappedListener := func(msg defines.Values) {
 		if newGoroutine {
 			go listener(msg)
 		} else {
 			listener(msg)
 		}
 	}
-	n.listenedTopics.UnsafeGetAndUpdate(topic, func(currentListeners []MsgListener) []MsgListener {
+	n.listenedTopics.UnsafeGetAndUpdate(topic, func(currentListeners []defines.MsgListener) []defines.MsgListener {
 		if currentListeners == nil {
-			return []MsgListener{wrappedListener}
+			return []defines.MsgListener{wrappedListener}
 		}
 		currentListeners = append(currentListeners, wrappedListener)
 		return currentListeners
 	})
 }
 
-func (n *LocalTopicNet) publishMessage(topic string, msg Values) Values {
-	msgWithTopic := FromString(topic).Extend(msg)
+func (n *LocalTopicNet) publishMessage(topic string, msg defines.Values) defines.Values {
+	msgWithTopic := defines.FromString(topic).Extend(msg)
 	listeners, _ := n.listenedTopics.Get(topic)
 	for _, listener := range listeners {
 		listener(msg)
@@ -312,7 +314,7 @@ func (n *LocalTopicNet) publishMessage(topic string, msg Values) Values {
 	return msgWithTopic
 }
 
-func (n *LocalTopicNet) PublishMessage(topic string, msg Values) {
+func (n *LocalTopicNet) PublishMessage(topic string, msg defines.Values) {
 	n.publishMessage(topic, msg)
 }
 
@@ -321,33 +323,31 @@ type LocalNode struct {
 	*LocalLock
 	*LocalTags
 	*LocalTopicNet
-	errChan chan error
-	values  *sync_wrapper.SyncKVMap[string, Values]
+	can_close.CanCloseWithError
+	values *sync_wrapper.SyncKVMap[string, defines.Values]
 }
 
-func (n *LocalNode) Dead() chan error {
-	return n.errChan
-}
-
-func (n *LocalNode) GetValue(key string) (val Values, found bool) {
+func (n *LocalNode) GetValue(key string) (val defines.Values, found bool) {
 	return n.values.Get(key)
 }
-func (n *LocalNode) SetValue(key string, val Values) {
+func (n *LocalNode) SetValue(key string, val defines.Values) {
 	n.values.Set(key, val)
 }
 
-func NewLocalNode(ctx context.Context) Node {
-	errChan := make(chan error)
+func NewLocalNode(ctx context.Context) defines.Node {
+	n := &LocalNode{
+		LocalAPINode:      NewLocalAPINode(),
+		LocalLock:         NewLocalLock(),
+		LocalTags:         NewLocalTags(),
+		LocalTopicNet:     NewLocalTopicNet(),
+		CanCloseWithError: can_close.NewClose(func() {}),
+		values:            sync_wrapper.NewSyncKVMap[string, defines.Values](),
+	}
+
 	go func() {
 		<-ctx.Done()
-		errChan <- ctx.Err()
+		n.CloseWithError(ctx.Err())
 	}()
-	return &LocalNode{
-		LocalAPINode:  NewLocalAPINode(),
-		LocalLock:     NewLocalLock(),
-		LocalTags:     NewLocalTags(),
-		LocalTopicNet: NewLocalTopicNet(),
-		errChan:       errChan,
-		values:        sync_wrapper.NewSyncKVMap[string, Values](),
-	}
+
+	return n
 }

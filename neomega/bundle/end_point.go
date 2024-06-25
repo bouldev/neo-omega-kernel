@@ -5,10 +5,10 @@ import (
 	"neo-omega-kernel/neomega/modules/cmd_sender"
 	"neo-omega-kernel/neomega/modules/core"
 	"neo-omega-kernel/neomega/uqholder"
-	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
 )
 
-func NewEndPointMicroOmega(node nodes.Node) (neomega.MicroOmega, error) {
+func NewEndPointMicroOmega(node defines.Node) (neomega.MicroOmega, error) {
 	reactCore := core.NewEndPointReactCore(node)
 	interactCore, err := core.NewEndPointInteractCore(node, reactCore)
 	if err != nil {

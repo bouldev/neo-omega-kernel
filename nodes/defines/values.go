@@ -1,4 +1,4 @@
-package nodes
+package defines
 
 import (
 	"errors"
@@ -167,7 +167,7 @@ func FromStrings(vals ...string) Values {
 
 var errorNoResult = errors.New("no result")
 
-func unwrapOutput(rets Values) (Values, error) {
+func UnwrapOutput(rets Values) (Values, error) {
 	if rets.IsEmpty() {
 		return Empty, errorNoResult
 	} else {
@@ -179,7 +179,7 @@ func unwrapOutput(rets Values) (Values, error) {
 	}
 }
 
-func wrapOutput(rets Values, err error) Values {
+func WrapOutput(rets Values, err error) Values {
 	if err != nil {
 		return FromStrings("err", err.Error())
 	} else {

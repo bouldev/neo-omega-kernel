@@ -1,4 +1,4 @@
-package core
+package underlay_conn
 
 import (
 	"neo-omega-kernel/minecraft/protocol/packet"
@@ -23,7 +23,6 @@ func (io *oneFrameIO) ReadPacket() ([]byte, error) {
 func byteSlicesToBytes(ss [][]byte) []byte {
 	io := &oneFrameIO{}
 	enc := packet.NewEncoder(io)
-	enc.EnableCompression(packet.SnappyCompression)
 	enc.Encode(ss)
 	return io.data
 }
@@ -31,7 +30,6 @@ func byteSlicesToBytes(ss [][]byte) []byte {
 func bytesToBytesSlices(ss []byte) [][]byte {
 	io := &oneFrameIO{data: ss}
 	enc := packet.NewDecoder(io)
-	enc.EnableCompression(packet.SnappyCompression)
 	pks, _ := enc.Decode()
 	return pks
 }

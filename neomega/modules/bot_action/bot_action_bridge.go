@@ -4,12 +4,13 @@ import (
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/nodes"
+	"neo-omega-kernel/nodes/defines"
 	"time"
 )
 
 type EndPointBotAction struct {
 	*BotActionSimple
-	node nodes.Node
+	node defines.Node
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeAPI() {
@@ -22,7 +23,7 @@ func (a *AccessPointBotActionWithPersistData) ExposeAPI() {
 	a.ExposeUseHotBarItem()
 }
 
-func NewEndPointBotAction(node nodes.Node, uq neomega.MicroUQHolder, ctrl neomega.InteractCore) neomega.BotAction {
+func NewEndPointBotAction(node defines.Node, uq neomega.MicroUQHolder, ctrl neomega.InteractCore) neomega.BotAction {
 	ba := &EndPointBotAction{
 		BotActionSimple: NewBotActionSimple(uq, ctrl),
 		node:            nodes.NewGroup("bot_action", node, false),
@@ -31,16 +32,16 @@ func NewEndPointBotAction(node nodes.Node, uq neomega.MicroUQHolder, ctrl neomeg
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeUseHotBarItemOnBlock() {
-	a.node.ExposeAPI("use_hot_bar_item_on_block", func(args nodes.Values) (result nodes.Values, err error) {
+	a.node.ExposeAPI("use_hot_bar_item_on_block", func(args defines.Values) (result defines.Values, err error) {
 		var blockPos define.CubePos
 		var blockNEMCRuntimeID uint32
 		var face int32
 		var slot uint8
 		if err = (&ArgsChain{resArgs: args}).TakePos(&blockPos).TakeUint32(&blockNEMCRuntimeID).TakeInt32(&face).TakeUint8(&slot).Error(); err != nil {
-			return nodes.Empty, err
+			return defines.Empty, err
 		}
 		err = a.UseHotBarItemOnBlock(blockPos, blockNEMCRuntimeID, face, slot)
-		return nodes.Empty, err
+		return defines.Empty, err
 	}, true)
 }
 
@@ -51,13 +52,13 @@ func (e *EndPointBotAction) UseHotBarItemOnBlock(blockPos define.CubePos, blockN
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeSelectHotBar() {
-	a.node.ExposeAPI("select_hot_bar", func(args nodes.Values) (result nodes.Values, err error) {
+	a.node.ExposeAPI("select_hot_bar", func(args defines.Values) (result defines.Values, err error) {
 		var slot uint8
 		if err = (&ArgsChain{resArgs: args}).TakeUint8(&slot).Error(); err != nil {
-			return nodes.Empty, err
+			return defines.Empty, err
 		}
 		err = a.selectHotBar(slot)
-		return nodes.Empty, err
+		return defines.Empty, err
 	}, true)
 }
 
@@ -68,25 +69,25 @@ func (e *EndPointBotAction) SelectHotBar(slotID uint8) error {
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeMoveItemFromInventoryToEmptyContainerSlots() {
-	a.node.ExposeAPI("move_item_from_inventory_slot_to_empty_container_slots", func(args nodes.Values) (result nodes.Values, err error) {
+	a.node.ExposeAPI("move_item_from_inventory_slot_to_empty_container_slots", func(args defines.Values) (result defines.Values, err error) {
 		var pos define.CubePos
 		var blockNEMCRuntimeID uint32
 		var blockName string
 		var counts uint8
 		chain := (&ArgsChain{resArgs: args})
 		if err = chain.TakePos(&pos).TakeUint32(&blockNEMCRuntimeID).TakeString(&blockName).TakeUint8(&counts).Error(); err != nil {
-			return nodes.Empty, err
+			return defines.Empty, err
 		}
 		switchOperations := map[uint8]uint8{}
 		for i := 0; i < int(counts); i++ {
 			var k, v uint8
 			if err = chain.TakeUint8(&k).TakeUint8(&v).Error(); err != nil {
-				return nodes.Empty, err
+				return defines.Empty, err
 			}
 			switchOperations[k] = v
 		}
 		err = a.MoveItemFromInventoryToEmptyContainerSlots(pos, blockNEMCRuntimeID, blockName, switchOperations)
-		return nodes.Empty, err
+		return defines.Empty, err
 	}, true)
 }
 
@@ -100,15 +101,15 @@ func (e *EndPointBotAction) MoveItemFromInventoryToEmptyContainerSlots(pos defin
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeUseAnvil() {
-	a.node.ExposeAPI("use_anvil", func(args nodes.Values) (result nodes.Values, err error) {
+	a.node.ExposeAPI("use_anvil", func(args defines.Values) (result defines.Values, err error) {
 		var pos define.CubePos
 		var slot uint8
 		var newName string
 		if err = (&ArgsChain{resArgs: args}).TakePos(&pos).TakeUint8(&slot).TakeString(&newName).Error(); err != nil {
-			return nodes.Empty, err
+			return defines.Empty, err
 		}
 		err = a.UseAnvil(pos, slot, newName)
-		return nodes.Empty, err
+		return defines.Empty, err
 	}, true)
 }
 
@@ -119,13 +120,13 @@ func (e *EndPointBotAction) UseAnvil(pos define.CubePos, slot uint8, newName str
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeDropItemFromHotBar() {
-	a.node.ExposeAPI("drop_item_from_hot_bar", func(args nodes.Values) (result nodes.Values, err error) {
+	a.node.ExposeAPI("drop_item_from_hot_bar", func(args defines.Values) (result defines.Values, err error) {
 		var slot uint8
 		if err = (&ArgsChain{resArgs: args}).TakeUint8(&slot).Error(); err != nil {
-			return nodes.Empty, err
+			return defines.Empty, err
 		}
 		err = a.DropItemFromHotBar(slot)
-		return nodes.Empty, err
+		return defines.Empty, err
 	}, true)
 }
 
@@ -136,13 +137,13 @@ func (e *EndPointBotAction) DropItemFromHotBar(slot uint8) error {
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeMoveItemInsideHotBarOrInventory() {
-	a.node.ExposeAPI("move_item_inside_hotbar_or_inventory", func(args nodes.Values) (result nodes.Values, err error) {
+	a.node.ExposeAPI("move_item_inside_hotbar_or_inventory", func(args defines.Values) (result defines.Values, err error) {
 		var sourceSlot, targetSlot, count uint8
 		if err = (&ArgsChain{resArgs: args}).TakeUint8(&sourceSlot).TakeUint8(&targetSlot).TakeUint8(&count).Error(); err != nil {
-			return nodes.Empty, err
+			return defines.Empty, err
 		}
 		err = a.MoveItemInsideHotBarOrInventory(sourceSlot, targetSlot, count)
-		return nodes.Empty, err
+		return defines.Empty, err
 	}, true)
 }
 
@@ -153,13 +154,13 @@ func (e *EndPointBotAction) MoveItemInsideHotBarOrInventory(sourceSlot, targetSl
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeUseHotBarItem() {
-	a.node.ExposeAPI("use_hotbar_item", func(args nodes.Values) (result nodes.Values, err error) {
+	a.node.ExposeAPI("use_hotbar_item", func(args defines.Values) (result defines.Values, err error) {
 		var slot uint8
 		if err = (&ArgsChain{resArgs: args}).TakeUint8(&slot).Error(); err != nil {
-			return nodes.Empty, err
+			return defines.Empty, err
 		}
 		err = a.UseHotBarItem(slot)
-		return nodes.Empty, err
+		return defines.Empty, err
 	}, true)
 }
 
@@ -171,22 +172,22 @@ func (e *EndPointBotAction) UseHotBarItem(slot uint8) (err error) {
 
 type ArgsChain struct {
 	err     error
-	resArgs nodes.Values
+	resArgs defines.Values
 }
 
 func (c *ArgsChain) Error() error {
 	return c.err
 }
 
-func (c *ArgsChain) Done() nodes.Values {
+func (c *ArgsChain) Done() defines.Values {
 	return c.resArgs
 }
 
 func (c *ArgsChain) SetInt64(x int64) *ArgsChain {
 	if c.resArgs == nil {
-		c.resArgs = make(nodes.Values, 0)
+		c.resArgs = make(defines.Values, 0)
 	}
-	c.resArgs = c.resArgs.Extend(nodes.FromInt64(x))
+	c.resArgs = c.resArgs.Extend(defines.FromInt64(x))
 	return c
 }
 
@@ -200,9 +201,9 @@ func (c *ArgsChain) TakeInt64(x *int64) *ArgsChain {
 
 func (c *ArgsChain) SetInt32(x int32) *ArgsChain {
 	if c.resArgs == nil {
-		c.resArgs = make(nodes.Values, 0)
+		c.resArgs = make(defines.Values, 0)
 	}
-	c.resArgs = c.resArgs.Extend(nodes.FromInt32(x))
+	c.resArgs = c.resArgs.Extend(defines.FromInt32(x))
 	return c
 }
 
@@ -216,9 +217,9 @@ func (c *ArgsChain) TakeInt32(x *int32) *ArgsChain {
 
 func (c *ArgsChain) SetUint64(x uint64) *ArgsChain {
 	if c.resArgs == nil {
-		c.resArgs = make(nodes.Values, 0)
+		c.resArgs = make(defines.Values, 0)
 	}
-	c.resArgs = c.resArgs.Extend(nodes.FromUint64(x))
+	c.resArgs = c.resArgs.Extend(defines.FromUint64(x))
 	return c
 }
 
@@ -232,9 +233,9 @@ func (c *ArgsChain) TakeUint64(x *int64) *ArgsChain {
 
 func (c *ArgsChain) SetUint32(x uint32) *ArgsChain {
 	if c.resArgs == nil {
-		c.resArgs = make(nodes.Values, 0)
+		c.resArgs = make(defines.Values, 0)
 	}
-	c.resArgs = c.resArgs.Extend(nodes.FromUint32(x))
+	c.resArgs = c.resArgs.Extend(defines.FromUint32(x))
 	return c
 }
 
@@ -248,9 +249,9 @@ func (c *ArgsChain) TakeUint32(x *uint32) *ArgsChain {
 
 func (c *ArgsChain) SetUint8(x byte) *ArgsChain {
 	if c.resArgs == nil {
-		c.resArgs = make(nodes.Values, 0)
+		c.resArgs = make(defines.Values, 0)
 	}
-	c.resArgs = c.resArgs.Extend(nodes.FromByte(x))
+	c.resArgs = c.resArgs.Extend(defines.FromByte(x))
 	return c
 }
 
@@ -279,9 +280,9 @@ func (c *ArgsChain) TakePos(pos *define.CubePos) *ArgsChain {
 
 func (c *ArgsChain) SetString(x string) *ArgsChain {
 	if c.resArgs == nil {
-		c.resArgs = make(nodes.Values, 0)
+		c.resArgs = make(defines.Values, 0)
 	}
-	c.resArgs = c.resArgs.Extend(nodes.FromString(x))
+	c.resArgs = c.resArgs.Extend(defines.FromString(x))
 	return c
 }
 
