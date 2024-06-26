@@ -35,7 +35,7 @@ func (i *InfoSender) BotSay(msg string) {
 		SourceName:       i.GetBotName(),
 		Message:          msg,
 		XUID:             "",
-		PlayerRuntimeID:  fmt.Sprintf("%d", i.GetBotRuntimeID()),
+		NeteaseExtraData: []string{"PlayerId", fmt.Sprintf("%d", i.GetBotRuntimeID())},
 	}
 	i.SendPacket(pk)
 }

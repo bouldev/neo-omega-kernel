@@ -46,8 +46,8 @@ type Text struct {
 	// Nintendo Switch). It is otherwise an empty string, and is used to decide which players are able to
 	// chat with each other.
 	PlatformChatID string
-	// TODO: Netease PlayerRuntimeID?
-	PlayerRuntimeID string
+	// Netease extra data
+	NeteaseExtraData []string
 }
 
 // ID ...
@@ -70,13 +70,8 @@ func (pk *Text) Marshal(io protocol.IO) {
 	}
 	io.String(&pk.XUID)
 	io.String(&pk.PlatformChatID)
-	// TODO: Netease PlayerRuntimeID?
+	// Netease
 	if pk.TextType == TextTypeChat {
-		b1 := byte(2)
-		s1 := "PlayerId"
-		//s2:="-12345678"
-		io.Uint8(&b1)
-		io.String(&s1)
-		io.String(&pk.PlayerRuntimeID)
+		protocol.FuncSlice(io, &pk.NeteaseExtraData, io.String)
 	}
 }
