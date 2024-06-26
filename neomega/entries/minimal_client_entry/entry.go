@@ -1,13 +1,19 @@
 package minimal_client_entry
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
 	"neo-omega-kernel/neomega/rental_server_impact/info_collect_utils"
 	"neo-omega-kernel/nodes"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/pterm/pterm"
 )
 
 const ENTRY_NAME = "omega_minimal_client"
@@ -38,9 +44,32 @@ func Entry(args *access_helper.ImpactOption) {
 		for {
 			i++
 			time.Sleep(time.Second)
-			ret := omegaCore.GetGameControl().SendWebSocketCmdNeedResponse(fmt.Sprintf("tp @s ~~ %v", i)).BlockGetResult()
-			fmt.Println(ret)
-			fmt.Println(omegaCore.GetMicroUQHolder().GetBotDimension())
+			ret := omegaCore.GetGameControl().SendWebSocketCmdNeedResponse("tp @s ~~~").BlockGetResult()
+			if ret == nil || ret.SuccessCount == 0 {
+				panic(fmt.Errorf("tp @s ~~~ fail, recv: %v", ret))
+			}
+		}
+	}()
+	go func() {
+		reader := bufio.NewReader(os.Stdin)
+		for {
+			fmt.Printf(">")
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				panic(err)
+			}
+			if strings.HasPrefix(line, "/") {
+				cmd := strings.TrimPrefix(line, "/")
+				ret := omegaCore.GetGameControl().SendWebSocketCmdNeedResponse(cmd).SetTimeout(time.Second).BlockGetResult()
+				if ret == nil {
+					pterm.Error.Println("cmd not responsed")
+				} else {
+					bs, _ := json.Marshal(ret)
+					pterm.Info.Println(string(bs))
+				}
+			} else {
+				fmt.Println("try type /tp @s ~~~")
+			}
 		}
 	}()
 	omegaCore.GetBotAction().DropItemFromHotBar(3)

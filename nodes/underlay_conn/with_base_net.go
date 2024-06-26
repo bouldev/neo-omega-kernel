@@ -58,6 +58,7 @@ func NewServerFromBasicNet(addr string) (defines.ZMQAPIServer, error) {
 			go func() {
 				serveConn.Run()
 				fmt.Println("a client connection closed: ", serveConn.CloseError())
+				conn.Close()
 			}()
 		}
 	}()
