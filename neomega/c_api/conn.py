@@ -1015,7 +1015,7 @@ if __name__ == '__main__':
     def on_snow_ball(chat:Chat):
         print("雪球: ",chat)
         omega.send_settings_command("kill @e[type=snowball]")
-    # 在执行之前需要放置一个命令块， 内容为: execute @e[type=snowball] ~~~ tell 机器人 @p
+    # 在执行之前需要放置一个命令块， 内容为: execute as @e[type=snowball] run tell 机器人 @p
     omega.listen_specific_chat("雪球",on_snow_ball)
 
     # 演示如何放置一个命令块
