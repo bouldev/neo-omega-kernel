@@ -55,7 +55,10 @@ func NewServerFromBasicNet(addr string) (defines.ZMQAPIServer, error) {
 			}
 			frameConn := byte_frame_conn.NewConnectionFromNet(conn)
 			serveConn := server.NewFrameAPIServer(frameConn)
-			go serveConn.Run()
+			go func() {
+				serveConn.Run()
+				fmt.Println("a client connection closed: ", serveConn.CloseError())
+			}()
 		}
 	}()
 	return server, nil

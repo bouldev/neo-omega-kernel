@@ -111,11 +111,15 @@ func (conn *ByteFrameConnection) UnLock() {
 
 func (conn *ByteFrameConnection) ReadRoutine(onPacket func([]byte)) {
 	for {
-		packets, err := conn.dec.Decode()
+		pks, err := conn.dec.Decode()
 		if err != nil {
+			if _, ok := err.(*packet.ResumableErr); ok {
+				continue
+			}
 			conn.CloseWithError(err)
+			return
 		}
-		for _, data := range packets {
+		for _, data := range pks {
 			onPacket(data)
 		}
 	}

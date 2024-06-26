@@ -28,7 +28,7 @@ func Server() {
 
 func Client(id string) {
 	fmt.Println("client start")
-	client, err := underlay_conn.NewClientFromBasicNet("tcp://127.0.0.1:7241", time.Second)
+	client, err := underlay_conn.NewClientFromBasicNet("tcp://127.0.0.1:7333", time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -46,8 +46,6 @@ func Client(id string) {
 }
 
 func main() {
-	go Server()
-	time.Sleep(time.Second)
 	go Client("1")
 	go Client("2")
 	c := make(chan struct{})

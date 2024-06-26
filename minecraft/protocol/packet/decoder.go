@@ -76,6 +76,15 @@ const (
 
 // Decode decodes one 'packet' from the io.Reader passed in NewDecoder(), producing a slice of packets that it
 // held and an error if not successful.
+
+type ResumableErr struct {
+	err error
+}
+
+func (e *ResumableErr) Error() string {
+	return e.err.Error()
+}
+
 func (decoder *Decoder) Decode() (packets [][]byte, err error) {
 	var data []byte
 	if decoder.pr == nil {
@@ -99,7 +108,7 @@ func (decoder *Decoder) Decode() (packets [][]byte, err error) {
 		decoder.encrypt.decrypt(data)
 		if err := decoder.encrypt.verify(data); err != nil {
 			// The packet did not have a correct checksum.
-			return nil, fmt.Errorf("error verifying packet: %v", err)
+			return nil, &ResumableErr{fmt.Errorf("error verifying packet: %v", err)}
 		}
 		data = data[:len(data)-8]
 	}
@@ -107,7 +116,7 @@ func (decoder *Decoder) Decode() (packets [][]byte, err error) {
 	if decoder.compression != nil {
 		data, err = decoder.compression.Decompress(data)
 		if err != nil {
-			return nil, fmt.Errorf("error decompressing packet: %v", err)
+			return nil, &ResumableErr{fmt.Errorf("error decompressing packet: %v", err)}
 		}
 	}
 
@@ -115,12 +124,12 @@ func (decoder *Decoder) Decode() (packets [][]byte, err error) {
 	for b.Len() != 0 {
 		var length uint32
 		if err := protocol.Varuint32(b, &length); err != nil {
-			return nil, fmt.Errorf("error reading packet length: %v", err)
+			return nil, &ResumableErr{fmt.Errorf("error reading packet length: %v", err)}
 		}
 		packets = append(packets, b.Next(int(length)))
 	}
 	if len(packets) > maximumInBatch && decoder.checkPacketLimit {
-		return nil, fmt.Errorf("number of packets %v in compressed batch exceeds %v", len(packets), maximumInBatch)
+		return nil, &ResumableErr{fmt.Errorf("number of packets %v in compressed batch exceeds %v", len(packets), maximumInBatch)}
 	}
 	return packets, nil
 }
