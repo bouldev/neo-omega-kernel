@@ -5,6 +5,7 @@ import (
 	"neo-omega-kernel/minecraft_neo/cascade_conn/byte_frame_conn"
 	"neo-omega-kernel/nodes/defines"
 	"net"
+	"os"
 	"strings"
 	"time"
 )
@@ -13,6 +14,9 @@ func NewBasicNetServer(addr string) (net.Listener, error) {
 	frags := strings.Split(addr, "://")
 	if len(frags) != 2 {
 		return nil, fmt.Errorf("must be in format of network://address. e.g. tcp://0.0.0.0:2401")
+	}
+	if frags[0] == "unix" {
+		os.Remove(frags[1])
 	}
 	return net.Listen(frags[0], frags[1])
 }
