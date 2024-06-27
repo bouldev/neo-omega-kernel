@@ -2,7 +2,7 @@ package underlay_conn
 
 import (
 	"fmt"
-	"neo-omega-kernel/minecraft_neo/cascade_conn/byte_frame_conn"
+	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/nodes/defines"
 	"net"
 	"os"
@@ -34,7 +34,8 @@ func NewClientFromBasicNet(addr string, timeout time.Duration) (defines.ZMQAPICl
 	if err != nil {
 		return nil, err
 	}
-	frameConn := byte_frame_conn.NewConnectionFromNet(conn)
+	frameConn := NewConnectionFromNet(conn)
+	frameConn.EnableCompression(packet.SnappyCompression)
 	client := NewFrameAPIClient(frameConn)
 	go client.Run()
 	return client, nil
@@ -53,11 +54,12 @@ func NewServerFromBasicNet(addr string) (defines.ZMQAPIServer, error) {
 				fmt.Println("Accept() failed, err: ", err)
 				continue
 			}
-			frameConn := byte_frame_conn.NewConnectionFromNet(conn)
+			frameConn := NewConnectionFromNet(conn)
+			frameConn.EnableCompression(packet.SnappyCompression)
 			serveConn := server.NewFrameAPIServer(frameConn)
 			go func() {
 				serveConn.Run()
-				fmt.Println("a client connection closed: ", serveConn.CloseError())
+				fmt.Println("a client connection closed. cause: ", <-serveConn.WaitClosed())
 				conn.Close()
 			}()
 		}

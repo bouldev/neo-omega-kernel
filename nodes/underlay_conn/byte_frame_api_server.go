@@ -2,7 +2,6 @@ package underlay_conn
 
 import (
 	"context"
-	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/minecraft_neo/can_close"
 	conn_defines "neo-omega-kernel/minecraft_neo/cascade_conn/defines"
 	"neo-omega-kernel/nodes/defines"
@@ -35,11 +34,11 @@ type FrameAPIServerConn struct {
 	identityBytes []byte
 	can_close.CanCloseWithError
 	*FrameAPIServer
-	FrameConn conn_defines.ByteFrameConn
+	FrameConn conn_defines.ByteFrameConnBase
 	cbs       *sync_wrapper.SyncKVMap[string, func(defines.Values)]
 }
 
-func (s *FrameAPIServer) NewFrameAPIServer(conn conn_defines.ByteFrameConn) *FrameAPIServerConn {
+func (s *FrameAPIServer) NewFrameAPIServer(conn conn_defines.ByteFrameConnBase) *FrameAPIServerConn {
 	identity := uuid.New().String()
 	c := &FrameAPIServerConn{
 		identity:      identity,
@@ -53,7 +52,6 @@ func (s *FrameAPIServer) NewFrameAPIServer(conn conn_defines.ByteFrameConn) *Fra
 	s.mu.Lock()
 	s.conns[identity] = c
 	s.mu.Unlock()
-	conn.EnableCompression(packet.SnappyCompression)
 	go func() {
 		// close when underlay err
 		c.CloseWithError(<-conn.WaitClosed())

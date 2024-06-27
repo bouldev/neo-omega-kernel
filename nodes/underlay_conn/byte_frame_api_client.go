@@ -2,7 +2,6 @@ package underlay_conn
 
 import (
 	"context"
-	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/minecraft_neo/can_close"
 	conn_defines "neo-omega-kernel/minecraft_neo/cascade_conn/defines"
 	"neo-omega-kernel/nodes/defines"
@@ -15,12 +14,12 @@ import (
 
 type FrameAPIClient struct {
 	can_close.CanCloseWithError
-	FrameConn conn_defines.ByteFrameConn
+	FrameConn conn_defines.ByteFrameConnBase
 	cbs       *sync_wrapper.SyncKVMap[string, func(defines.Values)]
 	apis      *sync_wrapper.SyncKVMap[string, func(defines.Values, func(defines.Values))]
 }
 
-func NewFrameAPIClient(conn conn_defines.ByteFrameConn) *FrameAPIClient {
+func NewFrameAPIClient(conn conn_defines.ByteFrameConnBase) *FrameAPIClient {
 	c := &FrameAPIClient{
 		// close underlay conn on err
 		CanCloseWithError: can_close.NewClose(conn.Close),
@@ -28,7 +27,6 @@ func NewFrameAPIClient(conn conn_defines.ByteFrameConn) *FrameAPIClient {
 		cbs:               sync_wrapper.NewSyncKVMap[string, func(defines.Values)](),
 		apis:              sync_wrapper.NewSyncKVMap[string, func(defines.Values, func(defines.Values))](),
 	}
-	conn.EnableCompression(packet.SnappyCompression)
 	go func() {
 		// close when underlay err
 		c.CloseWithError(<-conn.WaitClosed())
@@ -36,7 +34,7 @@ func NewFrameAPIClient(conn conn_defines.ByteFrameConn) *FrameAPIClient {
 	return c
 }
 
-func NewFrameAPIClientWithCtx(conn conn_defines.ByteFrameConn, ctx context.Context) *FrameAPIClient {
+func NewFrameAPIClientWithCtx(conn conn_defines.ByteFrameConnBase, ctx context.Context) *FrameAPIClient {
 	c := NewFrameAPIClient(conn)
 	go func() {
 		select {
