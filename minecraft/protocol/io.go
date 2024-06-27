@@ -47,6 +47,7 @@ type IO interface {
 	UUID(x *uuid.UUID)
 	RGBA(x *color.RGBA)
 	VarRGBA(x *color.RGBA)
+	NeteasePixels(*[]color.RGBA)
 	EntityMetadata(x *map[uint32]any)
 	Item(x *ItemStack)
 	ItemInstance(i *ItemInstance)

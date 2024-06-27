@@ -204,6 +204,67 @@ func (r *Reader) VarRGBA(x *color.RGBA) {
 	}
 }
 
+// Netease
+func (r *Reader) NeteasePixels(x *[]color.RGBA) {
+	var isEmpty bool
+	r.Bool(&isEmpty)
+	if isEmpty {
+		return
+	}
+
+	var marshalType uint8
+	r.Uint8(&marshalType)
+
+	switch marshalType {
+	case 1:
+		var pixels []uint8
+		var colors []color.RGBA
+
+		FuncSlice(r, &pixels, r.Uint8)
+
+		var length uint32
+		r.Varuint32(&length)
+		colors = make([]color.RGBA, length)
+		for i := uint32(0); i < length; i++ {
+			var v color.RGBA
+			var i uint8
+			r.RGBA(&v)
+			r.Uint8(&i)
+			colors[i] = v
+		}
+
+		*x = make([]color.RGBA, len(pixels))
+		for i, index := range pixels {
+			(*x)[i] = colors[index]
+		}
+	case 2:
+		var pixels []uint16
+		var colors []color.RGBA
+
+		FuncSlice(r, &pixels, r.Uint16)
+
+		var length uint32
+		r.Varuint32(&length)
+		colors = make([]color.RGBA, length)
+		for i := uint32(0); i < length; i++ {
+			var v color.RGBA
+			var i uint16
+			r.RGBA(&v)
+			r.Uint16(&i)
+			colors[i] = v
+		}
+
+		*x = make([]color.RGBA, len(pixels))
+		for i, index := range pixels {
+			(*x)[i] = colors[index]
+		}
+	case 3:
+		FuncSlice(r, x, r.RGBA)
+	default:
+		r.UnknownEnumOption(marshalType, "netease pixel marshal type")
+	}
+}
+
 // Bytes reads the leftover bytes into a byte slice.
 func (r *Reader) Bytes(p *[]byte) {
 	var err error

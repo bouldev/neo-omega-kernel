@@ -155,6 +155,20 @@ func (w *Writer) VarRGBA(x *color.RGBA) {
 	w.Varuint32(&val)
 }
 
+// Netease
+func (w *Writer) NeteasePixels(x *[]color.RGBA) {
+	isEmpty := len(*x) == 0
+	w.Bool(&isEmpty)
+	if isEmpty {
+		return
+	}
+
+	marshalType := uint8(3)
+	w.Uint8(&marshalType)
+
+	FuncSlice(w, x, w.RGBA)
+}
+
 // UUID writes a UUID to the underlying buffer.
 func (w *Writer) UUID(x *uuid.UUID) {
 	b := append((*x)[8:], (*x)[:8]...)
