@@ -33,6 +33,7 @@ const (
 	S_fail_to_create_token_file                                                                 = "fail to create token file: %v \n"
 	S_fail_to_write_token                                                                       = "fail to write token: %v \n"
 	S_auth_server_name_official                                                                 = "FastBuilder Official Auth Server"
+	S_auth_server_version_not_support                                                           = "Auth server not support current game version"
 	S_auth_server_name_liliya                                                                   = "Liliya233 Auth Server (require individual account)"
 	S_invalid_selection_please_select_in_1_to_2                                                 = "invalid input, please input in 1 ~ 2"
 	S_auth_server_name_user_specific                                                            = "[auth server: %v]"
@@ -150,7 +151,8 @@ var I18nDict_zh_cn map[string]string = map[string]string{
 	S_please_enter_rental_server_password:                      "请输入网易租赁服密码(没有则留空): ",
 	S_fail_to_create_token_file:                                "无法创建 token 文件 -> 这应该不是大问题\n",
 	S_fail_to_write_token:                                      "无法写入 token 文件 -> 这应该不是大问题\n",
-	S_auth_server_name_official:                                "FastBuilder 官方验证服务器",
+	S_auth_server_version_not_support:                          "[\033[31m使用的验证服务器暂时未适配新版本，请等待\033[0m]",
+	S_auth_server_name_official:                                "[\033[31m暂时未适配新版本，请等待\033[0m]FastBuilder 官方验证服务器 ",
 	S_auth_server_name_liliya:                                  "咕咕酱的验证服务器 (需要独立账户)",
 	S_invalid_selection_please_select_in_1_to_2:                "无效的输入，请输入 1 ~ 2 间的选择",
 	S_auth_server_name_user_specific:                           "[验证服务器: %v]",

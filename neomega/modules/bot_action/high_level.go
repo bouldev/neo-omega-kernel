@@ -183,68 +183,101 @@ func (o *BotActionHighLevel) highLevelGetAndRemoveSpecificBlockSideEffect(pos de
 	return decodedStructure, deferFunc, nil
 }
 
-func (o *BotActionHighLevel) HighLevelPlaceSign(targetPos define.CubePos, text string, lighting bool, signBlock string) (err error) {
+func (o *BotActionHighLevel) HighLevelPlaceSign(targetPos define.CubePos, signBlock string, opt *neomega.SignBlockPlaceOption) (err error) {
+	if opt == nil {
+		return nil
+	}
+	o.highLevelEnsureBotNearby(targetPos, 8)
 	release, err := o.occupyBot(time.Second * 3)
 	if err != nil {
 		return err
 	}
 	defer release()
-	return o.highLevelPlaceSign(targetPos, text, lighting, signBlock)
+	return o.highLevelPlaceSign(targetPos, signBlock, opt)
 }
 
-func (o *BotActionHighLevel) highLevelPlaceSign(targetPos define.CubePos, text string, lighting bool, signBlock string) (err error) {
-	victimBlock := targetPos.Add(define.CubePos{1, 0, 0})
-	if err = o.highLevelEnsureBotNearby(targetPos, 8); err != nil {
-		return err
+func (o *BotActionHighLevel) highLevelPlaceSign(targetPos define.CubePos, signBlock string, opt *neomega.SignBlockPlaceOption) (err error) {
+	rtid, ok := blocks.BlockStrToRuntimeID(signBlock)
+	if !ok {
+		return fmt.Errorf("sign block not found")
 	}
-	ret := o.cmdHelper.ReplaceHotBarItemCmd(0, "oak_sign").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
-	if ret == nil {
-		return fmt.Errorf("cannot move to target pos")
-	}
-	deferredAction, err := o.highLevelRemoveSpecificBlockSideEffect(victimBlock, false, "_sign_temp")
-	defer deferredAction()
+	blockNameWithState, _ := blocks.RuntimeIDToBlockNameWithStateStr(rtid)
+	blk, _ := blocks.RuntimeIDToBlock(rtid)
+	rot := int32(0)
+	if len(blk.States()) == 1 {
+		if blk.States()[0].Name == "facing_direction" {
+			if blk.States()[0].Value.Int32Val() == 2 {
+				rot = 8
+			}
+			if blk.States()[0].Value.Int32Val() == 3 {
+				rot = 0
+			}
+			if blk.States()[0].Value.Int32Val() == 4 {
+				rot = 4
+			}
+			if blk.States()[0].Value.Int32Val() == 5 {
+				rot = 12
+			}
+		}
+		if blk.States()[0].Name == "ground_sign_direction" {
+			rot = blk.States()[0].Value.Int32Val()
+		}
+	} else if len(blk.States()) == 4 {
+		if blk.States()[1].Value.Int32Val() == 2 {
+			rot = 8
+		}
+		if blk.States()[1].Value.Int32Val() == 3 {
+			rot = 0
+		}
+		if blk.States()[1].Value.Int32Val() == 4 {
+			rot = 4
+		}
+		if blk.States()[1].Value.Int32Val() == 5 {
+			rot = 12
+		}
 
-	o.cmdHelper.SetBlockCmd(targetPos, "air").Send()
-	o.cmdHelper.SetBlockCmd(victimBlock, "glass").Send()
-	blockRTID, found := blocks.BlockStrToRuntimeID("glass")
-	if !found {
-		return fmt.Errorf("glass runtime id not found")
 	}
-	// nemcBlockRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(blockRTID)
-	// if nemcBlockRuntimeID == chunk.NEMCAirRID {
-	// 	return fmt.Errorf("glass nemc runtime id not found")
-	// }
-	o.microAction.SleepTick(4)
-	// o.microAction.SelectHotBar(0)
-	o.microAction.UseHotBarItemOnBlock(victimBlock, blockRTID, 4, 0)
 
-	// this is actually a bug of minecraft
-	// if old sign is replace by new sign when "writing" (actually is "unfinished" state since nothing is sent to server when writing)
-	// data will be put in new sign
-	o.cmdHelper.SetBlockCmd(targetPos, signBlock).Send()
-	o.microAction.SleepTick(1)
-	IgnoreLighting := uint8(0)
-	TextIgnoreLegacyBugResolved := uint8(0)
-	if lighting {
-		IgnoreLighting = uint8(1)
-		TextIgnoreLegacyBugResolved = uint8(1)
+	font := define.CubePos{-2, 0, 2}
+	if rot >= 4 {
+		font = define.CubePos{-2, 0, -2}
 	}
+	if rot >= 8 {
+		font = define.CubePos{2, 0, -2}
+	}
+	if rot >= 12 {
+		font = define.CubePos{2, 0, 2}
+	}
+	back := define.CubePos{0, 0, 0}.Sub(font)
+	o.cmdHelper.SetBlockCmd(targetPos, blockNameWithState).AsWebSocket().SendAndGetResponse().BlockGetResult()
+	o.microAction.SelectHotBar(0)
+	o.cmdHelper.ReplaceHotBarItemCmd(0, "air").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+	o.microAction.UseHotBarItemOnBlock(targetPos, rtid, 4, 0)
 	o.ctrl.SendPacket(&packet.BlockActorData{
 		Position: protocol.BlockPos{int32(targetPos.X()), int32(targetPos.Y()), int32(targetPos.Z())},
-		NBTData: map[string]any{
-			"x":                           int32(targetPos.X()),
-			"y":                           int32(targetPos.Y()),
-			"z":                           int32(targetPos.Z()),
-			"id":                          "Sign",
-			"IgnoreLighting":              IgnoreLighting,
-			"PersistFormatting":           uint8(1),
-			"TextOwner":                   "",
-			"isMovable":                   uint8(1),
-			"TextIgnoreLegacyBugResolved": TextIgnoreLegacyBugResolved,
-			"SignTextColor":               int32(-16777216),
-			"Text":                        text,
-		},
+		NBTData:  opt.ToNBT(),
 	})
+	if dyeName := opt.FrontText.GetDyeName(); dyeName != "" {
+		o.cmdHelper.ReplaceHotBarItemCmd(0, dyeName).SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+		o.microAction.UseHotBarItemOnBlockWithBotOffset(targetPos, font, rtid, 0, 0)
+	}
+	if opt.FrontText.IgnoreLighting == 1 {
+		o.cmdHelper.ReplaceHotBarItemCmd(0, "glow_ink_sac").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+		o.microAction.UseHotBarItemOnBlockWithBotOffset(targetPos, font, rtid, 0, 0)
+	}
+	if dyeName := opt.BackText.GetDyeName(); dyeName != "" {
+		o.cmdHelper.ReplaceHotBarItemCmd(0, dyeName).SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+		o.microAction.UseHotBarItemOnBlockWithBotOffset(targetPos, back, rtid, 0, 0)
+	}
+
+	if opt.BackText.IgnoreLighting == 1 {
+		o.cmdHelper.ReplaceHotBarItemCmd(0, "glow_ink_sac").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+		o.microAction.UseHotBarItemOnBlockWithBotOffset(targetPos, back, rtid, 0, 0)
+	}
+	if opt.IsWaxed == 1 {
+		o.cmdHelper.ReplaceHotBarItemCmd(0, "honeycomb").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+		o.microAction.UseHotBarItemOnBlock(targetPos, rtid, 0, 0)
+	}
 	return nil
 }
 

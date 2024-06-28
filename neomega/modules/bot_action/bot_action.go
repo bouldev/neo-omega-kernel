@@ -11,6 +11,8 @@ import (
 	"neo-omega-kernel/nodes/defines"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"time"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type AccessPointBotActionWithPersistData struct {
@@ -164,6 +166,10 @@ func (o *AccessPointBotActionWithPersistData) UseHotBarItem(slotID uint8) (err e
 }
 
 func (o *AccessPointBotActionWithPersistData) UseHotBarItemOnBlock(blockPos define.CubePos, blockNEMCRuntimeID uint32, face int32, slotID uint8) (err error) {
+	return o.UseHotBarItemOnBlockWithBotOffset(blockPos, define.CubePos{0, 0, 0}, blockNEMCRuntimeID, face, slotID)
+}
+
+func (o *AccessPointBotActionWithPersistData) UseHotBarItemOnBlockWithBotOffset(blockPos define.CubePos, botOffset define.CubePos, blockNEMCRuntimeID uint32, face int32, slotID uint8) (err error) {
 	release, err := o.occupyBot(time.Second * 3)
 	if err != nil {
 		return err
@@ -182,6 +188,7 @@ func (o *AccessPointBotActionWithPersistData) UseHotBarItemOnBlock(blockPos defi
 		ActionType:      protocol.PlayerActionStartItemUseOn,
 		BlockPosition:   cubePos,
 	})
+	botPos := blockPos.Add(botOffset)
 	o.ctrl.SendPacket(&packet.InventoryTransaction{
 		LegacyRequestID:    0,
 		LegacySetItemSlots: []protocol.LegacySetItemSlot(nil),
@@ -196,6 +203,7 @@ func (o *AccessPointBotActionWithPersistData) UseHotBarItemOnBlock(blockPos defi
 			HotBarSlot:         int32(slotID),
 			HeldItem:           *item,
 			BlockRuntimeID:     blockNEMCRuntimeID,
+			Position:           mgl32.Vec3{float32(botPos.X()), float32(botPos.Y()), float32(botPos.Z())},
 		},
 	})
 	o.ctrl.SendPacket(&packet.PlayerAction{

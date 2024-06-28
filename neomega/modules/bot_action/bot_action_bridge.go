@@ -16,6 +16,7 @@ type EndPointBotAction struct {
 func (a *AccessPointBotActionWithPersistData) ExposeAPI() {
 	a.ExposeSelectHotBar()
 	a.ExposeUseHotBarItemOnBlock()
+	a.ExposeUseHotBarItemOnBlockWithOffset()
 	a.ExposeMoveItemFromInventoryToEmptyContainerSlots()
 	a.ExposeUseAnvil()
 	a.ExposeDropItemFromHotBar()
@@ -45,9 +46,30 @@ func (a *AccessPointBotActionWithPersistData) ExposeUseHotBarItemOnBlock() {
 	}, true)
 }
 
+func (a *AccessPointBotActionWithPersistData) ExposeUseHotBarItemOnBlockWithOffset() {
+	a.node.ExposeAPI("use_hot_bar_item_on_block_with_offset", func(args defines.Values) (result defines.Values, err error) {
+		var blockPos define.CubePos
+		var blockNEMCRuntimeID uint32
+		var face int32
+		var slot uint8
+		var offsetPos define.CubePos
+		if err = (&ArgsChain{resArgs: args}).TakePos(&blockPos).TakePos(&offsetPos).TakeUint32(&blockNEMCRuntimeID).TakeInt32(&face).TakeUint8(&slot).Error(); err != nil {
+			return defines.Empty, err
+		}
+		err = a.UseHotBarItemOnBlockWithBotOffset(blockPos, offsetPos, blockNEMCRuntimeID, face, slot)
+		return defines.Empty, err
+	}, true)
+}
+
 func (e *EndPointBotAction) UseHotBarItemOnBlock(blockPos define.CubePos, blockNEMCRuntimeID uint32, face int32, slot uint8) (err error) {
 	args := (&ArgsChain{}).SetPos(blockPos).SetUint32(blockNEMCRuntimeID).SetInt32(face).SetUint8(slot).Done()
 	_, err = e.node.CallWithResponse("use_hot_bar_item_on_block", args).SetTimeout(time.Second * 30).BlockGetResponse()
+	return err
+}
+
+func (e *EndPointBotAction) UseHotBarItemOnBlockWithBotOffset(blockPos define.CubePos, botOffset define.CubePos, blockNEMCRuntimeID uint32, face int32, slot uint8) (err error) {
+	args := (&ArgsChain{}).SetPos(blockPos).SetPos(botOffset).SetUint32(blockNEMCRuntimeID).SetInt32(face).SetUint8(slot).Done()
+	_, err = e.node.CallWithResponse("use_hot_bar_item_on_block_with_offset", args).SetTimeout(time.Second * 30).BlockGetResponse()
 	return err
 }
 

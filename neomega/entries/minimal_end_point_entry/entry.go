@@ -3,7 +3,10 @@ package minimal_end_point_entry
 import (
 	"fmt"
 	"neo-omega-kernel/i18n"
+	"neo-omega-kernel/neomega"
+	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/bundle"
+	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/nodes"
 	"neo-omega-kernel/nodes/defines"
 	"neo-omega-kernel/nodes/underlay_conn"
@@ -45,13 +48,114 @@ func Entry(args *Args) {
 	if err != nil {
 		panic(err)
 	}
-	time.Sleep(time.Second)
-	fmt.Println(omegaCore)
-	players := omegaCore.GetMicroUQHolder().GetAllOnlinePlayers()
-	for _, player := range players {
-		fmt.Println(player.GetUsername())
-		fmt.Println(player.GetEntityUniqueID())
+	// time.Sleep(time.Second)
+	// fmt.Println(omegaCore)
+	// players := omegaCore.GetMicroUQHolder().GetAllOnlinePlayers()
+	// for _, player := range players {
+	// 	fmt.Println(player.GetUsername())
+	// 	fmt.Println(player.GetEntityUniqueID())
+	// }
+	// provider := memory_hold_canvas.NewMemoryChunkCache(nil)
+	block, err := omegaCore.GetStructureRequester().RequestStructure(define.CubePos{1050, -60, 982}, define.CubePos{1, 1, 1}, "block").BlockGetResult()
+	if err != nil {
+		panic(err)
 	}
+	decoded, err := block.Decode()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("requested")
+	nbt := decoded.Nbts[define.CubePos{1050, -60, 982}]
+	opt := neomega.NbtToSignBlock(nbt)
+	fg, _ := decoded.BlockOf(define.CubePos{0, 0, 0})
+	blockNameWithState, _ := blocks.RuntimeIDToBlockNameWithStateStr(fg)
+	omegaCore.GetBotAction().HighLevelPlaceSign(define.CubePos{1051, -60, 982}, blockNameWithState, opt)
+	fmt.Println(nbt)
+	// fg, _ := decoded.BlockOf(define.CubePos{0, 0, 0})
+
+	// fmt.Println(blockNameWithState)
+	// // 0~3 z+
+	// // 4~7 x-
+	// // 8~11 z-
+	// // 12~16 x+
+	// blk, _ := blocks.RuntimeIDToBlock(fg)
+	// rot := int32(0)
+	// if len(blk.States()) == 1 {
+	// 	if blk.States()[0].Name == "facing_direction" {
+	// 		if blk.States()[0].Value.Int32Val() == 2 {
+	// 			rot = 8
+	// 		}
+	// 		if blk.States()[0].Value.Int32Val() == 3 {
+	// 			rot = 0
+	// 		}
+	// 		if blk.States()[0].Value.Int32Val() == 4 {
+	// 			rot = 4
+	// 		}
+	// 		if blk.States()[0].Value.Int32Val() == 5 {
+	// 			rot = 12
+	// 		}
+	// 	}
+	// 	if blk.States()[0].Name == "ground_sign_direction" {
+	// 		rot = blk.States()[0].Value.Int32Val()
+	// 	}
+	// } else if len(blk.States()) == 4 {
+	// 	if blk.States()[1].Value.Int32Val() == 2 {
+	// 		rot = 8
+	// 	}
+	// 	if blk.States()[1].Value.Int32Val() == 3 {
+	// 		rot = 0
+	// 	}
+	// 	if blk.States()[1].Value.Int32Val() == 4 {
+	// 		rot = 4
+	// 	}
+	// 	if blk.States()[1].Value.Int32Val() == 5 {
+	// 		rot = 12
+	// 	}
+
+	// }
+
+	// font := define.CubePos{-2, 0, 2}
+	// if rot >= 4 {
+	// 	font = define.CubePos{-2, 0, -2}
+	// }
+	// if rot >= 8 {
+	// 	font = define.CubePos{2, 0, -2}
+	// }
+	// if rot >= 12 {
+	// 	font = define.CubePos{2, 0, 2}
+	// }
+	// back := define.CubePos{0, 0, 0}.Sub(font)
+	// targetPos := define.CubePos{1051, -60, 982}
+	// omegaCore.GetBotAction().SetBlockCmd(targetPos, blockNameWithState).Send()
+	// omegaCore.GetBotAction().SelectHotBar(0)
+	// omegaCore.GetBotAction().ReplaceHotBarItemCmd(0, "air").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+	// omegaCore.GetBotAction().UseHotBarItemOnBlock(targetPos, fg, 4, 0)
+	// omegaCore.GetGameControl().SendPacket(&packet.BlockActorData{
+	// 	Position: protocol.BlockPos{int32(targetPos.X()), int32(targetPos.Y()), int32(targetPos.Z())},
+	// 	NBTData:  opt.ToNBT(),
+	// })
+	// if dyeName := opt.FrontText.GetDyeName(); dyeName != "" {
+	// 	fmt.Println(font)
+	// 	omegaCore.GetBotAction().ReplaceHotBarItemCmd(0, dyeName).SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+	// 	omegaCore.GetBotAction().UseHotBarItemOnBlockWithBotOffset(targetPos, font, fg, 0, 0)
+	// }
+	// if opt.FrontText.IgnoreLighting == 1 {
+	// 	omegaCore.GetBotAction().ReplaceHotBarItemCmd(0, "glow_ink_sac").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+	// 	omegaCore.GetBotAction().UseHotBarItemOnBlockWithBotOffset(targetPos, font, fg, 0, 0)
+	// }
+	// if dyeName := opt.BackText.GetDyeName(); dyeName != "" {
+	// 	omegaCore.GetBotAction().ReplaceHotBarItemCmd(0, dyeName).SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+	// 	omegaCore.GetBotAction().UseHotBarItemOnBlockWithBotOffset(targetPos, back, fg, 0, 0)
+	// }
+
+	// if opt.BackText.IgnoreLighting == 1 {
+	// 	omegaCore.GetBotAction().ReplaceHotBarItemCmd(0, "glow_ink_sac").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+	// 	omegaCore.GetBotAction().UseHotBarItemOnBlockWithBotOffset(targetPos, back, fg, 0, 0)
+	// }
+	// if opt.IsWaxed == 1 {
+	// 	omegaCore.GetBotAction().ReplaceHotBarItemCmd(0, "honeycomb").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
+	// 	omegaCore.GetBotAction().UseHotBarItemOnBlock(targetPos, fg, 0, 0)
+	// }
 
 	// omegaCore.GetGameControl().SendPacket(&packet.RequestPermissions{
 	// 	EntityUniqueID:       -4294967295,
