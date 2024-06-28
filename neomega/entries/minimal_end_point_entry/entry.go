@@ -58,9 +58,14 @@ func Entry(args *Args) {
 	// 	PermissionLevel:      3,
 	// 	RequestedPermissions: protocol.AbilityBuild,
 	// })
-	player, _ := omegaCore.GetPlayerInteract().GetPlayerKit("2401PT")
-	player.SetBuildAbility(false)
-	player.SetDoorsAndSwitchesAbility(false)
+	// for {
+	// 	player, _ := omegaCore.GetPlayerInteract().GetPlayerKit("2401PT")
+	// 	fmt.Println(player.IsOP())
+	// 	time.Sleep(time.Second * 3)
+	// }
+
+	// player.SetBuildAbility(false)
+	// player.SetDoorsAndSwitchesAbility(false)
 	// go func() {
 	// 	i := 0
 	// 	for {
