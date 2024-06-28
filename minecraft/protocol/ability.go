@@ -9,6 +9,7 @@ const (
 	AbilityAttackMobs
 	AbilityOperatorCommands
 	AbilityTeleport
+
 	AbilityInvulnerable
 	AbilityFlying
 	AbilityMayFly

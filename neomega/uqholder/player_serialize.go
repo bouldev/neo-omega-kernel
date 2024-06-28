@@ -76,46 +76,56 @@ func (p *Player) Marshal() (data []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
-	err = little_endian.WriteUint32(writer, p.PropertiesFlag)
+
+	err = writer.WriteByte(boolToByte(p.knowAbilitiesAndStatus))
 	if err != nil {
 		return nil, err
 	}
-	err = writer.WriteByte(boolToByte(p.knownPropertiesFlag))
+	err = writer.WriteByte(boolToByte(p.canBuild))
 	if err != nil {
 		return nil, err
 	}
-	err = little_endian.WriteUint32(writer, p.CommandPermissionLevel)
+	err = writer.WriteByte(boolToByte(p.canMine))
 	if err != nil {
 		return nil, err
 	}
-	err = writer.WriteByte(boolToByte(p.knownCommandPermissionLevel))
+	err = writer.WriteByte(boolToByte(p.canDoorsAndSwitches))
 	if err != nil {
 		return nil, err
 	}
-	err = little_endian.WriteUint32(writer, p.ActionPermissions)
+	err = writer.WriteByte(boolToByte(p.canOpenContainers))
 	if err != nil {
 		return nil, err
 	}
-	err = writer.WriteByte(boolToByte(p.knownActionPermissions))
+	err = writer.WriteByte(boolToByte(p.canAttackPlayers))
 	if err != nil {
 		return nil, err
 	}
-	err = little_endian.WriteUint32(writer, p.OPPermissionLevel)
+	err = writer.WriteByte(boolToByte(p.canAttackMobs))
 	if err != nil {
 		return nil, err
 	}
-	err = writer.WriteByte(boolToByte(p.knownOPPermissionLevel))
+	err = writer.WriteByte(boolToByte(p.canOperatorCommands))
 	if err != nil {
 		return nil, err
 	}
-	err = little_endian.WriteUint32(writer, p.CustomStoredPermissions)
+	err = writer.WriteByte(boolToByte(p.canTeleport))
 	if err != nil {
 		return nil, err
 	}
-	err = writer.WriteByte(boolToByte(p.knownCustomStoredPermissions))
+	err = writer.WriteByte(boolToByte(p.statusInvulnerable))
 	if err != nil {
 		return nil, err
 	}
+	err = writer.WriteByte(boolToByte(p.statusFlying))
+	if err != nil {
+		return nil, err
+	}
+	err = writer.WriteByte(boolToByte(p.statusMayFly))
+	if err != nil {
+		return nil, err
+	}
+
 	err = little_endian.WriteString(writer, p.DeviceID)
 	if err != nil {
 		return nil, err
@@ -237,46 +247,56 @@ func (p *Player) Unmarshal(data []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	p.PropertiesFlag, err = little_endian.Uint32(reader)
+
+	p.knowAbilitiesAndStatus, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
-	p.knownPropertiesFlag, err = readAndGetBool()
+	p.canBuild, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
-	p.CommandPermissionLevel, err = little_endian.Uint32(reader)
+	p.canMine, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
-	p.knownCommandPermissionLevel, err = readAndGetBool()
+	p.canDoorsAndSwitches, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
-	p.ActionPermissions, err = little_endian.Uint32(reader)
+	p.canOpenContainers, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
-	p.knownActionPermissions, err = readAndGetBool()
+	p.canAttackPlayers, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
-	p.OPPermissionLevel, err = little_endian.Uint32(reader)
+	p.canAttackMobs, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
-	p.knownOPPermissionLevel, err = readAndGetBool()
+	p.canOperatorCommands, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
-	p.CustomStoredPermissions, err = little_endian.Uint32(reader)
+	p.canTeleport, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
-	p.knownCustomStoredPermissions, err = readAndGetBool()
+	p.statusInvulnerable, err = readAndGetBool()
 	if err != nil {
 		return err
 	}
+	p.statusFlying, err = readAndGetBool()
+	if err != nil {
+		return err
+	}
+	p.statusMayFly, err = readAndGetBool()
+	if err != nil {
+		return err
+	}
+
 	p.DeviceID, err = little_endian.String(reader)
 	if err != nil {
 		return err

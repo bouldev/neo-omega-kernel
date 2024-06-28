@@ -277,20 +277,20 @@ func Entry(args *Args) {
 						fmt.Printf("%v %v %v\n", i, name, uuid)
 					}
 				}
-				if line == "command_permission_level" {
-					for _, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
-						name, _ := player.GetUsername()
-						level, found := player.GetCommandPermissionLevel()
-						fmt.Printf("%v %v %v\n", name, level, found)
-					}
-				}
-				if line == "op_permission_level" {
-					for _, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
-						name, _ := player.GetUsername()
-						level, found := player.GetOPPermissionLevel()
-						fmt.Printf("%v %v %v\n", name, level, found)
-					}
-				}
+				// if line == "command_permission_level" {
+				// 	for _, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
+				// 		name, _ := player.GetUsername()
+				// 		level, found := player.GetCommandPermissionLevel()
+				// 		fmt.Printf("%v %v %v\n", name, level, found)
+				// 	}
+				// }
+				// if line == "op_permission_level" {
+				// 	for _, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
+				// 		name, _ := player.GetUsername()
+				// 		level, found := player.GetOPPermissionLevel()
+				// 		fmt.Printf("%v %v %v\n", name, level, found)
+				// 	}
+				// }
 				continue
 			}
 		}

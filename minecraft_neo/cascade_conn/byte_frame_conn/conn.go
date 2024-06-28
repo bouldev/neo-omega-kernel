@@ -110,6 +110,9 @@ func (conn *ByteFrameConnection) UnLock() {
 }
 
 func (conn *ByteFrameConnection) ReadRoutine(onPacket func([]byte)) {
+	// os.RemoveAll("dumped_packets")
+	// os.MkdirAll("dumped_packets", 0755)
+	// packetI := 0
 	for {
 		pks, err := conn.dec.Decode()
 		if err != nil {
@@ -120,6 +123,8 @@ func (conn *ByteFrameConnection) ReadRoutine(onPacket func([]byte)) {
 			return
 		}
 		for _, data := range pks {
+			// packetI += 1
+			// os.WriteFile(fmt.Sprintf("dumped_packets/%06d.bin", packetI), data, 0755)
 			onPacket(data)
 		}
 	}

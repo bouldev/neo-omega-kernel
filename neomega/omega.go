@@ -294,7 +294,7 @@ type PlayerKit interface {
 	// e.g. CheckCondition(func(ok),"m=c","tag=op")
 	CheckCondition(onResult func(bool), conditions ...string)
 	Query(onResult func([]QueryResult), conditions ...string)
-	SetAbility(adventureFlagsUpdateMap, actionPermissionUpdateMap map[uint32]bool) (sent bool)
+	// SetAbility(adventureFlagsUpdateMap, actionPermissionUpdateMap map[uint32]bool) (sent bool)
 	SetAbilityString(adventureFlagsUpdateMap, actionPermissionUpdateMap map[string]bool) (sent bool)
 }
 

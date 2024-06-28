@@ -28,20 +28,20 @@ type Players struct {
 	playersByUUID                *sync_wrapper.SyncKVMap[uuid.UUID, *Player]
 	cachePlayersByEntityUniqueID *sync_wrapper.SyncKVMap[int64, *Player]
 	// cachePlayerByRuntimeID       map[uint64]*Player
-	cachePlayerByUsername          *sync_wrapper.SyncKVMap[string, *Player]
-	pendingAddPlayerPacket         map[int64]*packet.AddPlayer
-	pendingAdventureSettingsPacket map[int64]*packet.AdventureSettings
-	pendingMu                      sync.Mutex
+	cachePlayerByUsername  *sync_wrapper.SyncKVMap[string, *Player]
+	pendingAddPlayerPacket map[int64]*packet.AddPlayer
+	pendingAbilityData     map[int64]protocol.AbilityData
+	pendingMu              sync.Mutex
 }
 
 func NewPlayers() *Players {
 	return &Players{
-		playersByUUID:                  sync_wrapper.NewSyncKVMap[uuid.UUID, *Player](),
-		cachePlayersByEntityUniqueID:   sync_wrapper.NewSyncKVMap[int64, *Player](),
-		cachePlayerByUsername:          sync_wrapper.NewSyncKVMap[string, *Player](),
-		pendingAddPlayerPacket:         make(map[int64]*packet.AddPlayer),
-		pendingAdventureSettingsPacket: make(map[int64]*packet.AdventureSettings),
-		pendingMu:                      sync.Mutex{},
+		playersByUUID:                sync_wrapper.NewSyncKVMap[uuid.UUID, *Player](),
+		cachePlayersByEntityUniqueID: sync_wrapper.NewSyncKVMap[int64, *Player](),
+		cachePlayerByUsername:        sync_wrapper.NewSyncKVMap[string, *Player](),
+		pendingAddPlayerPacket:       make(map[int64]*packet.AddPlayer),
+		pendingAbilityData:           make(map[int64]protocol.AbilityData),
+		pendingMu:                    sync.Mutex{},
 	}
 }
 
@@ -169,8 +169,8 @@ func (players *Players) Unmarshal(data []byte) (err error) {
 	if players.pendingAddPlayerPacket == nil {
 		players.pendingAddPlayerPacket = make(map[int64]*packet.AddPlayer)
 	}
-	if players.pendingAdventureSettingsPacket == nil {
-		players.pendingAdventureSettingsPacket = make(map[int64]*packet.AdventureSettings)
+	if players.pendingAbilityData == nil {
+		players.pendingAbilityData = make(map[int64]protocol.AbilityData)
 	}
 	players.pendingMu = sync.Mutex{}
 
@@ -268,6 +268,36 @@ func (p *Players) RemovePlayer(e protocol.PlayerListEntry) {
 	}
 }
 
+func (uq *Players) updateAbilityData(ability protocol.AbilityData) {
+	uniqueID := ability.EntityUniqueID
+	playerReader, found := uq.GetPlayerByUniqueID(uniqueID)
+	if !found {
+		uq.pendingMu.Lock()
+		uq.pendingAbilityData[uniqueID] = ability
+		uq.pendingMu.Unlock()
+		return
+	}
+	player := playerReader.(*Player)
+	for _, layer := range ability.Layers {
+		if layer.Type == protocol.AbilityLayerTypeBase {
+			Values := layer.Values
+			player.knowAbilitiesAndStatus = true
+			player.canBuild = (Values & protocol.AbilityBuild) != 0
+			player.canMine = (Values & protocol.AbilityMine) != 0
+			player.canDoorsAndSwitches = (Values & protocol.AbilityDoorsAndSwitches) != 0
+			player.canOpenContainers = (Values & protocol.AbilityOpenContainers) != 0
+			player.canAttackPlayers = (Values & protocol.AbilityAttackPlayers) != 0
+			player.canAttackMobs = (Values & protocol.AbilityAttackMobs) != 0
+			player.canOperatorCommands = (Values & protocol.AbilityOperatorCommands) != 0
+			player.canTeleport = (Values & protocol.AbilityTeleport) != 0
+
+			player.statusInvulnerable = (Values & protocol.AbilityInvulnerable) != 0
+			player.statusFlying = (Values & protocol.AbilityFlying) != 0
+			player.statusMayFly = (Values & protocol.AbilityMayFly) != 0
+		}
+	}
+}
+
 func (uq *Players) UpdateFromPacket(pk packet.Packet) {
 	// if pk.ID() == packet.IDAdventureSettings || pk.ID() == packet.IDPlayerList {
 	// 	bs, _ := json.Marshal(pk)
@@ -287,13 +317,9 @@ func (uq *Players) UpdateFromPacket(pk packet.Packet) {
 			for _, e := range p.Entries {
 				player := uq.AddPlayer(e)
 				uq.pendingMu.Lock()
-				if pk, found := uq.pendingAdventureSettingsPacket[e.EntityUniqueID]; found {
-					player.setPropertiesFlag(pk.Flags)
-					player.setCommandPermissionLevel(pk.CommandPermissionLevel)
-					player.setActionPermissions(pk.ActionPermissions)
-					player.setOPPermissionLevel(pk.PermissionLevel)
-					player.setCustomStoredPermissions(pk.CustomStoredPermissions)
-					delete(uq.pendingAdventureSettingsPacket, e.EntityUniqueID)
+				if pk, found := uq.pendingAbilityData[e.EntityUniqueID]; found {
+					uq.updateAbilityData(pk)
+					delete(uq.pendingAbilityData, e.EntityUniqueID)
 				}
 				if pk, found := uq.pendingAddPlayerPacket[e.EntityUniqueID]; found {
 					player.setDeviceID(pk.DeviceID)
@@ -308,20 +334,23 @@ func (uq *Players) UpdateFromPacket(pk packet.Packet) {
 				uq.RemovePlayer(e)
 			}
 		}
-	case *packet.AdventureSettings:
-		playerReader, found := uq.GetPlayerByUniqueID(p.PlayerUniqueID)
-		if !found {
-			uq.pendingMu.Lock()
-			uq.pendingAdventureSettingsPacket[p.PlayerUniqueID] = p
-			uq.pendingMu.Unlock()
-			return
-		}
-		player := playerReader.(*Player)
-		player.setPropertiesFlag(p.Flags)
-		player.setCommandPermissionLevel(p.CommandPermissionLevel)
-		player.setActionPermissions(p.ActionPermissions)
-		player.setOPPermissionLevel(p.PermissionLevel)
-		player.setCustomStoredPermissions(p.CustomStoredPermissions)
+	// case *packet.UpdateAdventureSettings:
+	case *packet.UpdateAbilities:
+		uq.updateAbilityData(p.AbilityData)
+	// case *packet.AdventureSettings:
+	// 	playerReader, found := uq.GetPlayerByUniqueID(p.PlayerUniqueID)
+	// 	if !found {
+	// 		uq.pendingMu.Lock()
+	// 		uq.pendingAdventureSettingsPacket[p.PlayerUniqueID] = p
+	// 		uq.pendingMu.Unlock()
+	// 		return
+	// 	}
+	// 	player := playerReader.(*Player)
+	// 	player.setPropertiesFlag(p.Flags)
+	// 	player.setCommandPermissionLevel(p.CommandPermissionLevel)
+	// 	player.setActionPermissions(p.ActionPermissions)
+	// 	player.setOPPermissionLevel(p.PermissionLevel)
+	// 	player.setCustomStoredPermissions(p.CustomStoredPermissions)
 	case *packet.AddPlayer:
 		playerReader, found := uq.GetPlayerByUniqueID(p.AbilityData.EntityUniqueID)
 		if !found {
