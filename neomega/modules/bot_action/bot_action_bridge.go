@@ -125,18 +125,19 @@ func (e *EndPointBotAction) MoveItemFromInventoryToEmptyContainerSlots(pos defin
 func (a *AccessPointBotActionWithPersistData) ExposeUseAnvil() {
 	a.node.ExposeAPI("use_anvil", func(args defines.Values) (result defines.Values, err error) {
 		var pos define.CubePos
+		var blockNEMCRuntimeID uint32
 		var slot uint8
 		var newName string
-		if err = (&ArgsChain{resArgs: args}).TakePos(&pos).TakeUint8(&slot).TakeString(&newName).Error(); err != nil {
+		if err = (&ArgsChain{resArgs: args}).TakePos(&pos).TakeUint32(&blockNEMCRuntimeID).TakeUint8(&slot).TakeString(&newName).Error(); err != nil {
 			return defines.Empty, err
 		}
-		err = a.UseAnvil(pos, slot, newName)
+		err = a.UseAnvil(pos, blockNEMCRuntimeID, slot, newName)
 		return defines.Empty, err
 	}, true)
 }
 
-func (e *EndPointBotAction) UseAnvil(pos define.CubePos, slot uint8, newName string) error {
-	args := (&ArgsChain{}).SetPos(pos).SetUint8(slot).SetString(newName).Done()
+func (e *EndPointBotAction) UseAnvil(pos define.CubePos, blockNemcRtid uint32, slot uint8, newName string) error {
+	args := (&ArgsChain{}).SetPos(pos).SetUint32(blockNemcRtid).SetUint8(slot).SetString(newName).Done()
 	_, err := e.node.CallWithResponse("use_anvil", args).SetTimeout(time.Second * 30).BlockGetResponse()
 	return err
 }

@@ -427,6 +427,19 @@ func (o *BotActionHighLevel) highLevelRenameItemWithAnvil(pos define.CubePos, sl
 	if err := o.highLevelEnsureBotNearby(pos, 8); err != nil {
 		return err
 	}
+	structureResponse, err := o.structureRequester.RequestStructure(pos, define.CubePos{1, 1, 1}, "_temp").BlockGetResult()
+	if err != nil {
+		return err
+	}
+	structure, err := structureResponse.Decode()
+	if err != nil {
+		return err
+	}
+	containerRuntimeID := structure.ForeGround[0]
+	// containerNEMCRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(containerRuntimeID)
+	if containerRuntimeID == blocks.AIR_RUNTIMEID {
+		return fmt.Errorf("block of %v (nemc) not found", containerRuntimeID)
+	}
 	deferActionStand := func() {}
 	deferAction := func() {}
 	if autoGenAnvil {
@@ -448,7 +461,7 @@ func (o *BotActionHighLevel) highLevelRenameItemWithAnvil(pos define.CubePos, sl
 	defer deferActionStand()
 	defer deferAction()
 	o.microAction.SleepTick(1)
-	return o.microAction.UseAnvil(pos, slot, newName)
+	return o.microAction.UseAnvil(pos, containerRuntimeID, slot, newName)
 }
 
 func (o *BotActionHighLevel) HighLevelEnchantItem(slot uint8, enchants map[string]int32) (err error) {

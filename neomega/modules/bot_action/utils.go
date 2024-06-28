@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/chunks/define"
 	"strings"
@@ -49,40 +50,24 @@ func RefreshPosAndDimensionInfo(e *neomega.PosAndDimensionInfo, omega neomega.Cm
 	}
 }
 
-const (
-	ContainerIDDefault = byte(7)
-
-	ContainerIDInventory = byte(12)
-	ContainerIDHotBar    = byte(28)
-
-	ContainerIDFurnace      = byte(25)
-	ContainerIDSmoker       = byte(28) // 它和 ContainerIDHotBar 是一样的吗？
-	ContainerIDShulkerBox   = byte(30)
-	ContainerIDBlastFurnace = byte(45)
-	ContainerIDBarrel       = byte(58)
-	ContainerIDBrewingStand = byte(59)
-
-	ContainerIDUnknown = byte(255)
-)
-
 var containerNameContainerIDMapping = map[string]uint8{
-	"blast_furnace":      ContainerIDBlastFurnace,
-	"lit_blast_furnace":  ContainerIDBlastFurnace,
-	"smoker":             ContainerIDSmoker,
-	"lit_smoker":         ContainerIDSmoker,
-	"furnace":            ContainerIDFurnace,
-	"lit_furnace":        ContainerIDFurnace,
-	"chest":              ContainerIDDefault,
-	"trapped_chest":      ContainerIDDefault,
-	"lectern":            ContainerIDUnknown,
-	"hopper":             ContainerIDDefault,
-	"dispenser":          ContainerIDDefault,
-	"dropper":            ContainerIDDefault,
-	"jukebox":            ContainerIDUnknown,
-	"brewing_stand":      ContainerIDBrewingStand,
-	"undyed_shulker_box": ContainerIDShulkerBox,
-	"shulker_box":        ContainerIDShulkerBox,
-	"barrel":             ContainerIDBarrel,
+	"blast_furnace":      protocol.ContainerBlastFurnaceIngredient,
+	"lit_blast_furnace":  protocol.ContainerBlastFurnaceIngredient,
+	"smoker":             protocol.ContainerSmokerIngredient,
+	"lit_smoker":         protocol.ContainerSmokerIngredient,
+	"furnace":            protocol.ContainerFurnaceIngredient,
+	"lit_furnace":        protocol.ContainerFurnaceIngredient,
+	"chest":              protocol.ContainerLevelEntity,
+	"trapped_chest":      protocol.ContainerLevelEntity,
+	"lectern":            protocol.ContainerTypeLectern,
+	"hopper":             protocol.ContainerLevelEntity,
+	"dispenser":          protocol.ContainerLevelEntity,
+	"dropper":            protocol.ContainerLevelEntity,
+	"jukebox":            protocol.ContainerTypeJukebox,
+	"brewing_stand":      protocol.ContainerBrewingStandInput,
+	"undyed_shulker_box": protocol.ContainerShulkerBox,
+	"shulker_box":        protocol.ContainerShulkerBox,
+	"barrel":             protocol.ContainerBarrel,
 }
 
 func getContainerIDMappingByBlockBaseName(blockName string) (id uint8, found bool) {

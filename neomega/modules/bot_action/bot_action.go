@@ -382,7 +382,7 @@ func (o *AccessPointBotActionWithPersistData) MoveItemFromInventoryToEmptyContai
 		placeStackRequestAction := &protocol.PlaceStackRequestAction{}
 		placeStackRequestAction.Count = uint8(inventoryItem.Stack.Count)
 		placeStackRequestAction.Source = protocol.StackRequestSlotInfo{
-			ContainerID:    ContainerIDInventory, // player inventory (bag)
+			ContainerID:    protocol.ContainerCombinedHotBarAndInventory, // player inventory (bag)
 			Slot:           inventorySlot,
 			StackNetworkID: inventoryItem.StackNetworkID,
 		}
@@ -425,7 +425,7 @@ func (o *AccessPointBotActionWithPersistData) MoveItemFromInventoryToEmptyContai
 				for _, container := range containers {
 					target := containerNewData
 					windowID := int(containerWindow)
-					if container.ContainerID == ContainerIDInventory {
+					if container.ContainerID == protocol.ContainerCombinedHotBarAndInventory {
 						target = inventoryNewData
 						windowID = 0
 					}
@@ -450,7 +450,7 @@ func (o *AccessPointBotActionWithPersistData) MoveItemFromInventoryToEmptyContai
 	return err
 }
 
-func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot uint8, newName string) error {
+func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, blockNemcRtid uint32, slot uint8, newName string) error {
 	release, err := o.occupyBot(time.Second * 3)
 	if err != nil {
 		return err
@@ -481,7 +481,7 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 		ActionType:      protocol.PlayerActionStartBuildingBlock,
 		BlockPosition:   protocol.BlockPos{int32(pos.X()), int32(pos.Y()), int32(pos.Z())},
 	})
-
+	o.tapBlockUsingHotBarItem(pos, blockNemcRtid, 0)
 	var container *packet.ContainerOpen
 	select {
 	case <-time.NewTimer(time.Second * 3).C:
@@ -543,7 +543,7 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 	placeStackRequestAction := &protocol.PlaceStackRequestAction{}
 	placeStackRequestAction.Count = uint8(inventoryItem.Stack.Count)
 	placeStackRequestAction.Source = protocol.StackRequestSlotInfo{
-		ContainerID:    ContainerIDInventory, // player inventory (bag)
+		ContainerID:    protocol.ContainerCombinedHotBarAndInventory, // player inventory (bag)
 		Slot:           slot,
 		StackNetworkID: inventoryItem.StackNetworkID,
 	}
@@ -551,7 +551,7 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 		return fmt.Errorf("cannot move empty inventory slot %v to anvil slot %v", slot, 0)
 	}
 	placeStackRequestAction.Destination = protocol.StackRequestSlotInfo{
-		ContainerID:    0, // this is not a container
+		ContainerID:    protocol.ContainerAnvilInput, // this is not a container
 		Slot:           1,
 		StackNetworkID: 0,
 	}
@@ -563,12 +563,12 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 	getStackRequestAction := &protocol.PlaceStackRequestAction{}
 	getStackRequestAction.Count = uint8(inventoryItem.Stack.Count)
 	getStackRequestAction.Destination = protocol.StackRequestSlotInfo{
-		ContainerID:    ContainerIDInventory, // player inventory (bag)
+		ContainerID:    protocol.ContainerCombinedHotBarAndInventory, // player inventory (bag)
 		Slot:           slot,
 		StackNetworkID: 0, // after put item on anvil, this should be 0
 	}
 	getStackRequestAction.Source = protocol.StackRequestSlotInfo{
-		ContainerID:    0x3c,
+		ContainerID:    protocol.ContainerCreatedOutput,
 		Slot:           0x32,
 		StackNetworkID: RequestIDDoRenameAndTakeIt,
 	}
@@ -576,12 +576,12 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 	getStackWhenFailRequestAction := &protocol.PlaceStackRequestAction{}
 	getStackWhenFailRequestAction.Count = uint8(inventoryItem.Stack.Count)
 	getStackWhenFailRequestAction.Destination = protocol.StackRequestSlotInfo{
-		ContainerID:    ContainerIDInventory, // player inventory (bag)
+		ContainerID:    protocol.ContainerCombinedHotBarAndInventory, // player inventory (bag)
 		Slot:           slot,
 		StackNetworkID: 0, // after put item on anvil, this should be 0
 	}
 	getStackWhenFailRequestAction.Source = protocol.StackRequestSlotInfo{
-		ContainerID:    0,
+		ContainerID:    protocol.ContainerAnvilInput,
 		Slot:           1,
 		StackNetworkID: RequestIDPutItemOnAnvil,
 	}
@@ -607,7 +607,7 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 						DestroyStackRequestAction: protocol.DestroyStackRequestAction{
 							Count: byte(inventoryItem.Stack.Count),
 							Source: protocol.StackRequestSlotInfo{
-								ContainerID:    0,
+								ContainerID:    protocol.ContainerAnvilInput,
 								Slot:           1,
 								StackNetworkID: RequestIDPutItemOnAnvil,
 							},
@@ -661,7 +661,7 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 
 		if renameAndGetItemResponse.Status == protocol.ItemStackResponseStatusOK {
 			for _, container := range renameAndGetItemResponse.ContainerInfo {
-				if container.ContainerID == ContainerIDInventory { // 玩家背包
+				if container.ContainerID == protocol.ContainerCombinedHotBarAndInventory { // 玩家背包
 					for _, slot := range container.SlotInfo {
 						var itemInstance *protocol.ItemInstance
 						if slot.StackNetworkID == 0 {
@@ -698,7 +698,7 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, slot 
 
 		if fallbackGetItemResponse.Status == protocol.ItemStackResponseStatusOK {
 			for _, container := range fallbackGetItemResponse.ContainerInfo {
-				if container.ContainerID == ContainerIDInventory { // 玩家背包
+				if container.ContainerID == protocol.ContainerCombinedHotBarAndInventory { // 玩家背包
 					for _, slot := range container.SlotInfo {
 						var itemInstance *protocol.ItemInstance
 						if slot.StackNetworkID == 0 {
@@ -759,7 +759,7 @@ func (o *AccessPointBotActionWithPersistData) DropItemFromHotBar(slot uint8) err
 					&protocol.DropStackRequestAction{
 						Count: byte(inventoryItem.Stack.Count),
 						Source: protocol.StackRequestSlotInfo{
-							ContainerID:    ContainerIDHotBar,
+							ContainerID:    protocol.ContainerHotBar,
 							Slot:           byte(slot),
 							StackNetworkID: inventoryItem.StackNetworkID,
 						},
@@ -783,7 +783,7 @@ func (o *AccessPointBotActionWithPersistData) DropItemFromHotBar(slot uint8) err
 			return fmt.Errorf("client and server out of sync in maintained info (drop item)")
 		}
 		for _, container := range dropItemResponse.ContainerInfo {
-			if container.ContainerID == ContainerIDHotBar { // 玩家快捷物品栏
+			if container.ContainerID == protocol.ContainerHotBar { // 玩家快捷物品栏
 				for _, slot := range container.SlotInfo {
 					if slot.StackNetworkID == 0 {
 						o.clientInfo.writeInventorySlot(0, slot.Slot, o.makeEmptyItemInstance())
@@ -871,12 +871,12 @@ func (o *AccessPointBotActionWithPersistData) MoveItemInsideHotBarOrInventory(so
 	}
 	moveStackRequestAction.Count = count
 	moveStackRequestAction.Source = protocol.StackRequestSlotInfo{
-		ContainerID:    ContainerIDInventory, // player inventory (bag)
+		ContainerID:    protocol.ContainerCombinedHotBarAndInventory, // player inventory (bag)
 		Slot:           sourceSlot,
 		StackNetworkID: inventoryItem.StackNetworkID,
 	}
 	moveStackRequestAction.Destination = protocol.StackRequestSlotInfo{
-		ContainerID:    ContainerIDInventory, // player inventory (bag)
+		ContainerID:    protocol.ContainerCombinedHotBarAndInventory, // player inventory (bag)
 		Slot:           targetSlot,
 		StackNetworkID: 0,
 	}
@@ -905,7 +905,7 @@ func (o *AccessPointBotActionWithPersistData) MoveItemInsideHotBarOrInventory(so
 		if response.Status == protocol.ItemStackResponseStatusOK {
 			origItem := o.copyItemInstance(inventoryItem)
 			for _, container := range response.ContainerInfo {
-				if container.ContainerID != ContainerIDInventory {
+				if container.ContainerID != protocol.ContainerCombinedHotBarAndInventory {
 					o.forceGetRidOfUnrecoverableState("operate inventory but server report non-inventory container")
 				}
 				for _, slot := range container.SlotInfo {

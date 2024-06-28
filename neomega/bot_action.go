@@ -120,7 +120,7 @@ type BotAction interface {
 	UseHotBarItemOnBlockWithBotOffset(blockPos define.CubePos, botOffset define.CubePos, blockNEMCRuntimeID uint32, face int32, slot uint8) (err error)
 	// TapBlockUsingHotBarItem(blockPos define.CubePos, blockNEMCRuntimeID uint32, slotID uint8) (err error)
 	MoveItemFromInventoryToEmptyContainerSlots(pos define.CubePos, blockNemcRtid uint32, blockName string, moveOperations map[uint8]uint8) error
-	UseAnvil(pos define.CubePos, slot uint8, newName string) error
+	UseAnvil(pos define.CubePos, blockNemcRtid uint32, slot uint8, newName string) error
 	DropItemFromHotBar(slot uint8) error
 	MoveItemInsideHotBarOrInventory(sourceSlot, targetSlot, count uint8) error
 	SetStructureBlockData(pos define.CubePos, settings *StructureBlockSettings)
