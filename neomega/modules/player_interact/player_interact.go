@@ -94,7 +94,10 @@ func (i *PlayerInteract) onAddPlayer(uid uuid.UUID) {
 }
 
 func (i *PlayerInteract) onRemovePlayer(uid uuid.UUID) {
-	player := i.cachedPlayers[uid]
+	player, found := i.cachedPlayers[uid]
+	if !found {
+		return
+	}
 	name, found := player.GetUsername()
 	if found {
 		delete(i.nextMsgCbs, name)

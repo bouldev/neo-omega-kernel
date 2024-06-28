@@ -282,15 +282,7 @@ func (uq *Players) updateAbilityData(ability protocol.AbilityData) {
 		if layer.Type == protocol.AbilityLayerTypeBase {
 			Values := layer.Values
 			player.knowAbilitiesAndStatus = true
-			player.canBuild = (Values & protocol.AbilityBuild) != 0
-			player.canMine = (Values & protocol.AbilityMine) != 0
-			player.canDoorsAndSwitches = (Values & protocol.AbilityDoorsAndSwitches) != 0
-			player.canOpenContainers = (Values & protocol.AbilityOpenContainers) != 0
-			player.canAttackPlayers = (Values & protocol.AbilityAttackPlayers) != 0
-			player.canAttackMobs = (Values & protocol.AbilityAttackMobs) != 0
-			player.canOperatorCommands = (Values & protocol.AbilityOperatorCommands) != 0
-			player.canTeleport = (Values & protocol.AbilityTeleport) != 0
-
+			player.UpdateAbility(uint16(Values))
 			player.statusInvulnerable = (Values & protocol.AbilityInvulnerable) != 0
 			player.statusFlying = (Values & protocol.AbilityFlying) != 0
 			player.statusMayFly = (Values & protocol.AbilityMayFly) != 0

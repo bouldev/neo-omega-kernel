@@ -295,7 +295,16 @@ type PlayerKit interface {
 	CheckCondition(onResult func(bool), conditions ...string)
 	Query(onResult func([]QueryResult), conditions ...string)
 	// SetAbility(adventureFlagsUpdateMap, actionPermissionUpdateMap map[uint32]bool) (sent bool)
-	SetAbilityString(adventureFlagsUpdateMap, actionPermissionUpdateMap map[string]bool) (sent bool)
+	// SetAbilityString(adventureFlagsUpdateMap, actionPermissionUpdateMap map[string]bool) (sent bool)
+
+	SetBuildAbility(allow bool)
+	SetMineAbility(allow bool)
+	SetDoorsAndSwitchesAbility(allow bool)
+	SetOpenContainersAbility(allow bool)
+	SetAttackPlayersAbility(allow bool)
+	SetAttackMobsAbility(allow bool)
+	SetOperatorCommandsAbility(allow bool)
+	SetTeleportAbility(allow bool)
 }
 
 type GameCtrl interface {

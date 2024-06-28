@@ -1,16 +1,13 @@
 package minimal_end_point_entry
 
 import (
-	"bufio"
 	"fmt"
 	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/minecraft/protocol/packet"
 	"neo-omega-kernel/neomega/bundle"
 	"neo-omega-kernel/nodes"
 	"neo-omega-kernel/nodes/defines"
 	"neo-omega-kernel/nodes/underlay_conn"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -50,6 +47,20 @@ func Entry(args *Args) {
 	}
 	time.Sleep(time.Second)
 	fmt.Println(omegaCore)
+	players := omegaCore.GetMicroUQHolder().GetAllOnlinePlayers()
+	for _, player := range players {
+		fmt.Println(player.GetUsername())
+		fmt.Println(player.GetEntityUniqueID())
+	}
+
+	// omegaCore.GetGameControl().SendPacket(&packet.RequestPermissions{
+	// 	EntityUniqueID:       -4294967295,
+	// 	PermissionLevel:      3,
+	// 	RequestedPermissions: protocol.AbilityBuild,
+	// })
+	player, _ := omegaCore.GetPlayerInteract().GetPlayerKit("2401PT")
+	player.SetBuildAbility(false)
+	player.SetDoorsAndSwitchesAbility(false)
 	// go func() {
 	// 	i := 0
 	// 	for {
@@ -246,55 +257,55 @@ func Entry(args *Args) {
 	// 	Command:      "say 240!",
 	// }, 3)
 
-	go func() {
-		reader := bufio.NewReader(os.Stdin)
-		for {
-			time.Sleep(time.Second / 3)
-			fmt.Printf("> ")
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				panic(err)
-			}
-			line = strings.TrimSpace(line)
-			if strings.HasPrefix(line, "/") {
-				omegaCore.GetGameControl().SendWebSocketCmdNeedResponse(line).AsyncGetResult(func(output *packet.CommandOutput) {
-					fmt.Println(output)
-				})
-				continue
-			}
-			if strings.HasPrefix(line, "player/") {
-				omegaCore.GetGameControl().SendPlayerCmdNeedResponse(strings.TrimPrefix(line, "player/")).AsyncGetResult(func(output *packet.CommandOutput) {
-					fmt.Println(output)
-				})
-				continue
-			}
-			if strings.HasPrefix(line, "#uq.") {
-				line = strings.TrimPrefix(line, "#uq.")
-				if line == "all_players" {
-					for i, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
-						name, _ := player.GetUsername()
-						uuid, _ := player.GetUUIDString()
-						fmt.Printf("%v %v %v\n", i, name, uuid)
-					}
-				}
-				// if line == "command_permission_level" {
-				// 	for _, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
-				// 		name, _ := player.GetUsername()
-				// 		level, found := player.GetCommandPermissionLevel()
-				// 		fmt.Printf("%v %v %v\n", name, level, found)
-				// 	}
-				// }
-				// if line == "op_permission_level" {
-				// 	for _, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
-				// 		name, _ := player.GetUsername()
-				// 		level, found := player.GetOPPermissionLevel()
-				// 		fmt.Printf("%v %v %v\n", name, level, found)
-				// 	}
-				// }
-				continue
-			}
-		}
-	}()
+	// go func() {
+	// 	reader := bufio.NewReader(os.Stdin)
+	// 	for {
+	// 		time.Sleep(time.Second / 3)
+	// 		fmt.Printf("> ")
+	// 		line, err := reader.ReadString('\n')
+	// 		if err != nil {
+	// 			panic(err)
+	// 		}
+	// 		line = strings.TrimSpace(line)
+	// 		if strings.HasPrefix(line, "/") {
+	// 			omegaCore.GetGameControl().SendWebSocketCmdNeedResponse(line).AsyncGetResult(func(output *packet.CommandOutput) {
+	// 				fmt.Println(output)
+	// 			})
+	// 			continue
+	// 		}
+	// 		if strings.HasPrefix(line, "player/") {
+	// 			omegaCore.GetGameControl().SendPlayerCmdNeedResponse(strings.TrimPrefix(line, "player/")).AsyncGetResult(func(output *packet.CommandOutput) {
+	// 				fmt.Println(output)
+	// 			})
+	// 			continue
+	// 		}
+	// 		if strings.HasPrefix(line, "#uq.") {
+	// 			line = strings.TrimPrefix(line, "#uq.")
+	// 			if line == "all_players" {
+	// 				for i, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
+	// 					name, _ := player.GetUsername()
+	// 					uuid, _ := player.GetUUIDString()
+	// 					fmt.Printf("%v %v %v\n", i, name, uuid)
+	// 				}
+	// 			}
+	// 			// if line == "command_permission_level" {
+	// 			// 	for _, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
+	// 			// 		name, _ := player.GetUsername()
+	// 			// 		level, found := player.GetCommandPermissionLevel()
+	// 			// 		fmt.Printf("%v %v %v\n", name, level, found)
+	// 			// 	}
+	// 			// }
+	// 			// if line == "op_permission_level" {
+	// 			// 	for _, player := range omegaCore.GetMicroUQHolder().GetAllOnlinePlayers() {
+	// 			// 		name, _ := player.GetUsername()
+	// 			// 		level, found := player.GetOPPermissionLevel()
+	// 			// 		fmt.Printf("%v %v %v\n", name, level, found)
+	// 			// 	}
+	// 			// }
+	// 			continue
+	// 		}
+	// 	}
+	// }()
 
 	panic(<-node.WaitClosed())
 }

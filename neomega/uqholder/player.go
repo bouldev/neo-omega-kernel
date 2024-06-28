@@ -1,6 +1,7 @@
 package uqholder
 
 import (
+	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/neomega"
 	"time"
 
@@ -180,6 +181,17 @@ func (p *Player) GetSkinID() (id string, found bool) {
 func (p *Player) setSkinID(id string) {
 	p.SkinID = id
 	p.knownSkinID = true
+}
+
+func (player *Player) UpdateAbility(ability uint16) {
+	player.canBuild = (ability & protocol.AbilityBuild) != 0
+	player.canMine = (ability & protocol.AbilityMine) != 0
+	player.canDoorsAndSwitches = (ability & protocol.AbilityDoorsAndSwitches) != 0
+	player.canOpenContainers = (ability & protocol.AbilityOpenContainers) != 0
+	player.canAttackPlayers = (ability & protocol.AbilityAttackPlayers) != 0
+	player.canAttackMobs = (ability & protocol.AbilityAttackMobs) != 0
+	player.canOperatorCommands = (ability & protocol.AbilityOperatorCommands) != 0
+	player.canTeleport = (ability & protocol.AbilityTeleport) != 0
 }
 
 // func (p *Player) GetPropertiesFlag() (flag uint32, found bool) {
