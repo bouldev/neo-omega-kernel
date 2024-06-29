@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"neo-omega-kernel/i18n"
 	"neo-omega-kernel/neomega"
@@ -375,51 +374,176 @@ func PlayerSkinID(uuidStr *C.char) *C.char {
 	return C.CString(SkinID)
 }
 
-//export PlayerPropertiesFlag
-func PlayerPropertiesFlag(uuidStr *C.char) uint32 {
+// //export PlayerPropertiesFlag
+// func PlayerPropertiesFlag(uuidStr *C.char) uint32 {
+// 	p, _ := GPlayers.Get(C.GoString(uuidStr))
+// 	PropertiesFlag, _ := p.GetPropertiesFlag()
+// 	return PropertiesFlag
+// }
+
+// //export PlayerCommandPermissionLevel
+// func PlayerCommandPermissionLevel(uuidStr *C.char) uint32 {
+// 	p, _ := GPlayers.Get(C.GoString(uuidStr))
+// 	CommandPermissionLevel, _ := p.GetCommandPermissionLevel()
+// 	return CommandPermissionLevel
+// }
+
+// //export PlayerActionPermissions
+// func PlayerActionPermissions(uuidStr *C.char) uint32 {
+// 	p, _ := GPlayers.Get(C.GoString(uuidStr))
+// 	ActionPermissions, _ := p.GetActionPermissions()
+// 	return ActionPermissions
+// }
+
+// //export PlayerGetAbilityString
+// func PlayerGetAbilityString(uuidStr *C.char) *C.char {
+// 	p, _ := GPlayers.Get(C.GoString(uuidStr))
+// 	adventureFlagsMap, actionPermissionMap, _ := p.GetAbilityString()
+// 	abilityMap := map[string]map[string]bool{
+// 		"AdventureFlagsMap":   adventureFlagsMap,
+// 		"ActionPermissionMap": actionPermissionMap,
+// 	}
+// 	data, _ := json.Marshal(abilityMap)
+// 	return C.CString(string(data))
+// }
+
+// //export PlayerOPPermissionLevel
+// func PlayerOPPermissionLevel(uuidStr *C.char) uint32 {
+// 	p, _ := GPlayers.Get(C.GoString(uuidStr))
+// 	OPPermissionLevel, _ := p.GetOPPermissionLevel()
+// 	return OPPermissionLevel
+// }
+
+// //export PlayerCustomStoredPermissions
+// func PlayerCustomStoredPermissions(uuidStr *C.char) uint32 {
+// 	p, _ := GPlayers.Get(C.GoString(uuidStr))
+// 	CustomStoredPermissions, _ := p.GetCustomStoredPermissions()
+// 	return CustomStoredPermissions
+// }
+
+//export PlayerCanBuild
+func PlayerCanBuild(uuidStr *C.char) bool {
 	p, _ := GPlayers.Get(C.GoString(uuidStr))
-	PropertiesFlag, _ := p.GetPropertiesFlag()
-	return PropertiesFlag
+	hasAbility, _ := p.CanBuild()
+	return hasAbility
 }
 
-//export PlayerCommandPermissionLevel
-func PlayerCommandPermissionLevel(uuidStr *C.char) uint32 {
+//export PlayerSetBuild
+func PlayerSetBuild(uuidStr *C.char, allow bool) {
 	p, _ := GPlayers.Get(C.GoString(uuidStr))
-	CommandPermissionLevel, _ := p.GetCommandPermissionLevel()
-	return CommandPermissionLevel
+	p.SetBuildAbility(allow)
 }
 
-//export PlayerActionPermissions
-func PlayerActionPermissions(uuidStr *C.char) uint32 {
+//export PlayerCanMine
+func PlayerCanMine(uuidStr *C.char) bool {
 	p, _ := GPlayers.Get(C.GoString(uuidStr))
-	ActionPermissions, _ := p.GetActionPermissions()
-	return ActionPermissions
+	hasAbility, _ := p.CanMine()
+	return hasAbility
 }
 
-//export PlayerGetAbilityString
-func PlayerGetAbilityString(uuidStr *C.char) *C.char {
+//export PlayerSetMine
+func PlayerSetMine(uuidStr *C.char, allow bool) {
 	p, _ := GPlayers.Get(C.GoString(uuidStr))
-	adventureFlagsMap, actionPermissionMap, _ := p.GetAbilityString()
-	abilityMap := map[string]map[string]bool{
-		"AdventureFlagsMap":   adventureFlagsMap,
-		"ActionPermissionMap": actionPermissionMap,
-	}
-	data, _ := json.Marshal(abilityMap)
-	return C.CString(string(data))
+	p.SetMineAbility(allow)
 }
 
-//export PlayerOPPermissionLevel
-func PlayerOPPermissionLevel(uuidStr *C.char) uint32 {
+//export PlayerCanDoorsAndSwitches
+func PlayerCanDoorsAndSwitches(uuidStr *C.char) bool {
 	p, _ := GPlayers.Get(C.GoString(uuidStr))
-	OPPermissionLevel, _ := p.GetOPPermissionLevel()
-	return OPPermissionLevel
+	hasAbility, _ := p.CanDoorsAndSwitches()
+	return hasAbility
 }
 
-//export PlayerCustomStoredPermissions
-func PlayerCustomStoredPermissions(uuidStr *C.char) uint32 {
+//export PlayerSetDoorsAndSwitches
+func PlayerSetDoorsAndSwitches(uuidStr *C.char, allow bool) {
 	p, _ := GPlayers.Get(C.GoString(uuidStr))
-	CustomStoredPermissions, _ := p.GetCustomStoredPermissions()
-	return CustomStoredPermissions
+	p.SetDoorsAndSwitchesAbility(allow)
+}
+
+//export PlayerCanOpenContainers
+func PlayerCanOpenContainers(uuidStr *C.char) bool {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	hasAbility, _ := p.CanOpenContainers()
+	return hasAbility
+}
+
+//export PlayerSetOpenContainers
+func PlayerSetOpenContainers(uuidStr *C.char, allow bool) {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	p.SetOpenContainersAbility(allow)
+}
+
+//export PlayerCanAttackPlayers
+func PlayerCanAttackPlayers(uuidStr *C.char) bool {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	hasAbility, _ := p.CanAttackPlayers()
+	return hasAbility
+}
+
+//export PlayerSetAttackPlayers
+func PlayerSetAttackPlayers(uuidStr *C.char, allow bool) {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	p.SetAttackPlayersAbility(allow)
+}
+
+//export PlayerCanAttackMobs
+func PlayerCanAttackMobs(uuidStr *C.char) bool {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	hasAbility, _ := p.CanAttackMobs()
+	return hasAbility
+}
+
+//export PlayerSetAttackMobs
+func PlayerSetAttackMobs(uuidStr *C.char, allow bool) {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	p.SetAttackMobsAbility(allow)
+}
+
+//export PlayerCanOperatorCommands
+func PlayerCanOperatorCommands(uuidStr *C.char) bool {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	hasAbility, _ := p.CanOperatorCommands()
+	return hasAbility
+}
+
+//export PlayerSetOperatorCommands
+func PlayerSetOperatorCommands(uuidStr *C.char, allow bool) {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	p.SetOperatorCommandsAbility(allow)
+}
+
+//export PlayerCanTeleport
+func PlayerCanTeleport(uuidStr *C.char) bool {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	hasAbility, _ := p.CanTeleport()
+	return hasAbility
+}
+
+//export PlayerSetTeleport
+func PlayerSetTeleport(uuidStr *C.char, allow bool) {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	p.SetTeleportAbility(allow)
+}
+
+//export PlayerStatusInvulnerable
+func PlayerStatusInvulnerable(uuidStr *C.char) bool {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	hasAbility, _ := p.StatusInvulnerable()
+	return hasAbility
+}
+
+//export PlayerStatusFlying
+func PlayerStatusFlying(uuidStr *C.char) bool {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	hasAbility, _ := p.StatusFlying()
+	return hasAbility
+}
+
+//export PlayerStatusMayFly
+func PlayerStatusMayFly(uuidStr *C.char) bool {
+	p, _ := GPlayers.Get(C.GoString(uuidStr))
+	hasAbility, _ := p.StatusMayFly()
+	return hasAbility
 }
 
 //export PlayerDeviceID
@@ -481,21 +605,21 @@ func PlayerActionBar(uuidStr *C.char, actionBar *C.char) {
 	p.ActionBar(C.GoString(actionBar))
 }
 
-//export SetPlayerAbility
-func SetPlayerAbility(uuidStr *C.char, jsonFlags *C.char) {
-	p, _ := GPlayers.Get(C.GoString(uuidStr))
-	// abilityMap := map[string]map[string]bool{
-	// 	"AdventureFlagsMap":   adventureFlagsMap,
-	// 	"ActionPermissionMap": actionPermissionMap,
-	// }
-	abilityMap := map[string]map[string]bool{}
-	json.Unmarshal([]byte(C.GoString(jsonFlags)), &abilityMap)
-	adventureFlagsMap := abilityMap["AdventureFlagsMap"]
-	actionPermissionMap := abilityMap["ActionPermissionMap"]
-	fmt.Println(adventureFlagsMap)
-	fmt.Println(actionPermissionMap)
-	p.SetAbilityString(adventureFlagsMap, actionPermissionMap)
-}
+// //export SetPlayerAbility
+// func SetPlayerAbility(uuidStr *C.char, jsonFlags *C.char) {
+// 	p, _ := GPlayers.Get(C.GoString(uuidStr))
+// 	// abilityMap := map[string]map[string]bool{
+// 	// 	"AdventureFlagsMap":   adventureFlagsMap,
+// 	// 	"ActionPermissionMap": actionPermissionMap,
+// 	// }
+// 	abilityMap := map[string]map[string]bool{}
+// 	json.Unmarshal([]byte(C.GoString(jsonFlags)), &abilityMap)
+// 	adventureFlagsMap := abilityMap["AdventureFlagsMap"]
+// 	actionPermissionMap := abilityMap["ActionPermissionMap"]
+// 	fmt.Println(adventureFlagsMap)
+// 	fmt.Println(actionPermissionMap)
+// 	p.SetAbilityString(adventureFlagsMap, actionPermissionMap)
+// }
 
 //export InterceptPlayerJustNextInput
 func InterceptPlayerJustNextInput(uuidStr *C.char, retrieverID *C.char) {

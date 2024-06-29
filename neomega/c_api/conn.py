@@ -25,6 +25,9 @@ class byteCSlice(ctypes.Structure):
 def toCString(string: str):
     return ctypes.c_char_p(bytes(string, encoding="utf-8"))
 
+def toGoUint8(b:bool):
+    return ctypes.c_uint8(1 if b else 0)
+
 def to_GoInt(i: int):
     return ctypes.c_longlong(i)
 
@@ -202,18 +205,18 @@ LIB.PlayerBuildPlatform.argtypes = [CString]
 LIB.PlayerBuildPlatform.restype = ctypes.c_int32
 LIB.PlayerSkinID.argtypes = [CString]
 LIB.PlayerSkinID.restype = CString
-LIB.PlayerPropertiesFlag.argtypes = [CString]
-LIB.PlayerPropertiesFlag.restype = ctypes.c_uint32
-LIB.PlayerCommandPermissionLevel.argtypes = [CString]
-LIB.PlayerCommandPermissionLevel.restype = ctypes.c_uint32
-LIB.PlayerActionPermissions.argtypes = [CString]
-LIB.PlayerActionPermissions.restype = ctypes.c_uint32
-LIB.PlayerGetAbilityString.argtypes = [CString]
-LIB.PlayerGetAbilityString.restype = CString
-LIB.PlayerOPPermissionLevel.argtypes = [CString]
-LIB.PlayerOPPermissionLevel.restype = ctypes.c_uint32
-LIB.PlayerCustomStoredPermissions.argtypes = [CString]
-LIB.PlayerCustomStoredPermissions.restype = ctypes.c_uint32
+# LIB.PlayerPropertiesFlag.argtypes = [CString]
+# LIB.PlayerPropertiesFlag.restype = ctypes.c_uint32
+# LIB.PlayerCommandPermissionLevel.argtypes = [CString]
+# LIB.PlayerCommandPermissionLevel.restype = ctypes.c_uint32
+# LIB.PlayerActionPermissions.argtypes = [CString]
+# LIB.PlayerActionPermissions.restype = ctypes.c_uint32
+# LIB.PlayerGetAbilityString.argtypes = [CString]
+# LIB.PlayerGetAbilityString.restype = CString
+# LIB.PlayerOPPermissionLevel.argtypes = [CString]
+# LIB.PlayerOPPermissionLevel.restype = ctypes.c_uint32
+# LIB.PlayerCustomStoredPermissions.argtypes = [CString]
+# LIB.PlayerCustomStoredPermissions.restype = ctypes.c_uint32
 LIB.PlayerDeviceID.argtypes = [CString]
 LIB.PlayerDeviceID.restype = CString
 LIB.PlayerEntityRuntimeID.argtypes = [CString]
@@ -224,6 +227,36 @@ LIB.PlayerIsOP.argtypes = [CString]
 LIB.PlayerIsOP.restype = ctypes.c_uint8
 LIB.PlayerOnline.argtypes = [CString]
 LIB.PlayerOnline.restype = ctypes.c_uint8
+LIB.PlayerCanBuild.argtypes = [CString]
+LIB.PlayerCanBuild.restype = ctypes.c_uint8
+LIB.PlayerSetBuild.argtypes = [CString,ctypes.c_uint8]
+LIB.PlayerCanMine.argtypes = [CString]
+LIB.PlayerCanMine.restype = ctypes.c_uint8
+LIB.PlayerSetMine.argtypes = [CString,ctypes.c_uint8]
+LIB.PlayerCanDoorsAndSwitches.argtypes = [CString]
+LIB.PlayerCanDoorsAndSwitches.restype = ctypes.c_uint8
+LIB.PlayerSetDoorsAndSwitches.argtypes = [CString,ctypes.c_uint8]
+LIB.PlayerCanOpenContainers.argtypes = [CString]
+LIB.PlayerCanOpenContainers.restype = ctypes.c_uint8
+LIB.PlayerSetOpenContainers.argtypes = [CString,ctypes.c_uint8]
+LIB.PlayerCanAttackPlayers.argtypes = [CString]
+LIB.PlayerCanAttackPlayers.restype = ctypes.c_uint8
+LIB.PlayerSetAttackPlayers.argtypes = [CString,ctypes.c_uint8]
+LIB.PlayerCanAttackMobs.argtypes = [CString]
+LIB.PlayerCanAttackMobs.restype = ctypes.c_uint8
+LIB.PlayerSetAttackMobs.argtypes = [CString,ctypes.c_uint8]
+LIB.PlayerCanOperatorCommands.argtypes = [CString]
+LIB.PlayerCanOperatorCommands.restype = ctypes.c_uint8
+LIB.PlayerSetOperatorCommands.argtypes = [CString,ctypes.c_uint8]
+LIB.PlayerCanTeleport.argtypes = [CString]
+LIB.PlayerCanTeleport.restype = ctypes.c_uint8
+LIB.PlayerSetTeleport.argtypes = [CString,ctypes.c_uint8]
+LIB.PlayerStatusInvulnerable.argtypes = [CString]
+LIB.PlayerStatusInvulnerable.restype = ctypes.c_uint8
+LIB.PlayerStatusFlying.argtypes = [CString]
+LIB.PlayerStatusFlying.restype = ctypes.c_uint8
+LIB.PlayerStatusMayFly.argtypes = [CString]
+LIB.PlayerStatusMayFly.restype = ctypes.c_uint8
 
 LIB.GetPlayerByUUID.argtypes = [CString]
 LIB.GetPlayerByUUID.restype = CString
@@ -257,30 +290,30 @@ class Counter:
         self.current_i+=1
         return f"{self.prefix}_{self.current_i}"
 
-@dataclass 
-class ActionPermissionMap:
-    ActionPermissionAttackMobs:bool=False
-    ActionPermissionAttackPlayers:bool=False
-    ActionPermissionBuild:bool=False
-    ActionPermissionDoorsAndSwitches:bool=False
-    ActionPermissionMine:bool=False
-    ActionPermissionOpenContainers:bool=False
-    ActionPermissionOperator:bool=False
-    ActionPermissionTeleport:bool=False
-    ActionPermissionUnknown:bool=False
+# @dataclass 
+# class ActionPermissionMap:
+#     ActionPermissionAttackMobs:bool=False
+#     ActionPermissionAttackPlayers:bool=False
+#     ActionPermissionBuild:bool=False
+#     ActionPermissionDoorsAndSwitches:bool=False
+#     ActionPermissionMine:bool=False
+#     ActionPermissionOpenContainers:bool=False
+#     ActionPermissionOperator:bool=False
+#     ActionPermissionTeleport:bool=False
+#     ActionPermissionUnknown:bool=False
 
-@dataclass 
-class AdventureFlagsMap:
-    AdventureFlagAllowFlight:bool=False
-    AdventureFlagAutoJump:bool=False
-    AdventureFlagFlying:bool=False
-    AdventureFlagMuted:bool=False
-    AdventureFlagNoClip:bool=False
-    AdventureFlagWorldBuilder:bool=False
-    AdventureFlagWorldImmutable:bool=False
-    AdventureSettingsFlagsNoMvP:bool=False
-    AdventureSettingsFlagsNoPvM:bool=False
-    AdventureSettingsFlagsShowNameTags:bool=False
+# @dataclass 
+# class AdventureFlagsMap:
+#     AdventureFlagAllowFlight:bool=False
+#     AdventureFlagAutoJump:bool=False
+#     AdventureFlagFlying:bool=False
+#     AdventureFlagMuted:bool=False
+#     AdventureFlagNoClip:bool=False
+#     AdventureFlagWorldBuilder:bool=False
+#     AdventureFlagWorldImmutable:bool=False
+#     AdventureSettingsFlagsNoMvP:bool=False
+#     AdventureSettingsFlagsNoPvM:bool=False
+#     AdventureSettingsFlagsShowNameTags:bool=False
 
 @dataclass
 class Chat:
@@ -422,37 +455,124 @@ class PlayerKit:
         return toPyString(LIB.PlayerDeviceID(self._c_uuid))
 
     @property
-    def properties_flag(self)->int:
+    def can_build(self)->str:
         OmegaAvailable()
-        return int(LIB.PlayerPropertiesFlag(self._c_uuid))
+        return toPyString(LIB.PlayerCanBuild(self._c_uuid))
+
+    def set_build_permission(self,allow:bool):
+        OmegaAvailable()
+        LIB.PlayerSetBuild(self._c_uuid,toGoUint8(allow))
 
     @property
-    def command_permission_level(self)->int:
+    def can_mine(self)->str:
         OmegaAvailable()
-        return int(LIB.PlayerCommandPermissionLevel(self._c_uuid))
+        return toPyString(LIB.PlayerCanMine(self._c_uuid))
+
+    def set_mine_permission(self,allow:bool):
+        OmegaAvailable()
+        LIB.PlayerSetMine(self._c_uuid,toGoUint8(allow))
 
     @property
-    def action_permissions(self)->int:
+    def can_doors_and_switches(self)->str:
         OmegaAvailable()
-        return int(LIB.PlayerActionPermissions(self._c_uuid))
+        return toPyString(LIB.PlayerCanDoorsAndSwitches(self._c_uuid))
+
+    def set_doors_and_switches_permission(self,allow:bool):
+        OmegaAvailable()
+        LIB.PlayerSetDoorsAndSwitches(self._c_uuid,toGoUint8(allow))
 
     @property
-    def op_permissions_level(self)->int:
+    def can_open_containers(self)->str:
         OmegaAvailable()
-        return int(LIB.PlayerOPPermissionLevel(self._c_uuid))
+        return toPyString(LIB.PlayerCanOpenContainers(self._c_uuid))
+
+    def set_containers_permission(self,allow:bool):
+        OmegaAvailable()
+        LIB.PlayerSetOpenContainers(self._c_uuid,toGoUint8(allow))
 
     @property
-    def custom_permissions(self)->int:
+    def can_attack_players(self)->str:
         OmegaAvailable()
-        return int(LIB.PlayerCustomStoredPermissions(self._c_uuid))
+        return toPyString(LIB.PlayerCanAttackPlayers(self._c_uuid))
+
+    def set_attack_players_permission(self,allow:bool):
+        OmegaAvailable()
+        LIB.PlayerSetAttackPlayers(self._c_uuid,toGoUint8(allow))
 
     @property
-    def ability_map(self)->Tuple[ActionPermissionMap,AdventureFlagsMap]:
+    def can_attack_mobs(self)->str:
         OmegaAvailable()
-        maps= json.loads(toPyString(LIB.PlayerGetAbilityString(self._c_uuid)))
-        ActionPermissionMapData=maps["ActionPermissionMap"]
-        AdventureFlagsMapData=maps["AdventureFlagsMap"]
-        return ActionPermissionMap(**ActionPermissionMapData),AdventureFlagsMap(**AdventureFlagsMapData)
+        return toPyString(LIB.PlayerCanAttackMobs(self._c_uuid))
+
+    def set_attack_mobs_permission(self,allow:bool):
+        OmegaAvailable()
+        LIB.PlayerSetAttackMobs(self._c_uuid,toGoUint8(allow))
+
+    @property
+    def can_operator_commands(self)->str:
+        OmegaAvailable()
+        return toPyString(LIB.PlayerCanOperatorCommands(self._c_uuid))
+
+    def set_operator_commands_permission(self,allow:bool):
+        OmegaAvailable()
+        LIB.PlayerSetOperatorCommands(self._c_uuid,toGoUint8(allow))
+
+    @property
+    def can_teleport(self)->str:
+        OmegaAvailable()
+        return toPyString(LIB.PlayerCanTeleport(self._c_uuid))
+
+    def set_teleports_permission(self,allow:bool):
+        OmegaAvailable()
+        LIB.PlayerSetTeleport(self._c_uuid,toGoUint8(allow))
+
+    @property
+    def is_invulnerable(self)->str:
+        OmegaAvailable()
+        return toPyString(LIB.PlayerStatusInvulnerable(self._c_uuid))
+    
+    @property
+    def is_flying(self)->str:
+        OmegaAvailable()
+        return toPyString(LIB.PlayerStatusFlying(self._c_uuid))
+
+    @property
+    def can_fly(self)->str:
+        OmegaAvailable()
+        return toPyString(LIB.PlayerStatusMayFly(self._c_uuid))
+
+    # @property
+    # def properties_flag(self)->int:
+    #     OmegaAvailable()
+    #     return int(LIB.PlayerPropertiesFlag(self._c_uuid))
+
+    # @property
+    # def command_permission_level(self)->int:
+    #     OmegaAvailable()
+    #     return int(LIB.PlayerCommandPermissionLevel(self._c_uuid))
+
+    # @property
+    # def action_permissions(self)->int:
+    #     OmegaAvailable()
+    #     return int(LIB.PlayerActionPermissions(self._c_uuid))
+
+    # @property
+    # def op_permissions_level(self)->int:
+    #     OmegaAvailable()
+    #     return int(LIB.PlayerOPPermissionLevel(self._c_uuid))
+
+    # @property
+    # def custom_permissions(self)->int:
+    #     OmegaAvailable()
+    #     return int(LIB.PlayerCustomStoredPermissions(self._c_uuid))
+
+    # @property
+    # def ability_map(self)->Tuple[ActionPermissionMap,AdventureFlagsMap]:
+    #     OmegaAvailable()
+    #     maps= json.loads(toPyString(LIB.PlayerGetAbilityString(self._c_uuid)))
+    #     ActionPermissionMapData=maps["ActionPermissionMap"]
+    #     AdventureFlagsMapData=maps["AdventureFlagsMap"]
+    #     return ActionPermissionMap(**ActionPermissionMapData),AdventureFlagsMap(**AdventureFlagsMapData)
 
     @property
     def entity_runtime_id(self)->int:
