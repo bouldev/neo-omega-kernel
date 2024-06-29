@@ -3,6 +3,7 @@ package neomega
 import (
 	"encoding/json"
 	"fmt"
+	"neo-omega-kernel/neomega/blocks"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -259,34 +260,51 @@ func (i *containerSlotItemNBT) toContainerSlotItemStack() (slot uint8, stack *Co
 	if stack.Item.Components.IsEmpty() {
 		stack.Item.Components = nil
 	}
+	// if strings.Contains(stack.Item.Name, "box") {
+	// 	fmt.Println("box")
+	// }
 	if i.Block.Name != "" {
 		stack.Item.IsBlock = true
 		stack.Item.Value = i.Block.Value
+		states := map[string]any{}
 		if len(i.Block.State) > 0 {
-			stack.Item.RelatedBlockBedrockStateString = "["
-			props := make([]string, 0)
-			for k, v := range i.Block.State {
-				if bv, ok := v.(uint8); ok {
-					if bv == 0 {
-						v = "false"
-					} else {
-						v = "true"
-					}
-				}
-				if sv, ok := v.(string); ok {
-					v = fmt.Sprintf("\"%v\"", sv)
-				}
-				props = append(props, fmt.Sprintf("\"%v\": %v", k, v))
-			}
-			stateStr := strings.Join(props, ", ")
-			stack.Item.RelatedBlockBedrockStateString = fmt.Sprintf("[%v]", stateStr)
+			states = i.Block.State
 		}
+		rtid, found := blocks.BlockNameAndStateToRuntimeID(i.Block.Name, states)
+		if !found {
+			fmt.Printf("unknown nested block: %v %v", i.Block.Name, states)
+			stack.Item.IsBlock = false
+		} else {
+			blockNameNoStates, statesStr, _ := blocks.RuntimeIDToBlockNameAndStateStr(rtid)
+			i.Block.Name = blockNameNoStates
+			stack.Item.RelatedBlockBedrockStateString = statesStr
+			stack.Item.Name = blockNameNoStates
+		}
+		// if len(i.Block.State) > 0 {
+		// 	stack.Item.RelatedBlockBedrockStateString = "["
+		// 	props := make([]string, 0)
+		// 	for k, v := range i.Block.State {
+		// 		if bv, ok := v.(uint8); ok {
+		// 			if bv == 0 {
+		// 				v = "false"
+		// 			} else {
+		// 				v = "true"
+		// 			}
+		// 		}
+		// 		if sv, ok := v.(string); ok {
+		// 			v = fmt.Sprintf("\"%v\"", sv)
+		// 		}
+		// 		props = append(props, fmt.Sprintf("\"%v\": %v", k, v))
+		// 	}
+		// 	stateStr := strings.Join(props, ", ")
+		// 	stack.Item.RelatedBlockBedrockStateString = fmt.Sprintf("[%v]", stateStr)
+		// }
 	}
 	for _, enchant := range i.Tag.Enchant {
 		stack.Item.Enchants[fmt.Sprintf("%v", enchant.ID)] = enchant.Level
 	}
 	// a chest
-	if len(i.Tag.Items) > 0 {
+	if len(i.Tag.Items) > 0 && stack.Item.IsBlock {
 		if stack.Item.RelateComplexBlockData == nil {
 			stack.Item.RelateComplexBlockData = &ComplexBlockData{}
 		}
