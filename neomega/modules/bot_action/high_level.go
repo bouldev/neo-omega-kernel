@@ -553,7 +553,6 @@ func (o *BotActionHighLevel) highLevelPickBlock(pos define.CubePos, targetHotBar
 	o.playerHotBarChan = make(chan *packet.PlayerHotBar, 64)
 	for i := 0; i < retryTimes; i++ {
 		o.microAction.SelectHotBar(targetHotBar)
-		o.cmdHelper.ReplaceHotBarItemCmd(int32(targetHotBar), "air").SendAndGetResponse().BlockGetResult()
 		o.ctrl.SendPacket(&packet.BlockPickRequest{
 			Position:    protocol.BlockPos{int32(pos.X()), int32(pos.Y()), int32(pos.Z())},
 			AddBlockNBT: true,
@@ -565,7 +564,7 @@ func (o *BotActionHighLevel) highLevelPickBlock(pos define.CubePos, targetHotBar
 			if actualSlot == uint32(targetHotBar) {
 				return nil
 			} else {
-				if err := o.microAction.MoveItemInsideHotBarOrInventory(uint8(actualSlot), targetHotBar, 1); err != nil {
+				if err := o.microAction.MoveItemInsideHotBarOrInventory(uint8(actualSlot), targetHotBar, 1); err == nil {
 					return nil
 				}
 			}
