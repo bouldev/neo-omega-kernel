@@ -5,6 +5,7 @@ import (
 	"neo-omega-kernel/neomega/blocks/block_set"
 	"neo-omega-kernel/neomega/blocks/convertor"
 	"neo-omega-kernel/neomega/blocks/gen_map_neo/step0_nemc_blocks_liliya"
+	"neo-omega-kernel/neomega/blocks/gen_map_neo/step2_add_specific_legacy_converts"
 	"neo-omega-kernel/neomega/blocks/gen_map_neo/step2_add_standard_mc_converts"
 	"neo-omega-kernel/neomega/blocks/gen_map_neo/step3_add_schem_mapping"
 	"os"
@@ -80,6 +81,37 @@ func main() {
 				panic(err)
 			}
 			if err := os.WriteFile("bedrock_java_to_translate.br", outBuf.Bytes(), 0755); err != nil {
+				panic(err)
+			}
+		}
+	}
+	// Generate Specific Version Legacy Value Converts
+	specificVersionLegacyValueConvertsRecordString := ""
+	{
+		convertForSpecificVersion := readBlocks.CreateEmptyConvertor()
+		// Load Standard MC Records
+		{
+			standardMCConvertsRecord, err := convertor.ReadRecordsFromString(standardMCConvertsRecordsString)
+			if err != nil {
+				panic(err)
+			}
+			for _, r := range standardMCConvertsRecord {
+				convertForSpecificVersion.LoadConvertRecord(r, false, true)
+			}
+		}
+		convertRecords := step2_add_specific_legacy_converts.GenSpecificLegacyBlockToNemcTranslateRecords(convertForSpecificVersion, "data/legacy_block_palette_2.11.json", &readBlocks)
+		for _, r := range convertRecords {
+			specificVersionLegacyValueConvertsRecordString += r.String()
+		}
+		// SAVE
+		{
+			outBuf := bytes.NewBuffer([]byte{})
+			brotliWriter := brotli.NewWriter(outBuf)
+			brotliWriter.Write([]byte(specificVersionLegacyValueConvertsRecordString))
+			if err := brotliWriter.Close(); err != nil {
+				panic(err)
+			}
+			if err := os.WriteFile("specific_legacy_value_to_translate.br", outBuf.Bytes(), 0755); err != nil {
 				panic(err)
 			}
 		}
