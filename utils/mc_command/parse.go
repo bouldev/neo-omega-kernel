@@ -322,3 +322,63 @@ func ParseLegacyTestForBlockCommand(command string) *LegacyTestForBlockCommand {
 	}
 	return c
 }
+
+type LegacySummonCommand struct {
+	EntityType string
+	Pos        string
+	Event      string
+	EntityName string
+}
+
+func ParseLegacySummonCommand(command string) *LegacySummonCommand {
+	origCommand := command
+	command = strings.TrimSpace(origCommand)
+	reader := CleanStringAndNewSimpleTextReader(command)
+	var ok bool
+	var t string
+	token.ReadSpecific(reader, "/", true)
+	token.ReadWhiteSpace(reader)
+	ok, _ = token.ReadSpecific(reader, "summon", true)
+	if !ok {
+		return nil
+	}
+	_, _ = token.ReadWhiteSpace(reader)
+	c := &LegacySummonCommand{}
+
+	// entity type
+	ok, t = token.ReadNonWhiteSpace(reader)
+	if !ok {
+		return nil
+	}
+	c.EntityType = t
+	_, _ = token.ReadWhiteSpace(reader)
+
+	// position
+	ok, t = token.ReadPosition(reader)
+	if !ok {
+		return nil
+	}
+	c.Pos = t
+	token.ReadWhiteSpace(reader)
+
+	ok, _ = token.ReadSpecific(reader, "facing", true)
+	if ok {
+		// not legacy summon
+		return nil
+	}
+	// entity name
+	ok, t = token.ReadNonWhiteSpace(reader)
+	if !ok {
+		return nil
+	}
+	c.Event = t
+	token.ReadWhiteSpace(reader)
+
+	ok, t = token.ReadNonWhiteSpace(reader)
+	if !ok {
+		return nil
+	}
+	c.EntityName = t
+
+	return c
+}

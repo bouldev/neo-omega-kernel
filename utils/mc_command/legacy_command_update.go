@@ -144,6 +144,16 @@ func UpdateLegacyTestForBlockCommand(command string) string {
 	return newCommand + " " + blockStr
 }
 
+func UpdateLegacySummonCommand(command string) string {
+	c := ParseLegacySummonCommand(command)
+	// fmt.Println(c)
+	if c == nil {
+		return command
+	}
+	newCommand := fmt.Sprintf("summon %v %v facing %v %v %v", c.EntityType, c.Pos, c.Pos, c.Event, c.EntityName)
+	return newCommand
+}
+
 func UpdateLegacyCommand(command string) string {
 	lCommand := strings.ToLower(command)
 	lCommand = strings.TrimPrefix(lCommand, "/")
@@ -157,6 +167,8 @@ func UpdateLegacyCommand(command string) string {
 		return UpdateLegacyCloneCommand(command)
 	} else if strings.HasPrefix(lCommand, "testforblock") {
 		return UpdateLegacyTestForBlockCommand(command)
+	} else if strings.HasPrefix(lCommand, "summon") {
+		return UpdateLegacySummonCommand(command)
 	}
 	return command
 }
@@ -174,6 +186,8 @@ func IsUpdatableLegacyCommand(command string) string {
 		return "clone"
 	} else if strings.HasPrefix(lCommand, "testforblock") {
 		return "testforblock"
+	} else if strings.HasPrefix(lCommand, "summon") {
+		return "summon"
 	}
 	return ""
 }
