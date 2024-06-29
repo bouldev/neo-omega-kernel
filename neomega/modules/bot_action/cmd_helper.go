@@ -103,8 +103,10 @@ func (c *CommandHelper) ConstructDimensionLimitedGeneralCommand(cmd string) neom
 	if dimension != 0 {
 		if dimension == 1 {
 			cmd = "execute in nether run " + cmd
-		} else {
+		} else if dimension == 2 {
 			cmd = "execute in the_end run " + cmd
+		} else {
+			cmd = fmt.Sprintf("execute in dm%v run ", dimension) + cmd
 		}
 	}
 	return &generalCmd{cmd, c.CmdSender}
