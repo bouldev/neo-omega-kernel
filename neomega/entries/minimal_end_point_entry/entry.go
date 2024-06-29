@@ -56,7 +56,11 @@ func Entry(args *Args) {
 	// 	fmt.Println(player.GetEntityUniqueID())
 	// }
 	// provider := memory_hold_canvas.NewMemoryChunkCache(nil)
-	block, err := omegaCore.GetStructureRequester().RequestStructure(define.CubePos{1050, -60, 982}, define.CubePos{1, 1, 1}, "block").BlockGetResult()
+
+	origBlock := define.CubePos{1050, -60, 982}
+	targetBlock := define.CubePos{1052, -60, 982}
+
+	block, err := omegaCore.GetStructureRequester().RequestStructure(origBlock, define.CubePos{1, 1, 1}, "block").BlockGetResult()
 	if err != nil {
 		panic(err)
 	}
@@ -65,12 +69,41 @@ func Entry(args *Args) {
 		panic(err)
 	}
 	fmt.Println("requested")
-	nbt := decoded.Nbts[define.CubePos{1050, -60, 982}]
-	opt := neomega.NbtToSignBlock(nbt)
-	fg, _ := decoded.BlockOf(define.CubePos{0, 0, 0})
-	blockNameWithState, _ := blocks.RuntimeIDToBlockNameWithStateStr(fg)
-	omegaCore.GetBotAction().HighLevelPlaceSign(define.CubePos{1051, -60, 982}, blockNameWithState, opt)
-	fmt.Println(nbt)
+	nbtData := decoded.Nbts[origBlock]
+	fmt.Println(nbtData)
+	rtid, _ := decoded.BlockOf(define.CubePos{0, 0, 0})
+	blockName, _ := blocks.RuntimeIDToBlockNameWithStateStr(rtid)
+	omegaCore.GetBotAction().SetBlockCmd(targetBlock, blockName).AsWebSocket().SendAndGetResponse().BlockGetResult()
+
+	// containerInfo, _ := neomega.GenContainerItemsInfoFromItemsNbt(nbtData.([]any))
+	// fmt.Println(containerInfo)
+	// blockName, found := blocks.RuntimeIDToBlockNameWithStateStr(rtid)
+	// if !found {
+	// 	panic("block not found")
+	// }
+	// fmt.Println(blockName)
+	// err = omegaCore.GetBotAction().HighLevelGenContainer(targetBlock, containerInfo, blockName)
+	// fmt.Println(err)
+
+	itemNBT := nbtData["Item"]
+	rotationInfo, _ := nbtData["ItemRotation"].(float32)
+	rotation := (int(rotationInfo) / 45) + 1
+	item, err := neomega.GenItemInfoFromItemFrameNBT(itemNBT)
+	if err != nil {
+		panic(err)
+	}
+	err = omegaCore.GetBotAction().HighLevelMakeItem(item, 0, targetBlock.Add(define.CubePos{1, 0, -1}), targetBlock.Add(define.CubePos{1, 0, 1}))
+	if err != nil {
+		panic(err)
+	}
+	for rotation > 0 {
+		err = omegaCore.GetBotAction().HighLevelPlaceItemFrameItem(targetBlock, 0)
+		if err != nil {
+			break
+		}
+		rotation--
+	}
+
 	// fg, _ := decoded.BlockOf(define.CubePos{0, 0, 0})
 
 	// fmt.Println(blockNameWithState)

@@ -48,7 +48,7 @@ func NewBotActionHighLevel(
 	}
 
 	react.SetTypedPacketCallBack(packet.IDInventoryTransaction, func(p packet.Packet) {
-		isDroppedItem := false
+		// isDroppedItem := false
 		pk := p.(*packet.InventoryTransaction)
 		for _, _value := range pk.Actions {
 			c := bah.pickedItemChan
@@ -62,15 +62,22 @@ func NewBotActionHighLevel(
 			// always slot 1, StackNetworkID 0, when item is picked from the world
 			// protocol.InventoryActionSourceWorld
 
-			if _value.SourceType == protocol.InventoryActionSourceWorld {
-				isDroppedItem = true
-			} else if _value.SourceType == protocol.InventoryActionSourceContainer && isDroppedItem {
+			// seems this confusing part is fixed by nemc, now pick a single item will not send two packets
+			if _value.SourceType == protocol.InventoryActionSourceContainer {
+				// isDroppedItem = true
 				value := _value
 				select {
 				case c <- value:
 				default:
 				}
 			}
+			// else if _value.SourceType == protocol.InventoryActionSourceContainer && isDroppedItem {
+			// 	value := _value
+			// 	select {
+			// 	case c <- value:
+			// 	default:
+			// 	}
+			// }
 		}
 	}, false)
 
@@ -251,6 +258,7 @@ func (o *BotActionHighLevel) highLevelPlaceSign(targetPos define.CubePos, signBl
 	back := define.CubePos{0, 0, 0}.Sub(font)
 	o.cmdHelper.SetBlockCmd(targetPos, blockNameWithState).AsWebSocket().SendAndGetResponse().BlockGetResult()
 	o.microAction.SelectHotBar(0)
+	o.microAction.SleepTick(2)
 	o.cmdHelper.ReplaceHotBarItemCmd(0, "air").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
 	o.microAction.UseHotBarItemOnBlock(targetPos, rtid, 4, 0)
 	o.ctrl.SendPacket(&packet.BlockActorData{
@@ -427,19 +435,6 @@ func (o *BotActionHighLevel) highLevelRenameItemWithAnvil(pos define.CubePos, sl
 	if err := o.highLevelEnsureBotNearby(pos, 8); err != nil {
 		return err
 	}
-	structureResponse, err := o.structureRequester.RequestStructure(pos, define.CubePos{1, 1, 1}, "_temp").BlockGetResult()
-	if err != nil {
-		return err
-	}
-	structure, err := structureResponse.Decode()
-	if err != nil {
-		return err
-	}
-	containerRuntimeID := structure.ForeGround[0]
-	// containerNEMCRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(containerRuntimeID)
-	if containerRuntimeID == blocks.AIR_RUNTIMEID {
-		return fmt.Errorf("block of %v (nemc) not found", containerRuntimeID)
-	}
 	deferActionStand := func() {}
 	deferAction := func() {}
 	if autoGenAnvil {
@@ -457,6 +452,20 @@ func (o *BotActionHighLevel) highLevelRenameItemWithAnvil(pos define.CubePos, sl
 		if ret := o.cmdHelper.SetBlockCmd(pos, "anvil").AsWebSocket().SendAndGetResponse().SetTimeout(3 * time.Second).BlockGetResult(); ret == nil {
 			return fmt.Errorf("cannot place anvil for operation")
 		}
+	}
+	// wait until anvil place then get runtime id
+	structureResponse, err := o.structureRequester.RequestStructure(pos, define.CubePos{1, 1, 1}, "_temp").BlockGetResult()
+	if err != nil {
+		return err
+	}
+	structure, err := structureResponse.Decode()
+	if err != nil {
+		return err
+	}
+	containerRuntimeID := structure.ForeGround[0]
+	// containerNEMCRuntimeID := chunk.StandardRuntimeIDToNEMCRuntimeID(containerRuntimeID)
+	if containerRuntimeID == blocks.AIR_RUNTIMEID {
+		return fmt.Errorf("block of %v @ %v (nemc) not found, should be anvil", pos, containerRuntimeID)
 	}
 	defer deferActionStand()
 	defer deferAction()
@@ -525,6 +534,9 @@ func (o *BotActionHighLevel) HighLevelBlockBreakAndPickInHotBar(pos define.CubeP
 }
 
 func (o *BotActionHighLevel) highLevelBlockBreakAndPickInHotBar(pos define.CubePos, recoverBlock bool, targetSlots map[uint8]bool, maxRetriesTotal int) (targetSlotsGetInfo map[uint8]bool, err error) {
+	o.cmdSender.SendWebSocketCmdNeedResponse("clear @s").BlockGetResult()
+	o.microAction.SelectHotBar(0)
+	o.microAction.SleepTick(2)
 	// split targets
 	targetSlotsGetInfo = map[uint8]bool{}
 	for k, v := range targetSlots {
@@ -536,7 +548,7 @@ func (o *BotActionHighLevel) highLevelBlockBreakAndPickInHotBar(pos define.CubeP
 			o.cmdHelper.ReplaceHotBarItemCmd(int32(k), "air").SendAndGetResponse().BlockGetResult()
 		}
 	}
-	o.microAction.SleepTick(1)
+	o.microAction.SleepTick(2)
 	// merge later
 	defer func() {
 		for k, v := range targetSlots {

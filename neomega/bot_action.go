@@ -262,6 +262,30 @@ func (opt *SignBlockPlaceOption) ToNBT() map[string]any {
 	return out
 }
 
+func SimpleTextSignBlockOption(text string, lighting bool) *SignBlockPlaceOption {
+	u8lighting := uint8(0)
+	if lighting {
+		u8lighting = 1
+	}
+	return &SignBlockPlaceOption{
+		IsWaxed: 0,
+		FrontText: SignBlockText{
+			HideGlowOutline:   0,
+			Text:              text,
+			IgnoreLighting:    u8lighting,
+			PersistFormatting: 1,
+			SignTextColor:     -16777216,
+		},
+		BackText: SignBlockText{
+			HideGlowOutline:   0,
+			Text:              "",
+			IgnoreLighting:    0,
+			PersistFormatting: 1,
+			SignTextColor:     -16777216,
+		},
+	}
+}
+
 func NbtToSignBlock(nbt map[string]any) *SignBlockPlaceOption {
 	if nbt["id"] != "Sign" && nbt["id"] != "HangingSign" {
 		return nil

@@ -2,6 +2,7 @@ package bot_action
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/minecraft/protocol/packet"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/pterm/pterm"
 )
 
 type AccessPointBotActionWithPersistData struct {
@@ -103,7 +105,9 @@ func (o *AccessPointBotActionWithPersistData) occupyBot(timeout time.Duration) (
 		return nil, fmt.Errorf("cannot acquire bot, bot is busy")
 	case <-o.muChan:
 		if o.currentContainerOpenListener != nil || o.currentContainerCloseListener != nil || o.currentItemStackResponseListener != nil {
-			panic(fmt.Errorf("another operation is already proceeding, but bot is not locked"))
+			criticalInfo := fmt.Sprintf("another operation is already proceeding @ occupy, but bot is not locked, currentContainerOpenListener=%v currentContainerCloseListener=%v currentItemStackResponseListener=%v", o.currentContainerOpenListener != nil, o.currentContainerCloseListener != nil, o.currentItemStackResponseListener != nil)
+			pterm.Error.Println(criticalInfo)
+			o.forceGetRidOfUnrecoverableState(criticalInfo)
 		}
 		return func() {
 			o.muChan <- struct{}{} // give back bot control
@@ -301,7 +305,10 @@ func (o *AccessPointBotActionWithPersistData) MoveItemFromInventoryToEmptyContai
 	defer release()
 
 	if _, opened := o.uq.GetCurrentOpenedContainer(); opened {
-		return fmt.Errorf("another operation is already proceeding")
+		criticalInfo := "another operation is already proceeding @ move item"
+		pterm.Error.Println(criticalInfo)
+		o.forceGetRidOfUnrecoverableState(criticalInfo)
+		return errors.New(criticalInfo)
 	}
 
 	defer func() {
@@ -458,7 +465,10 @@ func (o *AccessPointBotActionWithPersistData) UseAnvil(pos define.CubePos, block
 	defer release()
 
 	if _, opened := o.uq.GetCurrentOpenedContainer(); opened {
-		return fmt.Errorf("another operation is already proceeding")
+		criticalInfo := "another operation is already proceeding @ use anvil"
+		pterm.Error.Println(criticalInfo)
+		o.forceGetRidOfUnrecoverableState(criticalInfo)
+		return errors.New(criticalInfo)
 	}
 
 	defer func() {
