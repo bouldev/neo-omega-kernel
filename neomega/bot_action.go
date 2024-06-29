@@ -102,6 +102,7 @@ type BotActionHighLevel interface {
 	HighLevelRenameItemWithAnvil(pos define.CubePos, slot uint8, newName string, autoGenAnvil bool) (err error)
 	HighLevelEnchantItem(slot uint8, enchants map[string]int32) (err error)
 	HighLevelListenItemPicked(timeout time.Duration) (actionChan chan protocol.InventoryAction, cancel func(), err error)
+	HighLevelPickBlock(pos define.CubePos, targetHotBar uint8, retryTimes int) error
 	HighLevelBlockBreakAndPickInHotBar(pos define.CubePos, recoverBlock bool, targetSlots map[uint8]bool, maxRetriesTotal int) (targetSlotsGetInfo map[uint8]bool, err error)
 	HighLevelSetContainerContent(pos define.CubePos, containerInfo map[uint8]*ContainerSlotItemStack) (err error)
 	HighLevelGenContainer(pos define.CubePos, containerInfo map[uint8]*ContainerSlotItemStack, block string) (err error)

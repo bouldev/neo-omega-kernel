@@ -3,8 +3,6 @@ package minimal_end_point_entry
 import (
 	"fmt"
 	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/blocks"
 	"neo-omega-kernel/neomega/bundle"
 	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/nodes"
@@ -48,6 +46,13 @@ func Entry(args *Args) {
 	if err != nil {
 		panic(err)
 	}
+	err = omegaCore.GetBotAction().HighLevelPickBlock(define.CubePos{1148, -60, 1029}, 3, 3)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("pick complete")
+	time.Sleep(time.Second)
+	omegaCore.GetBotAction().DropItemFromHotBar(3)
 	// time.Sleep(time.Second)
 	// fmt.Println(omegaCore)
 	// players := omegaCore.GetMicroUQHolder().GetAllOnlinePlayers()
@@ -57,25 +62,25 @@ func Entry(args *Args) {
 	// }
 	// provider := memory_hold_canvas.NewMemoryChunkCache(nil)
 
-	origBlock := define.CubePos{1050, -60, 982}
-	targetBlock := define.CubePos{1052, -60, 982}
+	// origBlock := define.CubePos{1149, -60, 1025}
+	// targetBlock := define.CubePos{1149, -60, 1027}
 
-	block, err := omegaCore.GetStructureRequester().RequestStructure(origBlock, define.CubePos{1, 1, 1}, "block").BlockGetResult()
-	if err != nil {
-		panic(err)
-	}
-	decoded, err := block.Decode()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("requested")
-	nbtData := decoded.Nbts[origBlock]
-	fmt.Println(nbtData)
-	rtid, _ := decoded.BlockOf(define.CubePos{0, 0, 0})
-	blockName, _ := blocks.RuntimeIDToBlockNameWithStateStr(rtid)
-	omegaCore.GetBotAction().SetBlockCmd(targetBlock, blockName).AsWebSocket().SendAndGetResponse().BlockGetResult()
+	// block, err := omegaCore.GetStructureRequester().RequestStructure(origBlock, define.CubePos{1, 1, 1}, "block").BlockGetResult()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// decoded, err := block.Decode()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println("requested")
+	// nbtData := decoded.Nbts[origBlock]
+	// fmt.Println(nbtData)
+	// rtid, _ := decoded.BlockOf(define.CubePos{0, 0, 0})
+	// blockName, _ := blocks.RuntimeIDToBlockNameWithStateStr(rtid)
+	// omegaCore.GetBotAction().SetBlockCmd(targetBlock, blockName).AsWebSocket().SendAndGetResponse().BlockGetResult()
 
-	// containerInfo, _ := neomega.GenContainerItemsInfoFromItemsNbt(nbtData.([]any))
+	// containerInfo, _ := neomega.GenContainerItemsInfoFromItemsNbt(nbtData["Items"].([]any))
 	// fmt.Println(containerInfo)
 	// blockName, found := blocks.RuntimeIDToBlockNameWithStateStr(rtid)
 	// if !found {
@@ -85,24 +90,24 @@ func Entry(args *Args) {
 	// err = omegaCore.GetBotAction().HighLevelGenContainer(targetBlock, containerInfo, blockName)
 	// fmt.Println(err)
 
-	itemNBT := nbtData["Item"]
-	rotationInfo, _ := nbtData["ItemRotation"].(float32)
-	rotation := (int(rotationInfo) / 45) + 1
-	item, err := neomega.GenItemInfoFromItemFrameNBT(itemNBT)
-	if err != nil {
-		panic(err)
-	}
-	err = omegaCore.GetBotAction().HighLevelMakeItem(item, 0, targetBlock.Add(define.CubePos{1, 0, -1}), targetBlock.Add(define.CubePos{1, 0, 1}))
-	if err != nil {
-		panic(err)
-	}
-	for rotation > 0 {
-		err = omegaCore.GetBotAction().HighLevelPlaceItemFrameItem(targetBlock, 0)
-		if err != nil {
-			break
-		}
-		rotation--
-	}
+	// itemNBT := nbtData["Item"]
+	// rotationInfo, _ := nbtData["ItemRotation"].(float32)
+	// rotation := (int(rotationInfo) / 45) + 1
+	// item, err := neomega.GenItemInfoFromItemFrameNBT(itemNBT)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// err = omegaCore.GetBotAction().HighLevelMakeItem(item, 0, targetBlock.Add(define.CubePos{1, 0, -1}), targetBlock.Add(define.CubePos{1, 0, 1}))
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// for rotation > 0 {
+	// 	err = omegaCore.GetBotAction().HighLevelPlaceItemFrameItem(targetBlock, 0)
+	// 	if err != nil {
+	// 		break
+	// 	}
+	// 	rotation--
+	// }
 
 	// fg, _ := decoded.BlockOf(define.CubePos{0, 0, 0})
 

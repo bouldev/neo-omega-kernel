@@ -24,6 +24,7 @@ type BotActionHighLevel struct {
 	structureRequester neomega.StructureRequester
 	microAction        neomega.BotAction
 	pickedItemChan     chan protocol.InventoryAction
+	playerHotBarChan   chan *packet.PlayerHotBar
 	muChan             chan struct{}
 	node               defines.Node
 	// asyncNBTBlockPlacer neomega.AsyncNBTBlockPlacer
@@ -46,6 +47,18 @@ func NewBotActionHighLevel(
 		muChan:      muChan,
 		node:        node,
 	}
+
+	react.SetTypedPacketCallBack(packet.IDPlayerHotBar, func(p packet.Packet) {
+		// isDroppedItem := false
+		pk := p.(*packet.PlayerHotBar)
+		if bah.playerHotBarChan == nil {
+			return
+		}
+		select {
+		case bah.playerHotBarChan <- pk:
+		default:
+		}
+	}, false)
 
 	react.SetTypedPacketCallBack(packet.IDInventoryTransaction, func(p packet.Packet) {
 		// isDroppedItem := false
@@ -524,6 +537,44 @@ func (o *BotActionHighLevel) HighLevelListenItemPicked(timeout time.Duration) (a
 	return o.pickedItemChan, cancel, nil
 }
 
+func (o *BotActionHighLevel) HighLevelPickBlock(pos define.CubePos, targetHotBar uint8, retryTimes int) error {
+	release, err := o.occupyBot(time.Second * 3)
+	if err != nil {
+		return err
+	}
+	defer release()
+	return o.highLevelPickBlock(pos, targetHotBar, retryTimes)
+}
+
+func (o *BotActionHighLevel) highLevelPickBlock(pos define.CubePos, targetHotBar uint8, retryTimes int) error {
+	if err := o.highLevelEnsureBotNearby(pos, 8); err != nil {
+		return err
+	}
+	o.playerHotBarChan = make(chan *packet.PlayerHotBar, 64)
+	for i := 0; i < retryTimes; i++ {
+		o.microAction.SelectHotBar(targetHotBar)
+		o.cmdHelper.ReplaceHotBarItemCmd(int32(targetHotBar), "air").SendAndGetResponse().BlockGetResult()
+		o.ctrl.SendPacket(&packet.BlockPickRequest{
+			Position:    protocol.BlockPos{int32(pos.X()), int32(pos.Y()), int32(pos.Z())},
+			AddBlockNBT: true,
+			HotBarSlot:  targetHotBar,
+		})
+		select {
+		case pk := <-o.playerHotBarChan:
+			actualSlot := pk.SelectedHotBarSlot
+			if actualSlot == uint32(targetHotBar) {
+				return nil
+			} else {
+				if err := o.microAction.MoveItemInsideHotBarOrInventory(uint8(actualSlot), targetHotBar, 1); err != nil {
+					return nil
+				}
+			}
+		case <-time.NewTimer(time.Second).C:
+		}
+	}
+	return fmt.Errorf("cannot pick block within specific retry times")
+}
+
 func (o *BotActionHighLevel) HighLevelBlockBreakAndPickInHotBar(pos define.CubePos, recoverBlock bool, targetSlots map[uint8]bool, maxRetriesTotal int) (targetSlotsGetInfo map[uint8]bool, err error) {
 	release, err := o.occupyBot(time.Second * 3)
 	if err != nil {
@@ -534,6 +585,9 @@ func (o *BotActionHighLevel) HighLevelBlockBreakAndPickInHotBar(pos define.CubeP
 }
 
 func (o *BotActionHighLevel) highLevelBlockBreakAndPickInHotBar(pos define.CubePos, recoverBlock bool, targetSlots map[uint8]bool, maxRetriesTotal int) (targetSlotsGetInfo map[uint8]bool, err error) {
+	if err := o.highLevelEnsureBotNearby(pos, 8); err != nil {
+		return map[uint8]bool{}, err
+	}
 	o.cmdSender.SendWebSocketCmdNeedResponse("clear @s").BlockGetResult()
 	o.microAction.SelectHotBar(0)
 	o.microAction.SleepTick(2)
@@ -848,9 +902,12 @@ func (o *BotActionHighLevel) highLevelMakeItem(item *neomega.Item, slotID uint8,
 		if err := o.highLevelSetContainerItems(nextContainerPos, item.RelateComplexBlockData.Container); err != nil {
 			return err
 		}
-		if _, err := o.highLevelBlockBreakAndPickInHotBar(nextContainerPos, false, map[uint8]bool{slotID: false}, 2); err != nil {
+		if err := o.highLevelPickBlock(nextContainerPos, slotID, 3); err != nil {
 			return err
 		}
+		// if _, err := o.highLevelBlockBreakAndPickInHotBar(nextContainerPos, false, map[uint8]bool{slotID: false}, 2); err != nil {
+		// 	return err
+		// }
 		// give complex block enchant and name
 		if len(item.Enchants) > 0 {
 			if err := o.highLevelEnchantItem(slotID, item.Enchants); err != nil {
@@ -964,7 +1021,7 @@ func (o *BotActionHighLevel) highLevelSetContainerItems(pos define.CubePos, cont
 			o.cmdHelper.SetBlockCmd(nextContainerPos, fmt.Sprintf("%v %v", stack.Item.Name, stack.Item.RelatedBlockBedrockStateString)).AsWebSocket().SendAndGetResponse().SetTimeout(3 * time.Second).BlockGetResult()
 			o.microAction.SleepTick(5)
 			updateErr(o.highLevelSetContainerItems(nextContainerPos, stack.Item.RelateComplexBlockData.Container))
-			_, err := o.highLevelBlockBreakAndPickInHotBar(nextContainerPos, false, map[uint8]bool{0: false}, 3)
+			err := o.highLevelPickBlock(nextContainerPos, 0, 3)
 			updateErr(err)
 			// give complex block enchant and name
 			if len(stack.Item.Enchants) > 0 {
