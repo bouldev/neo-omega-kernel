@@ -81,6 +81,17 @@ type ComplexBlockData struct {
 	Unknown map[string]any `json:"unknown_nbt,omitempty"`
 }
 
+func (d *ComplexBlockData) String(indent string) string {
+	if d.Container != nil {
+		out := "容器内容:"
+		for _, slot := range d.Container {
+			out += "\n" + indent + "    " + slot.String(indent+"    ")
+		}
+		return out
+	}
+	return ""
+}
+
 // to avoid using interface or "any" we enum all known item supported here
 type KnownItemData struct {
 	// is a book
@@ -91,6 +102,11 @@ type KnownItemData struct {
 	BookName string `json:"book_name,omitempty"`
 	// unknown (describe as a nbt)
 	Unknown map[string]any `json:"known_nbt,omitempty"`
+}
+
+func (d *KnownItemData) String(indent string) string {
+	out := fmt.Sprintf("书名: %v 作者: %v 页数: %v", d.BookName, d.BookAuthor, len(d.Pages))
+	return out
 }
 
 type Item struct {
@@ -119,6 +135,52 @@ type Item struct {
 	// Complex Block: when item put as a block, the block contains certain info, safe to be empty
 	RelateComplexBlockData *ComplexBlockData `json:"complex_block_data,omitempty"`
 	// End Complex Block
+}
+
+func (i *Item) String(indent string) string {
+	out := fmt.Sprintf("%v[特殊值=%v]", i.Name, i.Value)
+	if i.Components != nil {
+		if len(i.Components.CanPlaceOn) > 1 {
+			out += "\n" + indent + "   |可被放置于: "
+			for _, name := range i.Components.CanPlaceOn {
+				out += " " + name
+			}
+		}
+		if len(i.Components.CanDestroy) > 1 {
+			out += "\n" + indent + "   |可破坏: "
+			for _, name := range i.Components.CanDestroy {
+				out += " " + name
+			}
+		}
+		if i.Components.ItemLock != "" || i.Components.KeepOnDeath {
+			out += "\n" + indent + "   |"
+			if i.Components.ItemLock != "" {
+				out += "锁定在物品栏"
+			}
+			if i.Components.KeepOnDeath {
+				if i.Components.ItemLock != "" {
+					out += "&"
+				}
+				out += "死亡时保留"
+			}
+		}
+	}
+	if i.RelatedKnownItemData != nil {
+		out += "\n" + indent + "   |信息: " + i.RelatedKnownItemData.String(indent+"    ")
+	}
+	if len(i.Enchants) > 0 {
+		out += "\n" + indent + "   |附魔: "
+		for enchant, level := range i.Enchants {
+			out += fmt.Sprintf("%v级魔咒:%v; ", level, enchant)
+		}
+	}
+	if i.DisplayName != "" {
+		out += "\n" + indent + "   |被命名为: " + i.DisplayName
+	}
+	if i.RelateComplexBlockData != nil && i.RelateComplexBlockData.Container != nil {
+		out += "\n" + indent + "   |" + i.RelateComplexBlockData.String(indent+"    ")
+	}
+	return out
 }
 
 func (i *Item) GetJsonString() string {
@@ -165,6 +227,11 @@ func (i *Item) GetTypeDescription() ItemTypeDescription {
 type ContainerSlotItemStack struct {
 	Item  *Item `json:"item"`
 	Count uint8 `json:"count"`
+}
+
+func (s *ContainerSlotItemStack) String(indent string) string {
+	out := fmt.Sprintf("%v个 %v", s.Count, s.Item.String(indent))
+	return out
 }
 
 func GenContainerItemsInfoFromItemsNbt(itemsNbt []any) (container map[uint8]*ContainerSlotItemStack, err error) {
