@@ -10,6 +10,7 @@ import (
 	"neo-omega-kernel/neomega/chunks"
 	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/nodes/defines"
+	"neo-omega-kernel/utils/string_wrapper"
 	"strings"
 	"time"
 
@@ -28,6 +29,7 @@ type BotActionHighLevel struct {
 	muChan             chan struct{}
 	node               defines.Node
 	// asyncNBTBlockPlacer neomega.AsyncNBTBlockPlacer
+	nameCount int
 }
 
 func NewBotActionHighLevel(
@@ -56,6 +58,7 @@ func NewBotActionHighLevel(
 		}
 		select {
 		case bah.playerHotBarChan <- pk:
+			break
 		default:
 		}
 	}, false)
@@ -81,6 +84,7 @@ func NewBotActionHighLevel(
 				value := _value
 				select {
 				case c <- value:
+					break
 				default:
 				}
 			}
@@ -95,6 +99,11 @@ func NewBotActionHighLevel(
 	}, false)
 
 	return bah
+}
+
+func (o *BotActionHighLevel) nextCountName() string {
+	o.nameCount += 1
+	return string_wrapper.ReplaceWithUnfilteredLetter(fmt.Sprintf("%v", o.nameCount))
 }
 
 func (o *BotActionHighLevel) occupyBot(timeout time.Duration) (release func(), err error) {
@@ -418,14 +427,14 @@ func (o *BotActionHighLevel) highLevelMoveItemToContainer(pos define.CubePos, mo
 			case 5:
 				blockerPos[0] = blockerPos[0] + 1
 			}
-			deferAction, err = o.highLevelRemoveSpecificBlockSideEffect(blockerPos, true, "_temp_container_blocker")
+			deferAction, err = o.highLevelRemoveSpecificBlockSideEffect(blockerPos, true, "_temp_container_blocker"+o.nextCountName())
 			if err != nil {
 				return err
 			}
 		}
 	} else if strings.Contains(block.ShortName(), "chest") {
 		o.cmdHelper.BackupStructureWithGivenNameCmd(pos.Add(define.CubePos{0, 1, 0}), define.CubePos{1, 1, 1}, "container_blocker").SendAndGetResponse().SetTimeout(time.Second * 3).BlockGetResult()
-		deferAction, err = o.highLevelRemoveSpecificBlockSideEffect(pos.Add(define.CubePos{0, 1, 0}), true, "_temp_container_blocker")
+		deferAction, err = o.highLevelRemoveSpecificBlockSideEffect(pos.Add(define.CubePos{0, 1, 0}), true, "_temp_container_blocker"+o.nextCountName())
 		if err != nil {
 			return err
 		}
@@ -451,14 +460,14 @@ func (o *BotActionHighLevel) highLevelRenameItemWithAnvil(pos define.CubePos, sl
 	deferActionStand := func() {}
 	deferAction := func() {}
 	if autoGenAnvil {
-		deferActionStand, err = o.highLevelRemoveSpecificBlockSideEffect(pos.Add(define.CubePos{0, -1, 0}), false, "_temp_anvil_stand")
+		deferActionStand, err = o.highLevelRemoveSpecificBlockSideEffect(pos.Add(define.CubePos{0, -1, 0}), false, "_temp_anvil_stand"+o.nextCountName())
 		if err != nil {
 			return err
 		}
 		if ret := o.cmdHelper.SetBlockCmd(pos.Add(define.CubePos{0, -1, 0}), "glass").AsWebSocket().SendAndGetResponse().SetTimeout(3 * time.Second).BlockGetResult(); ret == nil {
 			return fmt.Errorf("cannot place anvil for operation")
 		}
-		deferAction, err = o.highLevelRemoveSpecificBlockSideEffect(pos, false, "_temp_anvil")
+		deferAction, err = o.highLevelRemoveSpecificBlockSideEffect(pos, false, "_temp_anvil"+o.nextCountName())
 		if err != nil {
 			return err
 		}
@@ -550,6 +559,9 @@ func (o *BotActionHighLevel) highLevelPickBlock(pos define.CubePos, targetHotBar
 	if err := o.highLevelEnsureBotNearby(pos, 8); err != nil {
 		return err
 	}
+	defer func() {
+		o.playerHotBarChan = nil
+	}()
 	o.playerHotBarChan = make(chan *packet.PlayerHotBar, 64)
 	for i := 0; i < retryTimes; i++ {
 		o.microAction.SelectHotBar(targetHotBar)
@@ -568,7 +580,9 @@ func (o *BotActionHighLevel) highLevelPickBlock(pos define.CubePos, targetHotBar
 					return nil
 				}
 			}
+			break
 		case <-time.NewTimer(time.Second).C:
+			break
 		}
 	}
 	return fmt.Errorf("cannot pick block within specific retry times")
@@ -663,6 +677,7 @@ func (o *BotActionHighLevel) highLevelBlockBreakAndPickInHotBar(pos define.CubeP
 				case <-actionChan:
 					notWantedExist = true
 					hasInreleventItem = true
+					break
 				default:
 				}
 				if !notWantedExist {
@@ -883,7 +898,7 @@ func (o *BotActionHighLevel) highLevelMakeItem(item *neomega.Item, slotID uint8,
 		if item.DisplayName != "" {
 			deferActionStand, _ := o.highLevelRemoveSpecificBlockSideEffect(anvilPos.Add(define.CubePos{0, -1, 0}), false, "_temp_anvil_stand")
 			o.cmdHelper.SetBlockCmd(anvilPos.Add(define.CubePos{0, -1, 0}), "glass").AsWebSocket().SendAndGetResponse().SetTimeout(3 * time.Second).BlockGetResult()
-			deferAction, _ := o.highLevelRemoveSpecificBlockSideEffect(anvilPos, false, "_temp_anvil")
+			deferAction, _ := o.highLevelRemoveSpecificBlockSideEffect(anvilPos, false, "_temp_anvil"+o.nextCountName())
 			o.cmdHelper.SetBlockCmd(anvilPos, "anvil").AsWebSocket().SendAndGetResponse().SetTimeout(3 * time.Second).BlockGetResult()
 			o.highLevelRenameItemWithAnvil(anvilPos, slotID, item.DisplayName, false)
 			deferAction()
@@ -895,18 +910,18 @@ func (o *BotActionHighLevel) highLevelMakeItem(item *neomega.Item, slotID uint8,
 			}
 		}
 	} else {
-		deferActionWorkspace, _ := o.highLevelRemoveSpecificBlockSideEffect(nextContainerPos, false, "_temp_work")
+		deferActionWorkspace, _ := o.highLevelRemoveSpecificBlockSideEffect(nextContainerPos, false, "_temp_work"+o.nextCountName())
 		defer deferActionWorkspace()
 		o.cmdHelper.SetBlockCmd(nextContainerPos, fmt.Sprintf("%v %v", item.Name, item.RelatedBlockBedrockStateString)).AsWebSocket().SendAndGetResponse().SetTimeout(3 * time.Second).BlockGetResult()
 		if err := o.highLevelSetContainerItems(nextContainerPos, item.RelateComplexBlockData.Container); err != nil {
 			return err
 		}
-		if err := o.highLevelPickBlock(nextContainerPos, slotID, 3); err != nil {
-			return err
-		}
-		// if _, err := o.highLevelBlockBreakAndPickInHotBar(nextContainerPos, false, map[uint8]bool{slotID: false}, 2); err != nil {
+		// if err := o.highLevelPickBlock(nextContainerPos, slotID, 3); err != nil {
 		// 	return err
 		// }
+		if _, err := o.highLevelBlockBreakAndPickInHotBar(nextContainerPos, false, map[uint8]bool{slotID: false}, 2); err != nil {
+			return err
+		}
 		// give complex block enchant and name
 		if len(item.Enchants) > 0 {
 			if err := o.highLevelEnchantItem(slotID, item.Enchants); err != nil {
@@ -962,9 +977,9 @@ func (o *BotActionHighLevel) highLevelSetContainerItems(pos define.CubePos, cont
 
 		for _, stack := range slotAndEnchant {
 			if stack.Item.DisplayName != "" {
-				deferActionStand, _ = o.highLevelRemoveSpecificBlockSideEffect(anvilPos.Add(define.CubePos{0, -1, 0}), false, "_temp_anvil_stand")
+				deferActionStand, _ = o.highLevelRemoveSpecificBlockSideEffect(anvilPos.Add(define.CubePos{0, -1, 0}), false, "_temp_anvil_stand"+o.nextCountName())
 				o.cmdHelper.SetBlockCmd(anvilPos.Add(define.CubePos{0, -1, 0}), "glass").AsWebSocket().SendAndGetResponse().SetTimeout(3 * time.Second).BlockGetResult()
-				deferAction, _ = o.highLevelRemoveSpecificBlockSideEffect(anvilPos, false, "_temp_anvil")
+				deferAction, _ = o.highLevelRemoveSpecificBlockSideEffect(anvilPos, false, "_temp_anvil"+o.nextCountName())
 				o.cmdHelper.SetBlockCmd(anvilPos, "anvil").AsWebSocket().SendAndGetResponse().SetTimeout(3 * time.Second).BlockGetResult()
 				break
 			}
@@ -1015,12 +1030,13 @@ func (o *BotActionHighLevel) highLevelSetContainerItems(pos define.CubePos, cont
 		slot, stack := _slot, _stack
 		if stack.Item.GetTypeDescription().IsComplexBlock() {
 			o.microAction.SleepTick(5)
-			deferActionWorkspace, _ := o.highLevelRemoveSpecificBlockSideEffect(nextContainerPos, false, "_temp_work")
+			deferActionWorkspace, _ := o.highLevelRemoveSpecificBlockSideEffect(nextContainerPos, false, "_temp_work"+o.nextCountName())
 			defer deferActionWorkspace()
 			o.cmdHelper.SetBlockCmd(nextContainerPos, fmt.Sprintf("%v %v", stack.Item.Name, stack.Item.RelatedBlockBedrockStateString)).AsWebSocket().SendAndGetResponse().SetTimeout(3 * time.Second).BlockGetResult()
 			o.microAction.SleepTick(5)
 			updateErr(o.highLevelSetContainerItems(nextContainerPos, stack.Item.RelateComplexBlockData.Container))
-			err := o.highLevelPickBlock(nextContainerPos, 0, 3)
+			// err := o.highLevelPickBlock(nextContainerPos, 0, 3)
+			_, err := o.highLevelBlockBreakAndPickInHotBar(nextContainerPos, false, map[uint8]bool{0: false}, 3)
 			updateErr(err)
 			// give complex block enchant and name
 			if len(stack.Item.Enchants) > 0 {
