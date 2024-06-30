@@ -1077,7 +1077,7 @@ func (o *BotActionHighLevel) highLevelRequestLargeArea(startPos define.CubePos, 
 				if err != nil {
 					time.Sleep(time.Second)
 				}
-				resp, err = o.structureRequester.RequestStructure(define.CubePos{startX, startPos.Y(), startZ}, define.CubePos{xRange[1], size.Y(), zRange[1]}, "_tmp").BlockGetResult()
+				resp, err = o.structureRequester.RequestStructure(define.CubePos{startX, startPos.Y(), startZ}, define.CubePos{xRange[1], size.Y(), zRange[1]}, "_tmp"+o.nextCountName()).BlockGetResult()
 				if err != nil {
 					continue
 				}
