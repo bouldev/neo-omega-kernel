@@ -455,91 +455,91 @@ class PlayerKit:
         return toPyString(LIB.PlayerDeviceID(self._c_uuid))
 
     @property
-    def can_build(self)->str:
+    def can_build(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerCanBuild(self._c_uuid))
+        return LIB.PlayerCanBuild(self._c_uuid)==1
 
     def set_build_permission(self,allow:bool):
         OmegaAvailable()
         LIB.PlayerSetBuild(self._c_uuid,toGoUint8(allow))
 
     @property
-    def can_mine(self)->str:
+    def can_mine(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerCanMine(self._c_uuid))
+        return LIB.PlayerCanMine(self._c_uuid)==1
 
     def set_mine_permission(self,allow:bool):
         OmegaAvailable()
         LIB.PlayerSetMine(self._c_uuid,toGoUint8(allow))
 
     @property
-    def can_doors_and_switches(self)->str:
+    def can_doors_and_switches(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerCanDoorsAndSwitches(self._c_uuid))
+        return LIB.PlayerCanDoorsAndSwitches(self._c_uuid)==1
 
     def set_doors_and_switches_permission(self,allow:bool):
         OmegaAvailable()
         LIB.PlayerSetDoorsAndSwitches(self._c_uuid,toGoUint8(allow))
 
     @property
-    def can_open_containers(self)->str:
+    def can_open_containers(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerCanOpenContainers(self._c_uuid))
+        return LIB.PlayerCanOpenContainers(self._c_uuid)==1
 
     def set_containers_permission(self,allow:bool):
         OmegaAvailable()
         LIB.PlayerSetOpenContainers(self._c_uuid,toGoUint8(allow))
 
     @property
-    def can_attack_players(self)->str:
+    def can_attack_players(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerCanAttackPlayers(self._c_uuid))
+        return LIB.PlayerCanAttackPlayers(self._c_uuid)==1
 
     def set_attack_players_permission(self,allow:bool):
         OmegaAvailable()
         LIB.PlayerSetAttackPlayers(self._c_uuid,toGoUint8(allow))
 
     @property
-    def can_attack_mobs(self)->str:
+    def can_attack_mobs(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerCanAttackMobs(self._c_uuid))
+        return LIB.PlayerCanAttackMobs(self._c_uuid)==1
 
     def set_attack_mobs_permission(self,allow:bool):
         OmegaAvailable()
         LIB.PlayerSetAttackMobs(self._c_uuid,toGoUint8(allow))
 
     @property
-    def can_operator_commands(self)->str:
+    def can_operator_commands(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerCanOperatorCommands(self._c_uuid))
+        return LIB.PlayerCanOperatorCommands(self._c_uuid)==1
 
     def set_operator_commands_permission(self,allow:bool):
         OmegaAvailable()
         LIB.PlayerSetOperatorCommands(self._c_uuid,toGoUint8(allow))
 
     @property
-    def can_teleport(self)->str:
+    def can_teleport(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerCanTeleport(self._c_uuid))
+        return LIB.PlayerCanTeleport(self._c_uuid)==1
 
     def set_teleports_permission(self,allow:bool):
         OmegaAvailable()
         LIB.PlayerSetTeleport(self._c_uuid,toGoUint8(allow))
 
     @property
-    def is_invulnerable(self)->str:
+    def is_invulnerable(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerStatusInvulnerable(self._c_uuid))
+        return LIB.PlayerStatusInvulnerable(self._c_uuid)==1
     
     @property
-    def is_flying(self)->str:
+    def is_flying(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerStatusFlying(self._c_uuid))
+        return LIB.PlayerStatusFlying(self._c_uuid)==1
 
     @property
-    def can_fly(self)->str:
+    def can_fly(self)->bool:
         OmegaAvailable()
-        return toPyString(LIB.PlayerStatusMayFly(self._c_uuid))
+        return LIB.PlayerStatusMayFly(self._c_uuid)==1
 
     # @property
     # def properties_flag(self)->int:
