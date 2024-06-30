@@ -1,6 +1,8 @@
 package bot_action
 
 import (
+	"bytes"
+	"neo-omega-kernel/minecraft/protocol"
 	"neo-omega-kernel/neomega"
 	"neo-omega-kernel/neomega/chunks/define"
 	"neo-omega-kernel/nodes"
@@ -14,6 +16,7 @@ type EndPointBotAction struct {
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeAPI() {
+	a.ExposeInventoryContent()
 	a.ExposeSelectHotBar()
 	a.ExposeUseHotBarItemOnBlock()
 	a.ExposeUseHotBarItemOnBlockWithOffset()
@@ -30,6 +33,41 @@ func NewEndPointBotAction(node defines.Node, uq neomega.MicroUQHolder, ctrl neom
 		node:            nodes.NewGroup("bot_action", node, false),
 	}
 	return ba
+}
+
+func (a *AccessPointBotActionWithPersistData) ExposeInventoryContent() {
+	a.node.ExposeAPI("get_inventory_content", func(args defines.Values) (result defines.Values, err error) {
+		var windowID uint32
+		var slot uint8
+		if err = (&ArgsChain{resArgs: args}).TakeUint32(&windowID).TakeUint8(&slot).Error(); err != nil {
+			return defines.Empty, err
+		}
+		inventoryContent, found := a.GetInventoryContent(windowID, slot)
+		if !found {
+			return defines.Empty, nil
+		}
+		buf := bytes.NewBuffer([]byte{})
+		writer := protocol.NewWriter(buf, 0)
+		writer.ItemInstance(inventoryContent)
+		return defines.FromFrags(buf.Bytes()), nil
+	}, true)
+}
+
+func (e *EndPointBotAction) GetInventoryContent(windowID uint32, slotID uint8) (*protocol.ItemInstance, bool) {
+	args := (&ArgsChain{}).SetUint32(windowID).SetUint8(slotID).Done()
+	ret, err := e.node.CallWithResponse("get_inventory_content", args).SetTimeout(time.Second * 30).BlockGetResponse()
+	if err != nil || ret.IsEmpty() {
+		return nil, false
+	}
+	data, err := ret.ToBytes()
+	if err != nil {
+		return nil, false
+	}
+	buf := bytes.NewBuffer(data)
+	reader := protocol.NewReader(buf, 0, false)
+	instance := protocol.ItemInstance{}
+	reader.ItemInstance(&instance)
+	return &instance, true
 }
 
 func (a *AccessPointBotActionWithPersistData) ExposeUseHotBarItemOnBlock() {
@@ -312,6 +350,22 @@ func (c *ArgsChain) SetString(x string) *ArgsChain {
 func (c *ArgsChain) TakeString(x *string) *ArgsChain {
 	if c.err == nil {
 		*x, c.err = c.resArgs.ToString()
+		c.resArgs = c.resArgs.ConsumeHead()
+	}
+	return c
+}
+
+func (c *ArgsChain) SetBytes(x []byte) *ArgsChain {
+	if c.resArgs == nil {
+		c.resArgs = make(defines.Values, 0)
+	}
+	c.resArgs = c.resArgs.ExtendFrags(x)
+	return c
+}
+
+func (c *ArgsChain) TakeBytes(x *[]byte) *ArgsChain {
+	if c.err == nil {
+		*x, c.err = c.resArgs.ToBytes()
 		c.resArgs = c.resArgs.ConsumeHead()
 	}
 	return c

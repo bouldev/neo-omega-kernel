@@ -97,6 +97,10 @@ func NewAccessPointBotActionWithPersistData(
 	return ba
 }
 
+func (o *AccessPointBotActionWithPersistData) GetInventoryContent(windowID uint32, slotID uint8) (instance *protocol.ItemInstance, found bool) {
+	return o.clientInfo.GetInventorySlot(windowID, slotID)
+}
+
 func (o *AccessPointBotActionWithPersistData) occupyBot(timeout time.Duration) (release func(), err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

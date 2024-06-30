@@ -125,6 +125,7 @@ type BotAction interface {
 	DropItemFromHotBar(slot uint8) error
 	MoveItemInsideHotBarOrInventory(sourceSlot, targetSlot, count uint8) error
 	SetStructureBlockData(pos define.CubePos, settings *StructureBlockSettings)
+	GetInventoryContent(windowID uint32, slotID uint8) (instance *protocol.ItemInstance, found bool)
 }
 
 type ItemLockPlace string
