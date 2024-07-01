@@ -265,7 +265,7 @@ func UpdateLegacyCommand(command string) string {
 		return UpdateLegacyTestForBlockCommand(command)
 	} else if strings.HasPrefix(lCommand, "summon") {
 		return UpdateLegacySummonCommand(command)
-	} else if strings.HasPrefix(lCommand, "title") {
+	} else if strings.HasPrefix(lCommand, "title") && !strings.HasPrefix(lCommand, "titleraw") {
 		return UpdateLegacyTitleCommand(command)
 	}
 	return command
@@ -286,7 +286,7 @@ func IsUpdatableLegacyCommand(command string) string {
 		return "testforblock"
 	} else if strings.HasPrefix(lCommand, "summon") {
 		return "summon"
-	} else if strings.HasPrefix(lCommand, "title") {
+	} else if strings.HasPrefix(lCommand, "title") && !strings.HasPrefix(lCommand, "titleraw") {
 		return "title"
 	}
 	return ""
