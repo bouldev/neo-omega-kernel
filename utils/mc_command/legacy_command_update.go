@@ -3,6 +3,7 @@ package mc_command
 import (
 	"fmt"
 	"neo-omega-kernel/neomega/blocks"
+	"neo-omega-kernel/utils/mc_command/token"
 	"strconv"
 	"strings"
 )
@@ -32,12 +33,16 @@ func UpdateBlockDescribe(blockName, blockValueString string) (string, error) {
 }
 
 func UpdateLegacyExecuteCommand(command string) string {
+	origCommand := command
 	c := ParseLegacyMCExecuteCommand(command)
 	if c == nil {
 		return command
 	}
 	newCommand := fmt.Sprintf("execute as %v at @s positioned %v", c.Selector, c.Pos)
 	if c.DetectPosIfAny != "" {
+		if strings.ContainsAny(c.DetectBlockValueIfAny, "[]") {
+			return origCommand
+		}
 		updateBlock, err := UpdateBlockDescribe(c.DetectBlockNameIfAny, c.DetectBlockValueIfAny)
 		if err != nil {
 			fmt.Println(err)
@@ -50,6 +55,9 @@ func UpdateLegacyExecuteCommand(command string) string {
 }
 
 func UpdateLegacySetBlockCommand(command string) string {
+	if strings.ContainsAny(command, "[]") {
+		return command
+	}
 	c := ParseLegacySetBlockCommand(command)
 	if c == nil {
 		return command
@@ -70,6 +78,9 @@ func UpdateLegacySetBlockCommand(command string) string {
 }
 
 func UpdateLegacyFillCommand(command string) string {
+	if strings.ContainsAny(command, "[]") {
+		return command
+	}
 	c := ParseLegacyFillCommand(command)
 	if c == nil {
 		return command
@@ -102,6 +113,9 @@ func UpdateLegacyFillCommand(command string) string {
 }
 
 func UpdateLegacyCloneCommand(command string) string {
+	if strings.ContainsAny(command, "[]") {
+		return command
+	}
 	c := ParseLegacyCloneCommand(command)
 	// fmt.Println(c)
 	if c == nil {
@@ -127,6 +141,9 @@ func UpdateLegacyCloneCommand(command string) string {
 }
 
 func UpdateLegacyTestForBlockCommand(command string) string {
+	if strings.ContainsAny(command, "[]") {
+		return command
+	}
 	c := ParseLegacyTestForBlockCommand(command)
 	// fmt.Println(c)
 	if c == nil {
@@ -154,6 +171,85 @@ func UpdateLegacySummonCommand(command string) string {
 	return newCommand
 }
 
+func UpdateLegacyTitleCommand(command string) string {
+	convetString := func(in string) string {
+		out := strings.ReplaceAll(in, "\\", "\\\\")
+		out = strings.ReplaceAll(in, "\n", "\\n")
+		return out
+	}
+	if !strings.Contains(command, "\n") {
+		return command
+	}
+	origCommand := command
+	command = strings.TrimSpace(origCommand)
+	reader := CleanStringAndNewSimpleTextReader(command)
+	token.ReadSpecific(reader, "/", true)
+	token.ReadWhiteSpace(reader)
+	token.ReadSpecific(reader, "title", true)
+	newCommand := "titleraw "
+	token.ReadWhiteSpace(reader)
+	ok, t := token.ReadMCSelector(reader)
+	if !ok {
+		return origCommand
+	}
+	newCommand += t
+	token.ReadWhiteSpace(reader)
+	ok, t = token.ReadNonWhiteSpace(reader)
+	if !ok {
+		return origCommand
+	}
+	newCommand += " " + t
+	token.ReadWhiteSpace(reader)
+	_, t = token.ReadUntilEnd(reader)
+	reader = CleanStringAndNewSimpleTextReader(t)
+	newCommand += ` {"rawtext": [`
+	first := true
+	res := ""
+	for reader.Current() != "" {
+		_, t := token.ReadAnyExcept(reader, "@")
+		if t != "" {
+			// fmt.Println("non-selector ", t, " END")
+			res += convetString(t)
+		} else {
+			// possible a selector
+			ok, t := token.ReadMCSelector(reader)
+			if ok {
+				// is selector
+				if res != "" {
+					if first {
+						first = false
+					} else {
+						newCommand += ","
+					}
+					newCommand += `{"text":"` + res + `"}`
+					res = ""
+				}
+
+				if first {
+					first = false
+				} else {
+					newCommand += ","
+				}
+				newCommand += `{"selector":"` + convetString(t) + `"}`
+			} else {
+				// something else
+				token.ReadSpecific(reader, "@", false)
+				res += "@"
+			}
+		}
+	}
+	if res != "" {
+		if first {
+			first = false
+		} else {
+			newCommand += ","
+		}
+		newCommand += `{"text":"` + res + `"}`
+		res = ""
+	}
+	return newCommand + "]}"
+}
+
 func UpdateLegacyCommand(command string) string {
 	lCommand := strings.ToLower(command)
 	lCommand = strings.TrimPrefix(lCommand, "/")
@@ -169,6 +265,8 @@ func UpdateLegacyCommand(command string) string {
 		return UpdateLegacyTestForBlockCommand(command)
 	} else if strings.HasPrefix(lCommand, "summon") {
 		return UpdateLegacySummonCommand(command)
+	} else if strings.HasPrefix(lCommand, "title") {
+		return UpdateLegacyTitleCommand(command)
 	}
 	return command
 }
@@ -188,6 +286,8 @@ func IsUpdatableLegacyCommand(command string) string {
 		return "testforblock"
 	} else if strings.HasPrefix(lCommand, "summon") {
 		return "summon"
+	} else if strings.HasPrefix(lCommand, "title") {
+		return "title"
 	}
 	return ""
 }

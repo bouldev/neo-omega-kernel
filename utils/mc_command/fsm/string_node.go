@@ -299,6 +299,33 @@ func MakeQuoteMixtureNonExceptStringLogic(except string) func(end, fail Automata
 	}
 }
 
+type anyExcept struct {
+	NextNonExcept AutomataNode
+	Except        string
+	Else          AutomataNode
+}
+
+func (n *anyExcept) Do(r TextReader, currentRead *Text) {
+	if r.Current() == "" {
+		n.Else.Do(r, currentRead)
+		return
+	}
+	if !strings.ContainsAny(r.Current(), n.Except) {
+		currentRead.Text += r.CurrentThenNext()
+		n.NextNonExcept.Do(r, currentRead)
+		return
+	}
+	n.Else.Do(r, currentRead)
+}
+func MakeNonExceptStringLogic(except string) func(end, fail AutomataNode) AutomataNode {
+	return func(end, fail AutomataNode) AutomataNode {
+		_1 := &anyExcept{Except: except}
+		_1.Else = end
+		_1.NextNonExcept = _1
+		return _1
+	}
+}
+
 // except =" \n\r\t"
 func MakeQuoteMixtureNonExceptStringNode(except string) *MachineNodeWrapper {
 	return &MachineNodeWrapper{
