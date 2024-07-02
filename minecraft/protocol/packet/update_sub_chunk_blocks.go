@@ -1,6 +1,6 @@
 package packet
 
-import "neo-omega-kernel/minecraft/protocol"
+import "github.com/OmineDev/neomega-core/minecraft/protocol"
 
 // UpdateSubChunkBlocks is essentially just UpdateBlock packet, however for a set of blocks in a sub-chunk.
 type UpdateSubChunkBlocks struct {

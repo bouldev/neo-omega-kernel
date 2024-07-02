@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // CreativeContent is a packet sent by the server to set the creative inventory's content for a player.

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"neo-omega-kernel/neomega/entries/minimal_client_entry"
+	"github.com/OmineDev/neomega-core/neomega/entries/minimal_client_entry"
 )
 
 func main() {

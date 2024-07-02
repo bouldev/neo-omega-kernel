@@ -1,8 +1,8 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/nbt"
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/nbt"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // EditorNetwork is a packet sent from the server to the client and vise-versa to communicate editor-mode related

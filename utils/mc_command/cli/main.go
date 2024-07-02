@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"neo-omega-kernel/utils/mc_command"
+
+	"github.com/OmineDev/neomega-core/utils/mc_command"
 )
 
 func main() {

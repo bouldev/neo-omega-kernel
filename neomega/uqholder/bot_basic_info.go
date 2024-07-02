@@ -2,12 +2,13 @@ package uqholder
 
 import (
 	"bytes"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/encoding/binary_read_write"
-	binary_read_write2 "neo-omega-kernel/neomega/encoding/binary_read_write"
-	"neo-omega-kernel/neomega/encoding/little_endian"
-	"neo-omega-kernel/neomega/minecraft_conn"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/encoding/binary_read_write"
+	binary_read_write2 "github.com/OmineDev/neomega-core/neomega/encoding/binary_read_write"
+	"github.com/OmineDev/neomega-core/neomega/encoding/little_endian"
+	"github.com/OmineDev/neomega-core/neomega/minecraft_conn"
 )
 
 func init() {

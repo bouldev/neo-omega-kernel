@@ -4,11 +4,12 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/block_set"
-	"neo-omega-kernel/neomega/blocks/describe"
 	"os"
 	"sort"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/block_set"
+	"github.com/OmineDev/neomega-core/neomega/blocks/describe"
 )
 
 type RawState struct {

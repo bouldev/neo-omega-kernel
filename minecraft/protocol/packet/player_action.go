@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // PlayerAction is sent by the client when it executes any action, for example starting to sprint, swim,

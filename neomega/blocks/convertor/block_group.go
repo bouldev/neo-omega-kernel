@@ -2,8 +2,9 @@ package convertor
 
 import (
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/describe"
 	"sync"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/describe"
 )
 
 type ToNEMCBaseNames struct {

@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // AnimateEntity is sent by the server to animate an entity client-side. It may be used to play a single

@@ -1,9 +1,9 @@
 package minecraft_conn
 
 import (
-	"neo-omega-kernel/minecraft/protocol/login"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/minecraft_neo/game_data"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/login"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/minecraft_neo/game_data"
 )
 
 type Conn interface {

@@ -2,10 +2,11 @@ package byte_frame_conn
 
 import (
 	"context"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/minecraft_neo/can_close"
 
-	// "neo-omega-kernel/minecraft_neo/defines"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/minecraft_neo/can_close"
+
+	// "github.com/OmineDev/neomega-core/minecraft_neo/defines"
 	"net"
 	"sync"
 	"time"

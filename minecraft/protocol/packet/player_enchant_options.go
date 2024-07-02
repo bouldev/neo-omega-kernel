@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // PlayerEnchantOptions is sent by the server to update the enchantment options displayed when the user opens

@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // InventoryContent is sent by the server to update the full content of a particular inventory. It is usually

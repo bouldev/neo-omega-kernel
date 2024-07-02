@@ -2,12 +2,13 @@ package neomega
 
 import (
 	"context"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega/blocks"
-	"neo-omega-kernel/neomega/chunks"
-	"neo-omega-kernel/neomega/chunks/chunk"
-	"neo-omega-kernel/neomega/chunks/define"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega/blocks"
+	"github.com/OmineDev/neomega-core/neomega/chunks"
+	"github.com/OmineDev/neomega-core/neomega/chunks/chunk"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
 )
 
 type BlockPalettes struct {

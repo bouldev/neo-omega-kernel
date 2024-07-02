@@ -1,6 +1,6 @@
 package token
 
-import "neo-omega-kernel/utils/mc_command/fsm"
+import "github.com/OmineDev/neomega-core/utils/mc_command/fsm"
 
 type TextReader interface {
 	// if "" means EOF

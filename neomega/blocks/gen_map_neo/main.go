@@ -2,13 +2,14 @@ package main
 
 import (
 	"bytes"
-	"neo-omega-kernel/neomega/blocks/block_set"
-	"neo-omega-kernel/neomega/blocks/convertor"
-	"neo-omega-kernel/neomega/blocks/gen_map_neo/step0_nemc_blocks_liliya"
-	"neo-omega-kernel/neomega/blocks/gen_map_neo/step2_add_specific_legacy_converts"
-	"neo-omega-kernel/neomega/blocks/gen_map_neo/step2_add_standard_mc_converts"
-	"neo-omega-kernel/neomega/blocks/gen_map_neo/step3_add_schem_mapping"
 	"os"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/block_set"
+	"github.com/OmineDev/neomega-core/neomega/blocks/convertor"
+	"github.com/OmineDev/neomega-core/neomega/blocks/gen_map_neo/step0_nemc_blocks_liliya"
+	"github.com/OmineDev/neomega-core/neomega/blocks/gen_map_neo/step2_add_specific_legacy_converts"
+	"github.com/OmineDev/neomega-core/neomega/blocks/gen_map_neo/step2_add_standard_mc_converts"
+	"github.com/OmineDev/neomega-core/neomega/blocks/gen_map_neo/step3_add_schem_mapping"
 
 	"github.com/andybalholm/brotli"
 )

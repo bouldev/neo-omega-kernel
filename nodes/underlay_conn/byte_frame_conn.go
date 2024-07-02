@@ -6,10 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"neo-omega-kernel/minecraft_neo/can_close"
-	"neo-omega-kernel/neomega/encoding/little_endian"
 
-	// "neo-omega-kernel/minecraft_neo/defines"
+	"github.com/OmineDev/neomega-core/minecraft_neo/can_close"
+	"github.com/OmineDev/neomega-core/neomega/encoding/little_endian"
+
+	// "github.com/OmineDev/neomega-core/minecraft_neo/defines"
 	"net"
 	"sync"
 	"time"

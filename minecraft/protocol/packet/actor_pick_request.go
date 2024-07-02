@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // ActorPickRequest is sent by the client when it tries to pick an entity, so that it gets a spawn egg which

@@ -6,7 +6,8 @@ import (
 	"crypto/cipher"
 	"fmt"
 	"io"
-	"neo-omega-kernel/minecraft/internal"
+
+	"github.com/OmineDev/neomega-core/minecraft/internal"
 )
 
 // Encoder handles the encoding of Minecraft packets that are sent to an io.Writer. The packets are compressed

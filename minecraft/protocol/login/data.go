@@ -4,11 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
 	"net"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 
 	"github.com/google/uuid"
 	"golang.org/x/text/language"

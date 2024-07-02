@@ -2,12 +2,13 @@ package cmd_sender
 
 import (
 	"context"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/utils/sync_wrapper"
 	"strings"
 	"sync"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/utils/sync_wrapper"
 
 	"github.com/google/uuid"
 )

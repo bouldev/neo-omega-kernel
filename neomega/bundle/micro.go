@@ -2,18 +2,20 @@ package bundle
 
 import (
 	"fmt"
-	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/nodes/defines"
 
-	// "neo-omega-kernel/neomega/modules/block/placer"
-	"neo-omega-kernel/neomega/modules/bot_action"
-	"neo-omega-kernel/neomega/modules/info_sender"
-	"neo-omega-kernel/neomega/modules/player_interact"
-	"neo-omega-kernel/neomega/modules/structure"
+	"github.com/OmineDev/neomega-core/i18n"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/nodes/defines"
+
+	// "github.com/OmineDev/neomega-core/neomega/modules/block/placer"
 	"sync"
 	"time"
+
+	"github.com/OmineDev/neomega-core/neomega/modules/bot_action"
+	"github.com/OmineDev/neomega-core/neomega/modules/info_sender"
+	"github.com/OmineDev/neomega-core/neomega/modules/player_interact"
+	"github.com/OmineDev/neomega-core/neomega/modules/structure"
 )
 
 func init() {

@@ -3,7 +3,8 @@ package options
 import (
 	"crypto/ecdsa"
 	"log"
-	"neo-omega-kernel/minecraft/protocol/login"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/login"
 )
 
 // Dialer allows specifying specific settings for connection to a Minecraft server.

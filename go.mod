@@ -1,4 +1,4 @@
-module neo-omega-kernel
+module github.com/cma2401pt/neo-omega-kernel
 
 go 1.20
 

@@ -3,11 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega/uqholder"
 	"os"
 	"reflect"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega/uqholder"
 )
 
 type packetData struct {

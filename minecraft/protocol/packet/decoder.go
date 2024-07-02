@@ -6,7 +6,8 @@ import (
 	"crypto/cipher"
 	"fmt"
 	"io"
-	"neo-omega-kernel/minecraft/protocol"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // Decoder handles the decoding of Minecraft packets sent through an io.Reader. These packets in turn contain

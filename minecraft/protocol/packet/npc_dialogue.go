@@ -1,6 +1,6 @@
 package packet
 
-import "neo-omega-kernel/minecraft/protocol"
+import "github.com/OmineDev/neomega-core/minecraft/protocol"
 
 const (
 	NPCDialogueActionOpen int32 = iota

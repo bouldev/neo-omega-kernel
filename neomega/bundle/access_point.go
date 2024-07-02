@@ -1,12 +1,12 @@
 package bundle
 
 import (
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/minecraft_conn"
-	"neo-omega-kernel/neomega/modules/cmd_sender"
-	"neo-omega-kernel/neomega/modules/core"
-	"neo-omega-kernel/neomega/uqholder"
-	"neo-omega-kernel/nodes/defines"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/minecraft_conn"
+	"github.com/OmineDev/neomega-core/neomega/modules/cmd_sender"
+	"github.com/OmineDev/neomega-core/neomega/modules/core"
+	"github.com/OmineDev/neomega-core/neomega/uqholder"
+	"github.com/OmineDev/neomega-core/nodes/defines"
 )
 
 func NewAccessPointMicroOmega(node defines.Node, conn minecraft_conn.Conn) neomega.UnReadyMicroOmega {

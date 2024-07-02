@@ -3,9 +3,10 @@ package step3_add_schem_mapping
 import (
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/convertor"
-	"neo-omega-kernel/neomega/blocks/describe"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/convertor"
+	"github.com/OmineDev/neomega-core/neomega/blocks/describe"
 )
 
 type JavaToBedrockMappingIn struct {

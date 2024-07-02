@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"neo-omega-kernel/i18n"
 	"net/http"
 	"regexp"
+
+	"github.com/OmineDev/neomega-core/i18n"
 
 	"github.com/pterm/pterm"
 )

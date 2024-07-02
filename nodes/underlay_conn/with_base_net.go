@@ -2,12 +2,13 @@ package underlay_conn
 
 import (
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/nodes/defines"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/nodes/defines"
 )
 
 func NewBasicNetServer(addr string) (net.Listener, error) {

@@ -1,8 +1,9 @@
 package chunk
 
 import (
-	"neo-omega-kernel/neomega/chunks/define"
 	"sync"
+
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
 )
 
 const SubChunkVersion = 9

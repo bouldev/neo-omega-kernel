@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"neo-omega-kernel/neomega/blocks"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks"
 )
 
 func main() {

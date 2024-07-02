@@ -3,7 +3,8 @@ package defines
 import (
 	"errors"
 	"fmt"
-	"neo-omega-kernel/neomega/encoding/little_endian"
+
+	"github.com/OmineDev/neomega-core/neomega/encoding/little_endian"
 
 	"github.com/google/uuid"
 )

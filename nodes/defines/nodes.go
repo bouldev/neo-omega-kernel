@@ -2,8 +2,9 @@ package defines
 
 import (
 	"context"
-	"neo-omega-kernel/minecraft_neo/can_close"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft_neo/can_close"
 )
 
 type Values [][]byte

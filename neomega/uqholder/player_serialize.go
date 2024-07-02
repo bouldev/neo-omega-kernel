@@ -3,10 +3,11 @@ package uqholder
 import (
 	"bytes"
 	"errors"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/neomega/encoding/binary_read_write"
-	"neo-omega-kernel/neomega/encoding/little_endian"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/neomega/encoding/binary_read_write"
+	"github.com/OmineDev/neomega-core/neomega/encoding/little_endian"
 )
 
 func (p *Player) Marshal() (data []byte, err error) {

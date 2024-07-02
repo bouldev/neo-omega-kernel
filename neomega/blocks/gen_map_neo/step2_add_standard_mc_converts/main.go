@@ -2,8 +2,9 @@ package step2_add_standard_mc_converts
 
 import (
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/block_set"
-	"neo-omega-kernel/neomega/blocks/convertor"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/block_set"
+	"github.com/OmineDev/neomega-core/neomega/blocks/convertor"
 )
 
 func GenMCToNemcTranslateRecords(

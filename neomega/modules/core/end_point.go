@@ -3,11 +3,12 @@ package core
 import (
 	"bytes"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/nodes/defines"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/nodes/defines"
 )
 
 type EndPointInteractCore struct {

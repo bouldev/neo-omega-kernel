@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"neo-omega-kernel/i18n"
 	"os"
 	"path/filepath"
+
+	"github.com/OmineDev/neomega-core/i18n"
 )
 
 type AccessWrapper struct {

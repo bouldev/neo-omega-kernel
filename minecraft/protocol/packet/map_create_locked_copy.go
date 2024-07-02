@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // MapCreateLockedCopy is sent by the client to create a locked copy of one map into another map. In vanilla,

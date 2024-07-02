@@ -1,9 +1,10 @@
 package uqholder
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/neomega"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/neomega"
 
 	"github.com/google/uuid"
 )

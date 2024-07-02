@@ -2,8 +2,9 @@ package mc_command
 
 import (
 	"fmt"
-	"neo-omega-kernel/utils/mc_command/token"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/utils/mc_command/token"
 )
 
 type LegacyMCExecuteCommand struct {

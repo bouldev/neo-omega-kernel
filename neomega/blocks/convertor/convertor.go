@@ -1,8 +1,9 @@
 package convertor
 
 import (
-	"neo-omega-kernel/neomega/blocks/describe"
 	"sync"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/describe"
 )
 
 type ToNEMCConvertor struct {

@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/describe"
 	"strconv"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/describe"
 )
 
 func BlockSetFromStringRecords(dataBytes string, unknownRtid uint32) *BlockSet {

@@ -1,8 +1,8 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/nbt"
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/nbt"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"

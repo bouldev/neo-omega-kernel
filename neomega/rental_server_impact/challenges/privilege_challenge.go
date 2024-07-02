@@ -3,11 +3,12 @@ package challenges
 import (
 	"context"
 	"fmt"
-	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
 	"time"
+
+	"github.com/OmineDev/neomega-core/i18n"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
 )
 
 type OperatorChallenge struct {

@@ -1,8 +1,8 @@
 package login_and_spawn_core
 
 import (
-	"neo-omega-kernel/minecraft/resource"
-	"neo-omega-kernel/minecraft_neo/game_data"
+	"github.com/OmineDev/neomega-core/minecraft/resource"
+	"github.com/OmineDev/neomega-core/minecraft_neo/game_data"
 )
 
 // Authenticated returns true if the connection was authenticated through XBOX Live services.

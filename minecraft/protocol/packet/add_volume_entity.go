@@ -1,8 +1,8 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/nbt"
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/nbt"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // AddVolumeEntity sends a volume entity's definition and metadata from server to client.

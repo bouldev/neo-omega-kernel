@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // OpenSign is sent by the server to open a sign for editing. As of 1.19.80, the player can interact with a sign to edit

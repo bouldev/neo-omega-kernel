@@ -26,6 +26,7 @@
 - 一些基本的例子可以在 neomega/entries 下找到
 
 ### 特别说明:
+- 此仓库不包含机器人登陆时信息的获取
 - 对于一些和机器人相关的数据包，例如 ChangeDimension, Respawn, 其信息的记录位于 uqHolder, 但是响应应该位于 botAction  
 - 为了减轻通信量，一些数据包被过滤或者不转发，包括:  
   - packet.MovePlayer: pk.EntityRuntimeID != botRuntimeID 时忽略
@@ -33,6 +34,20 @@
   - packet.IDSetActorData: pk.EntityRuntimeID != botRuntimeID 时忽略
   - packet.IDSetActorMotion: pk.EntityRuntimeID != botRuntimeID 时忽略
 
+### 相关库
+- gophertunnel: 
+https://github.com/Sandertv/gophertunnel  
+gophertunnel 是一个国际版 MC 相关库，其实现了非常多数据包的序列化/反序列化 & 连接等重要协议，但是因为网易 MC 和 国际版 MC 不同，我们复制了这个库并对其修改以使之可以与网易 MC 相兼容
+
+ 
+- Tnze/go-mc   
+https://github.com/Tnze/go-mc  
+尽管不是很显眼，但是 snbt/nbt 等实现使用的是 Tnze/go-mc
+
+ 
+- PhoenixBuilder  
+https://github.com/LNSSPsd/PhoenixBuilder  
+PhoenixBuilder主要用于网易版MC的建筑导入导出，几何体构建等。neomega 前身由 PhoenixBuilder 分叉出来
 
 ## nodes
 ### 目的

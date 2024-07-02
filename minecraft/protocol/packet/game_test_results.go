@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // GameTestResults is a packet sent in response to the GameTestRequest packet, with a boolean indicating whether the

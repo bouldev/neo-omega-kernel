@@ -3,8 +3,9 @@ package neomega
 import (
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/neomega/blocks"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks"
 
 	"github.com/mitchellh/mapstructure"
 )

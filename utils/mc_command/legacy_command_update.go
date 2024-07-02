@@ -2,10 +2,11 @@ package mc_command
 
 import (
 	"fmt"
-	"neo-omega-kernel/neomega/blocks"
-	"neo-omega-kernel/utils/mc_command/token"
 	"strconv"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks"
+	"github.com/OmineDev/neomega-core/utils/mc_command/token"
 )
 
 func UpdateBlockDescribe(blockName, blockValueString string) (string, error) {

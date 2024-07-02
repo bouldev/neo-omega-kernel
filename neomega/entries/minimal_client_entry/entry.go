@@ -5,13 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
-	"neo-omega-kernel/neomega/rental_server_impact/info_collect_utils"
-	"neo-omega-kernel/nodes"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/OmineDev/neomega-core/i18n"
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/access_helper"
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/info_collect_utils"
+	"github.com/OmineDev/neomega-core/nodes"
 
 	"github.com/pterm/pterm"
 )

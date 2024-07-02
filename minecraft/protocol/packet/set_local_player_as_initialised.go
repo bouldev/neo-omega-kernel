@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // SetLocalPlayerAsInitialised is sent by the client in response to a PlayStatus packet with the status set

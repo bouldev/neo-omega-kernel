@@ -2,12 +2,13 @@ package underlay_conn
 
 import (
 	"context"
-	"neo-omega-kernel/minecraft_neo/can_close"
-	conn_defines "neo-omega-kernel/minecraft_neo/cascade_conn/defines"
-	"neo-omega-kernel/nodes/defines"
-	"neo-omega-kernel/utils/sync_wrapper"
 	"strings"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft_neo/can_close"
+	conn_defines "github.com/OmineDev/neomega-core/minecraft_neo/cascade_conn/defines"
+	"github.com/OmineDev/neomega-core/nodes/defines"
+	"github.com/OmineDev/neomega-core/utils/sync_wrapper"
 
 	"github.com/google/uuid"
 )

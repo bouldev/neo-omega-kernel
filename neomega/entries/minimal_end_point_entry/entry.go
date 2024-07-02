@@ -2,14 +2,15 @@ package minimal_end_point_entry
 
 import (
 	"fmt"
-	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/neomega/bundle"
-	"neo-omega-kernel/neomega/chunks/define"
-	"neo-omega-kernel/nodes"
-	"neo-omega-kernel/nodes/defines"
-	"neo-omega-kernel/nodes/underlay_conn"
 	"os"
 	"time"
+
+	"github.com/OmineDev/neomega-core/i18n"
+	"github.com/OmineDev/neomega-core/neomega/bundle"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
+	"github.com/OmineDev/neomega-core/nodes"
+	"github.com/OmineDev/neomega-core/nodes/defines"
+	"github.com/OmineDev/neomega-core/nodes/underlay_conn"
 )
 
 const ENTRY_NAME = "omega_minimal_end_point"
@@ -26,7 +27,7 @@ func Entry(args *Args) {
 		if err != nil {
 			panic(err)
 		}
-		node = nodes.NewGroup("neo-omega-kernel/neomega", slave, false)
+		node = nodes.NewGroup("github.com/OmineDev/neomega-core/neomega", slave, false)
 		node.ListenMessage("reboot", func(msg defines.Values) {
 			reason, _ := msg.ToString()
 			fmt.Println(reason)

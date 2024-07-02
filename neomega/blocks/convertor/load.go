@@ -2,7 +2,8 @@ package convertor
 
 import (
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/describe"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/describe"
 )
 
 func (c *ToNEMCConvertor) LoadConvertRecord(r *ConvertRecord, overwrite bool, strict bool) {

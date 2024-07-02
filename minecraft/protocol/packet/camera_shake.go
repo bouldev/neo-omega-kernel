@@ -1,6 +1,6 @@
 package packet
 
-import "neo-omega-kernel/minecraft/protocol"
+import "github.com/OmineDev/neomega-core/minecraft/protocol"
 
 const (
 	CameraShakeTypePositional uint8 = iota

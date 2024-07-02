@@ -3,9 +3,10 @@ package nodes
 import (
 	"context"
 	"fmt"
-	"neo-omega-kernel/minecraft_neo/can_close"
-	"neo-omega-kernel/nodes/defines"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft_neo/can_close"
+	"github.com/OmineDev/neomega-core/nodes/defines"
 )
 
 type ZMQSlaveNode struct {

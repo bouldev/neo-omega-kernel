@@ -3,13 +3,14 @@ package info_collect_utils
 import (
 	"bufio"
 	"fmt"
-	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
-	"neo-omega-kernel/utils/input"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	"github.com/OmineDev/neomega-core/i18n"
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/access_helper"
+	"github.com/OmineDev/neomega-core/utils/input"
 
 	"github.com/pterm/pterm"
 	"golang.org/x/term"

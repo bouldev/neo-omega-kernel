@@ -1,8 +1,8 @@
 package defines
 
 import (
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/minecraft_neo/can_close"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/minecraft_neo/can_close"
 )
 
 type AdvancedConnControl interface {

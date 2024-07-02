@@ -9,7 +9,7 @@ import (
 	"sort"
 	"unsafe"
 
-	"neo-omega-kernel/minecraft/nbt"
+	"github.com/OmineDev/neomega-core/minecraft/nbt"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"

@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // PhotoInfoRequest is sent by the client to request photo information from the server. This packet was deprecated in 1.19.80.

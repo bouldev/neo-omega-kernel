@@ -1,8 +1,9 @@
 package neomega
 
 import (
-	"neo-omega-kernel/minecraft/protocol/packet"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"

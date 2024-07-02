@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"neo-omega-kernel/nodes/defines"
-	"neo-omega-kernel/nodes/underlay_conn"
 	"time"
+
+	"github.com/OmineDev/neomega-core/nodes/defines"
+	"github.com/OmineDev/neomega-core/nodes/underlay_conn"
 )
 
 func Server() {

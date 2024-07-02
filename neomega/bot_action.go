@@ -3,12 +3,13 @@ package neomega
 import (
 	"encoding/json"
 	"math"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega/chunks"
-	"neo-omega-kernel/neomega/chunks/define"
 	"strings"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega/chunks"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/lucasb-eyer/go-colorful"

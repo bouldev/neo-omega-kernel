@@ -2,8 +2,9 @@ package cmd_sender
 
 import (
 	"context"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/nodes/defines"
+
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/nodes/defines"
 
 	"github.com/google/uuid"
 )

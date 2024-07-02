@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // GUIDataPickItem is sent by the server to make the client 'select' a hot bar slot. It currently appears to

@@ -5,9 +5,10 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"neo-omega-kernel/neomega/blocks/block_set"
-	"neo-omega-kernel/neomega/blocks/convertor"
-	"neo-omega-kernel/neomega/blocks/describe"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/block_set"
+	"github.com/OmineDev/neomega-core/neomega/blocks/convertor"
+	"github.com/OmineDev/neomega-core/neomega/blocks/describe"
 
 	"github.com/andybalholm/brotli"
 )

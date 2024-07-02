@@ -2,15 +2,16 @@ package login_and_spawn_core
 
 import (
 	"context"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/minecraft/resource"
-	"neo-omega-kernel/minecraft_neo/can_close"
-	"neo-omega-kernel/minecraft_neo/cascade_conn/defines"
-	"neo-omega-kernel/minecraft_neo/game_data"
-	"neo-omega-kernel/minecraft_neo/login_and_spawn_core/options"
 	"sync"
 	"sync/atomic"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/minecraft/resource"
+	"github.com/OmineDev/neomega-core/minecraft_neo/can_close"
+	"github.com/OmineDev/neomega-core/minecraft_neo/cascade_conn/defines"
+	"github.com/OmineDev/neomega-core/minecraft_neo/game_data"
+	"github.com/OmineDev/neomega-core/minecraft_neo/login_and_spawn_core/options"
 )
 
 type Core struct {

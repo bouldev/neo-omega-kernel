@@ -1,6 +1,6 @@
 package packet
 
-import "neo-omega-kernel/minecraft/protocol"
+import "github.com/OmineDev/neomega-core/minecraft/protocol"
 
 // EducationResourceURI is a packet that transmits education resource settings to all clients.
 type EducationResourceURI struct {

@@ -3,9 +3,10 @@ package info_sender
 import (
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
 )
 
 func init() {

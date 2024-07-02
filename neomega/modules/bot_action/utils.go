@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/chunks/define"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
 
 	"github.com/go-gl/mathgl/mgl32"
 )

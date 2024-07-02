@@ -2,10 +2,11 @@ package bot_action
 
 import (
 	"fmt"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/chunks/define"
-	"neo-omega-kernel/utils/string_wrapper"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
+	"github.com/OmineDev/neomega-core/utils/string_wrapper"
 
 	"github.com/google/uuid"
 )

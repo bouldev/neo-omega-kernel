@@ -2,11 +2,12 @@ package access_helper
 
 import (
 	"context"
-	"neo-omega-kernel/minecraft/protocol/login"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/minecraft_neo/cascade_conn/defines"
-	"neo-omega-kernel/minecraft_neo/login_and_spawn_core"
 	"sync"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/login"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/minecraft_neo/cascade_conn/defines"
+	"github.com/OmineDev/neomega-core/minecraft_neo/login_and_spawn_core"
 )
 
 type Authenticator interface {

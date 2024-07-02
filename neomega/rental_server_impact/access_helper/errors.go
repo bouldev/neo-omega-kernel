@@ -2,7 +2,8 @@ package access_helper
 
 import (
 	"errors"
-	"neo-omega-kernel/i18n"
+
+	"github.com/OmineDev/neomega-core/i18n"
 )
 
 var ErrFBUserCenterLoginFail = errors.New(i18n.T(i18n.S_invalid_auth_server_user_account))

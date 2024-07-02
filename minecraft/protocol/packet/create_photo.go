@@ -1,6 +1,6 @@
 package packet
 
-import "neo-omega-kernel/minecraft/protocol"
+import "github.com/OmineDev/neomega-core/minecraft/protocol"
 
 // CreatePhoto is a packet that allows players to export photos from their portfolios into items in their inventory.
 // This packet only works on the Education Edition version of Minecraft.

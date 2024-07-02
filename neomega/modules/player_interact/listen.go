@@ -1,10 +1,11 @@
 package player_interact
 
 import (
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/uqholder"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/uqholder"
 )
 
 func (i *PlayerInteract) onTextPacket(pk *packet.Text) {

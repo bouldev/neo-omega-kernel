@@ -2,7 +2,8 @@ package packet
 
 import (
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // Unknown is an implementation of the Packet interface for unknown/unimplemented packets. It holds the packet

@@ -1,8 +1,8 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/nbt"
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/nbt"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // BlockActorData is sent by the server to update data of a block entity client-side, for example the data of

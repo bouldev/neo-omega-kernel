@@ -2,12 +2,13 @@ package core
 
 import (
 	"fmt"
-	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/minecraft_conn"
-	"neo-omega-kernel/nodes/defines"
 	"time"
+
+	"github.com/OmineDev/neomega-core/i18n"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/minecraft_conn"
+	"github.com/OmineDev/neomega-core/nodes/defines"
 )
 
 type AccessPointInteractCore struct {

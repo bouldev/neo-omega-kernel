@@ -1,9 +1,10 @@
 package nodes
 
 import (
-	"neo-omega-kernel/nodes/defines"
 	"strings"
 	"time"
+
+	"github.com/OmineDev/neomega-core/nodes/defines"
 )
 
 type group struct {

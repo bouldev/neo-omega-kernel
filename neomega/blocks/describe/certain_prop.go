@@ -2,9 +2,10 @@ package describe
 
 import (
 	"fmt"
-	"neo-omega-kernel/neomega/alter/snbt"
 	"sort"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/neomega/alter/snbt"
 )
 
 type PropValType uint8

@@ -7,8 +7,9 @@ import (
 	"image/color"
 	"io"
 	"math"
-	"neo-omega-kernel/minecraft/nbt"
 	"unsafe"
+
+	"github.com/OmineDev/neomega-core/minecraft/nbt"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"

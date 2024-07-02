@@ -11,20 +11,21 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/bundle"
-	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
-	"neo-omega-kernel/neomega/rental_server_impact/info_collect_utils"
-	"neo-omega-kernel/nodes"
-	"neo-omega-kernel/nodes/defines"
-	"neo-omega-kernel/nodes/underlay_conn"
-	"neo-omega-kernel/utils/sync_wrapper"
 	"time"
 	"unsafe"
 
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/i18n"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/bundle"
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/access_helper"
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/info_collect_utils"
+	"github.com/OmineDev/neomega-core/nodes"
+	"github.com/OmineDev/neomega-core/nodes/defines"
+	"github.com/OmineDev/neomega-core/nodes/underlay_conn"
+	"github.com/OmineDev/neomega-core/utils/sync_wrapper"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
 )
 
 var GOmegaCore neomega.MicroOmega
@@ -740,7 +741,7 @@ func ConnectOmega(address *C.char) (Cerr *C.char) {
 		if err != nil {
 			return C.CString(err.Error())
 		}
-		node = nodes.NewGroup("neo-omega-kernel/neomega", slave, false)
+		node = nodes.NewGroup("github.com/OmineDev/neomega-core/neomega", slave, false)
 		if !node.CheckNetTag("access-point") {
 			return C.CString(i18n.T(i18n.S_no_access_point_in_network))
 		}
@@ -780,7 +781,7 @@ func StartOmega(address *C.char, impactOptionsJson *C.char) (Cerr *C.char) {
 			}
 			// server := nodes.NewSimpleZMQServer(socket)
 			master := nodes.NewZMQMasterNode(server)
-			node = nodes.NewGroup("neo-omega-kernel/neomega", master, false)
+			node = nodes.NewGroup("github.com/OmineDev/neomega-core/neomega", master, false)
 		}
 	}
 	ctx := context.Background()

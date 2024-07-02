@@ -1,7 +1,7 @@
 package game_data
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 
 	"github.com/go-gl/mathgl/mgl32"
 )

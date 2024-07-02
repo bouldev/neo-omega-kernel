@@ -3,7 +3,7 @@ package packet
 import (
 	"io"
 
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // Packet represents a packet that may be sent over a Minecraft network connection. The packet needs to hold

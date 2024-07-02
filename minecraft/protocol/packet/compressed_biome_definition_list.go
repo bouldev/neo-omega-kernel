@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"neo-omega-kernel/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 // CompressedBiomeDefinitionList is sent by the server to send a list of biomes to the client. The contents of this packet

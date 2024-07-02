@@ -3,14 +3,15 @@ package structure
 import (
 	"context"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/blocks"
-	"neo-omega-kernel/neomega/chunks/define"
-	"neo-omega-kernel/utils/string_wrapper"
-	"neo-omega-kernel/utils/sync_wrapper"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/blocks"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
+	"github.com/OmineDev/neomega-core/utils/string_wrapper"
+	"github.com/OmineDev/neomega-core/utils/sync_wrapper"
 
 	"github.com/google/uuid"
 	"github.com/mitchellh/mapstructure"

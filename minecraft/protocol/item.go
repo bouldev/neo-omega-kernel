@@ -1,7 +1,7 @@
 package protocol
 
 import (
-	"neo-omega-kernel/minecraft/nbt"
+	"github.com/OmineDev/neomega-core/minecraft/nbt"
 )
 
 // ItemInstance represents a unique instance of an item stack. These instances carry a specific network ID

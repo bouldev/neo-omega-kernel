@@ -1,9 +1,10 @@
 package chunks
 
 import (
-	"neo-omega-kernel/neomega/chunks/chunk"
-	"neo-omega-kernel/neomega/chunks/define"
 	"time"
+
+	"github.com/OmineDev/neomega-core/neomega/chunks/chunk"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
 )
 
 var TimeStampNotFound = time.Unix(0, 0).Unix()

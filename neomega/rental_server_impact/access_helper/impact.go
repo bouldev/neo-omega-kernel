@@ -3,12 +3,13 @@ package access_helper
 import (
 	"context"
 	"fmt"
-	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/bundle"
-	"neo-omega-kernel/neomega/rental_server_impact/challenges"
-	"neo-omega-kernel/nodes/defines"
 	"time"
+
+	"github.com/OmineDev/neomega-core/i18n"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/bundle"
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/challenges"
+	"github.com/OmineDev/neomega-core/nodes/defines"
 )
 
 type AuthenticatorWithToken interface {

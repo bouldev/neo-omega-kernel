@@ -3,12 +3,13 @@ package packet_conn
 import (
 	"bytes"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/minecraft_neo/can_close"
-	"neo-omega-kernel/minecraft_neo/cascade_conn/defines"
 	"os"
 	"path/filepath"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/minecraft_neo/can_close"
+	"github.com/OmineDev/neomega-core/minecraft_neo/cascade_conn/defines"
 )
 
 type PacketConn struct {

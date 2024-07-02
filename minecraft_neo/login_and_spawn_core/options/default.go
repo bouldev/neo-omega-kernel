@@ -8,9 +8,10 @@ import (
 	"encoding/base64"
 	"log"
 	rand2 "math/rand"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/login"
 	"os"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/login"
 
 	"github.com/google/uuid"
 )

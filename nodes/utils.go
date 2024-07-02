@@ -1,8 +1,9 @@
 package nodes
 
 import (
-	"neo-omega-kernel/nodes/defines"
 	"time"
+
+	"github.com/OmineDev/neomega-core/nodes/defines"
 )
 
 func WaitUntilConflictNodeOffline(node defines.Node, tag string, maxWaitTime time.Duration) bool {

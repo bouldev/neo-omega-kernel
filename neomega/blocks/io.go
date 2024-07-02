@@ -2,9 +2,10 @@ package blocks
 
 import (
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/describe"
 	"strconv"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/neomega/blocks/describe"
 )
 
 func RuntimeIDToBlock(runtimeID uint32) (block *describe.Block, found bool) {

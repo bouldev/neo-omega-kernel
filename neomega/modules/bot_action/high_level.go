@@ -3,16 +3,17 @@ package bot_action
 import (
 	"context"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/blocks"
-	"neo-omega-kernel/neomega/chunks"
-	"neo-omega-kernel/neomega/chunks/define"
-	"neo-omega-kernel/nodes/defines"
-	"neo-omega-kernel/utils/string_wrapper"
 	"strings"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/blocks"
+	"github.com/OmineDev/neomega-core/neomega/chunks"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
+	"github.com/OmineDev/neomega-core/nodes/defines"
+	"github.com/OmineDev/neomega-core/utils/string_wrapper"
 
 	"github.com/go-gl/mathgl/mgl32"
 )

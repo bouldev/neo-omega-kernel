@@ -2,9 +2,10 @@ package player_interact
 
 import (
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
 	"sync"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
 
 	"github.com/google/uuid"
 )

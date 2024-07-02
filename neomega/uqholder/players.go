@@ -3,17 +3,18 @@ package uqholder
 import (
 	"bytes"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/encoding/binary_read_write"
-	"neo-omega-kernel/neomega/encoding/little_endian"
-	"neo-omega-kernel/utils/sync_wrapper"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/encoding/binary_read_write"
+	"github.com/OmineDev/neomega-core/neomega/encoding/little_endian"
+	"github.com/OmineDev/neomega-core/utils/sync_wrapper"
 
 	"github.com/google/uuid"
 )

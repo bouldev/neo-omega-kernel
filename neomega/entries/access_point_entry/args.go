@@ -2,9 +2,10 @@ package access_point
 
 import (
 	"flag"
-	"neo-omega-kernel/neomega/entries/minimal_client_entry"
-	"neo-omega-kernel/neomega/entries/minimal_end_point_entry"
-	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
+
+	"github.com/OmineDev/neomega-core/neomega/entries/minimal_client_entry"
+	"github.com/OmineDev/neomega-core/neomega/entries/minimal_end_point_entry"
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/access_helper"
 )
 
 type ArgsPlaceHolder struct {

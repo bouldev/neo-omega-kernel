@@ -1,7 +1,7 @@
 package underlay_conn
 
 import (
-	"neo-omega-kernel/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
 )
 
 type oneFrameIO struct {

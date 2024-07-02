@@ -1,6 +1,6 @@
 package block_set
 
-import "neo-omega-kernel/neomega/blocks/describe"
+import "github.com/OmineDev/neomega-core/neomega/blocks/describe"
 
 // describe blocks of a specific game version
 // rtids must start from 0 and consecutive

@@ -1,9 +1,10 @@
 package core
 
 import (
-	"neo-omega-kernel/minecraft/protocol/packet"
 	"reflect"
 	"strings"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
 )
 
 var mcPacketNameIDMapping map[string]uint32

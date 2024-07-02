@@ -3,13 +3,14 @@ package access_point
 import (
 	"context"
 	"fmt"
-	"neo-omega-kernel/i18n"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
-	"neo-omega-kernel/neomega/rental_server_impact/info_collect_utils"
-	"neo-omega-kernel/nodes"
-	"neo-omega-kernel/nodes/defines"
-	"neo-omega-kernel/nodes/underlay_conn"
+
+	"github.com/OmineDev/neomega-core/i18n"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/access_helper"
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/info_collect_utils"
+	"github.com/OmineDev/neomega-core/nodes"
+	"github.com/OmineDev/neomega-core/nodes/defines"
+	"github.com/OmineDev/neomega-core/nodes/underlay_conn"
 )
 
 const ENTRY_NAME = "omega_access_point"
@@ -38,7 +39,7 @@ func Entry(args *Args) {
 			panic(err)
 		}
 		master := nodes.NewZMQMasterNode(server)
-		node = nodes.NewGroup("neo-omega-kernel/neomega", master, false)
+		node = nodes.NewGroup("github.com/OmineDev/neomega-core/neomega", master, false)
 	}
 	omegaCore, err = access_helper.ImpactServer(ctx, node, accessOption)
 	if err != nil {

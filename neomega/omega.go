@@ -3,12 +3,13 @@ package neomega
 import (
 	"context"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/neomega/blocks"
-	"neo-omega-kernel/neomega/chunks/define"
 	"strings"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/neomega/blocks"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
 
 	"github.com/google/uuid"
 )

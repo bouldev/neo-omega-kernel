@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"neo-omega-kernel/minecraft/internal"
 	"sync"
+
+	"github.com/OmineDev/neomega-core/minecraft/internal"
 
 	"github.com/golang/snappy"
 	"github.com/klauspost/compress/flate"

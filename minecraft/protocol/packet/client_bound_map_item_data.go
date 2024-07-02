@@ -2,7 +2,8 @@ package packet
 
 import (
 	"image/color"
-	"neo-omega-kernel/minecraft/protocol"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
 )
 
 const (

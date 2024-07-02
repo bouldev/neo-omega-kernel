@@ -2,12 +2,13 @@ package bot_action
 
 import (
 	"bytes"
-	"neo-omega-kernel/minecraft/protocol"
-	"neo-omega-kernel/neomega"
-	"neo-omega-kernel/neomega/chunks/define"
-	"neo-omega-kernel/nodes"
-	"neo-omega-kernel/nodes/defines"
 	"time"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol"
+	"github.com/OmineDev/neomega-core/neomega"
+	"github.com/OmineDev/neomega-core/neomega/chunks/define"
+	"github.com/OmineDev/neomega-core/nodes"
+	"github.com/OmineDev/neomega-core/nodes/defines"
 )
 
 type EndPointBotAction struct {

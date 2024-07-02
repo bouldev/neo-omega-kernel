@@ -3,7 +3,8 @@ package minimal_client_entry
 import (
 	"flag"
 	"fmt"
-	"neo-omega-kernel/neomega/rental_server_impact/access_helper"
+
+	"github.com/OmineDev/neomega-core/neomega/rental_server_impact/access_helper"
 )
 
 type ArgsPlaceHolder struct {

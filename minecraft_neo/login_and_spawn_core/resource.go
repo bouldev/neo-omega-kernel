@@ -3,8 +3,9 @@ package login_and_spawn_core
 import (
 	"bytes"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol/packet"
-	"neo-omega-kernel/minecraft/resource"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
+	"github.com/OmineDev/neomega-core/minecraft/resource"
 )
 
 // resourcePackQueue is used to aid in the handling of resource pack queueing and downloading. Only one

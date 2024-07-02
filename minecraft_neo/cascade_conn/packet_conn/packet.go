@@ -3,7 +3,8 @@ package packet_conn
 import (
 	"bytes"
 	"fmt"
-	"neo-omega-kernel/minecraft/protocol/packet"
+
+	"github.com/OmineDev/neomega-core/minecraft/protocol/packet"
 )
 
 // packetData holds the data of a Minecraft packet.
