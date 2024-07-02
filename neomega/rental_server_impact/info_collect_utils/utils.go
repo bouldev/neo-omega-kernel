@@ -132,9 +132,9 @@ func ReadUserInfoAndUpdateImpactOptions(impactOptions *access_helper.ImpactOptio
 			impactOptions.ServerCode, impactOptions.ServerPassword,
 			impactOptions.AuthServer,
 		)
-	if impactOptions.AuthServer == AUTH_SERVER_FB_OFFICIAL {
-		panic(i18n.T(i18n.S_auth_server_version_not_support))
-	}
+	// if impactOptions.AuthServer == AUTH_SERVER_FB_OFFICIAL {
+	// 	panic(i18n.T(i18n.S_auth_server_version_not_support))
+	// }
 	return err
 }
 
