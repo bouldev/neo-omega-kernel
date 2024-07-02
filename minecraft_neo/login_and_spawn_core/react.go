@@ -505,7 +505,8 @@ func (core *Core) handleResourcePackDataInfo(pk *packet.ResourcePackDataInfo) er
 	if pack.size != pk.Size {
 		// Size mismatch: The ResourcePacksInfo packet had a size for the pack that did not match with the
 		// size sent here.
-		core.ErrorLog.Printf("pack %v had a different size in the ResourcePacksInfo packet than the ResourcePackDataInfo packet\n", id)
+		// Netease: disable error log as they're encrypted
+		// core.ErrorLog.Printf("pack %v had a different size in the ResourcePacksInfo packet than the ResourcePackDataInfo packet\n", id)
 		pack.size = pk.Size
 	}
 
