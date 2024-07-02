@@ -20,17 +20,17 @@ func (n *ZMQSlaveNode) IsMaster() bool {
 	return false
 }
 
-func (n *ZMQSlaveNode) heatBeat() {
-	go func() {
-		for {
-			if !n.client.CallWithResponse("/ping", defines.Empty).SetTimeout(time.Second).BlockGetResponse().EqualString("pong") {
-				n.CloseWithError(fmt.Errorf("disconnected"))
-				break
-			}
-			time.Sleep(time.Second * 5)
-		}
-	}()
-}
+// func (n *ZMQSlaveNode) heatBeat() {
+// 	go func() {
+// 		for {
+// 			if !n.client.CallWithResponse("/ping", defines.Empty).SetTimeout(time.Second).BlockGetResponse().EqualString("pong") {
+// 				n.CloseWithError(fmt.Errorf("disconnected"))
+// 				break
+// 			}
+// 			time.Sleep(time.Second * 5)
+// 		}
+// 	}()
+// }
 
 func (n *ZMQSlaveNode) ListenMessage(topic string, listener defines.MsgListener, newGoroutine bool) {
 	n.client.CallWithResponse("/subscribe", defines.FromString(topic)).BlockGetResponse()
@@ -189,7 +189,7 @@ func NewZMQSlaveNode(client defines.ZMQAPIClient) (defines.Node, error) {
 	go func() {
 		slave.CloseWithError(<-client.WaitClosed())
 	}()
-	go slave.heatBeat()
+	// go slave.heatBeat()
 
 	if !slave.client.CallWithResponse("/new_client", defines.Empty).BlockGetResponse().EqualString("ok") {
 		return nil, fmt.Errorf("version mismatch")

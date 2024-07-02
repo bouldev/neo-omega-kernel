@@ -30,5 +30,6 @@ type ZMQAPIServer interface {
 	ConcealAPI(apiName string)
 	CallOmitResponse(callee ZMQCaller, api string, args Values)
 	CallWithResponse(callee ZMQCaller, api string, args Values) ZMQResultHandler
+	SetOnCloseCleanUp(callee ZMQCaller, cb func())
 	can_close.CanClose
 }

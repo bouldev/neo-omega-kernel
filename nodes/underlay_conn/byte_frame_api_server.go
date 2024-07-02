@@ -7,24 +7,23 @@ import (
 	"neo-omega-kernel/nodes/defines"
 	"neo-omega-kernel/utils/sync_wrapper"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type FrameAPIServer struct {
-	apis  *sync_wrapper.SyncKVMap[string, func(defines.ZMQCaller, defines.Values, func(defines.Values))]
-	conns map[string]*FrameAPIServerConn
-	mu    sync.RWMutex
+	apis    *sync_wrapper.SyncKVMap[string, func(defines.ZMQCaller, defines.Values, func(defines.Values))]
+	conns   *sync_wrapper.SyncKVMap[string, *FrameAPIServerConn]
+	onClose *sync_wrapper.SyncKVMap[string, func()]
 	can_close.CanCloseWithError
 }
 
 func NewFrameAPIServer(onCloseHook func()) *FrameAPIServer {
 	return &FrameAPIServer{
 		apis:              sync_wrapper.NewSyncKVMap[string, func(defines.ZMQCaller, defines.Values, func(defines.Values))](),
-		conns:             make(map[string]*FrameAPIServerConn),
-		mu:                sync.RWMutex{},
+		conns:             sync_wrapper.NewSyncKVMap[string, *FrameAPIServerConn](),
+		onClose:           sync_wrapper.NewSyncKVMap[string, func()](),
 		CanCloseWithError: can_close.NewClose(onCloseHook),
 	}
 }
@@ -49,17 +48,21 @@ func (s *FrameAPIServer) NewFrameAPIServer(conn conn_defines.ByteFrameConnBase) 
 		cbs:               sync_wrapper.NewSyncKVMap[string, func(defines.Values)](),
 		FrameAPIServer:    s,
 	}
-	s.mu.Lock()
-	s.conns[identity] = c
-	s.mu.Unlock()
+	s.conns.Set(identity, c)
 	go func() {
 		// close when underlay err
 		c.CloseWithError(<-conn.WaitClosed())
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		delete(s.conns, identity)
+		onClose, ok := s.onClose.Get(identity)
+		if ok {
+			onClose()
+		}
+		s.conns.Delete(identity)
 	}()
 	return c
+}
+
+func (c *FrameAPIServer) SetOnCloseCleanUp(callee defines.ZMQCaller, cb func()) {
+	c.onClose.Set(string(callee), cb)
 }
 
 func (s *FrameAPIServer) NewFrameAPIServerWithCtx(conn conn_defines.ByteFrameConn, apis *FrameAPIServer, ctx context.Context) *FrameAPIServerConn {
@@ -96,9 +99,7 @@ func (c *FrameAPIServer) ExposeAPI(apiName string, api defines.ZMQServerAPI, new
 }
 
 func (c *FrameAPIServer) CallOmitResponse(callee defines.ZMQCaller, api string, args defines.Values) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	conn, ok := c.conns[string(callee)]
+	conn, ok := c.conns.Get(string(callee))
 	if !ok {
 		return
 	}
@@ -115,9 +116,7 @@ func (h *serverVoidRespHandler) AsyncGetResponse(callback func(defines.Values)) 
 }
 
 func (c *FrameAPIServer) CallWithResponse(callee defines.ZMQCaller, api string, args defines.Values) defines.ZMQResultHandler {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	conn, ok := c.conns[string(callee)]
+	conn, ok := c.conns.Get(string(callee))
 	if !ok {
 		return &serverVoidRespHandler{}
 	}

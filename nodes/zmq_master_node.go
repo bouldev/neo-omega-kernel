@@ -186,18 +186,22 @@ func NewZMQMasterNode(server defines.ZMQAPIServer) defines.Node {
 	}, false)
 	server.ExposeAPI("/new_client", func(caller defines.ZMQCaller, args defines.Values) defines.Values {
 		nodeInfo := master.onNewNode(string(caller))
-		go func() {
-			for {
-				if !server.CallWithResponse(caller, "/ping", defines.Empty).
-					SetTimeout(time.Second).
-					BlockGetResponse().
-					EqualString("pong") {
-					master.onNodeOffline(string(caller), nodeInfo)
-					return
-				}
-				time.Sleep(time.Second)
-			}
-		}()
+		// go func() {
+		// 	for {
+		// 		if !server.CallWithResponse(caller, "/ping", defines.Empty).
+		// 			SetTimeout(time.Second).
+		// 			BlockGetResponse().
+		// 			EqualString("pong") {
+		// 			master.onNodeOffline(string(caller), nodeInfo)
+		// 			return
+		// 		}
+		// 		time.Sleep(time.Second)
+		// 	}
+		// }()
+		server.SetOnCloseCleanUp(caller, func() {
+			// fmt.Println("node clean up")
+			master.onNodeOffline(string(caller), nodeInfo)
+		})
 		go func() {
 			for {
 				select {
@@ -248,9 +252,9 @@ func NewZMQMasterNode(server defines.ZMQAPIServer) defines.Node {
 			return defines.FromString(ErrNotReg.Error())
 		}
 		// reject if api exist
-		if master.LocalAPINode.HasAPI(apiName) {
-			return defines.FromString(ErrAPIExist.Error())
-		}
+		// if master.LocalAPINode.HasAPI(apiName) {
+		// 	return defines.FromString(ErrAPIExist.Error())
+		// }
 		slaveInfo.ExposedApis.Set(apiName, struct{}{})
 		master.ApiProvider.Set(apiName, string(provider))
 		// master to slave call
