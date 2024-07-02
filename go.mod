@@ -1,4 +1,4 @@
-module github.com/OmineDev/neo-omega-kernel
+module github.com/OmineDev/neomega-core
 
 go 1.20
 
