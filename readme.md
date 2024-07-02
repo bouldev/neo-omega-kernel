@@ -6,6 +6,18 @@
 ██║ ╚████║███████╗╚██████╔╝██║ ╚═╝ ██║███████╗╚██████╔╝██║  ██║  
 ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝  
 ``` 
+# REPO ARCHIVED
+这个仓库将在 https://github.com/OmineDev/neomega-core 进行后续开发 
+(从 a21f2820a582cafa06f10d98582782fd3178d268 继续)   
+此仓库所有内容将被保留  
+
+
+最后 Commit:  
+Commit: a21f2820a582cafa06f10d98582782fd3178d268  
+Parents: 77c99e70cacd410d36d80329b5fb33dd2279ccda  
+Author: CMA2401PT <1634268014@qq.com>  
+Committer: CMA2401PT <1634268014@qq.com>  
+Date: Tue Jul 02 2024 23:33:04 GMT+0800 (中国标准时间)  
 
 ## neomega
 ### 目的
